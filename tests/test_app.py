@@ -51,3 +51,36 @@ def test_complete_demo_workflow_and_export():
     assert {"Download Markdown", "Download PDF", "Download full audit JSON", "Download per-field CSV"} <= labels
     app.sidebar.radio[0].set_value("Evaluation").run()
     assert not app.exception
+
+
+def test_password_screen_blocks_until_correct(monkeypatch):
+    monkeypatch.setenv("APP_PASSWORD", "fyp-test")
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=20).run()
+    assert not app.exception and not any(b.label == "Load synthetic demo" for b in app.button)
+    app.text_input[0].input("wrong").run()
+    app.button[0].click().run()
+    assert app.error and not any(b.label == "Load synthetic demo" for b in app.button)
+    app.text_input[0].input("fyp-test").run()
+    app.button[0].click().run()
+    assert any(b.label == "Load synthetic demo" for b in app.button)
+
+
+def test_no_password_configured_means_no_screen(monkeypatch):
+    monkeypatch.delenv("APP_PASSWORD", raising=False)
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=20).run()
+    assert any(b.label == "Load synthetic demo" for b in app.button)
+
+
+def test_cloud_secrets_become_settings_without_overriding(monkeypatch):
+    import os
+    monkeypatch.setenv("GEMINI_MODEL", "local-choice")
+    monkeypatch.delenv("FINSIGHT_SHARED_DEPLOYMENT", raising=False)
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=20)
+    app.secrets["FINSIGHT_SHARED_DEPLOYMENT"] = "true"
+    app.secrets["GEMINI_MODEL"] = "cloud-choice"
+    try:
+        app.run()
+        assert os.environ["GEMINI_MODEL"] == "local-choice"
+        assert any("Shared test version" in i.value for i in app.info)
+    finally:
+        os.environ.pop("FINSIGHT_SHARED_DEPLOYMENT", None)

@@ -7,3 +7,4 @@ data/*.sqlite*
 data/*.pdf
 output/
 tmp/
+.streamlit/secrets.toml

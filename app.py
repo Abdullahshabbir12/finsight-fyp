@@ -3,11 +3,15 @@ import sqlite3
 from dotenv import load_dotenv
 import streamlit as st
 from src.database.store import list_runs, load_run, save_run
+from src.ui.access import load_cloud_secrets, password_ok, shared_deployment
 from src.ui.results import results_screen, evaluation_screen
 from src.ui.workflow import setup_screen, processing_screen, verification_screen, set_run
 
-load_dotenv()
 st.set_page_config(page_title="FinSight | Financial research", page_icon="◈", layout="wide")
+load_cloud_secrets()
+load_dotenv()
+if not password_ok():
+    st.stop()
 st.markdown("""<style>
 .block-container {max-width: 1500px; padding-top: 2rem; padding-bottom: 2rem;}
 [data-testid="stMetric"] {background: white; border: 1px solid #dce5ed; border-radius: 10px; padding: 16px;}
@@ -17,6 +21,9 @@ h1 {letter-spacing: -0.04em;}
 </style>""", unsafe_allow_html=True)
 st.title("FinSight")
 st.caption("EVIDENCE-LED FINANCIAL RESEARCH · ACCOUNTING & FINANCE")
+if shared_deployment():
+    st.info("Shared test version. Upload public annual reports only: page text is sent to the AI provider. Saved runs are "
+            "visible to every tester and are deleted whenever the app restarts, so download your report before leaving.")
 st.sidebar.title("◈ FinSight")
 st.sidebar.caption("Financial research workspace")
 step = st.sidebar.radio("Workflow", ["Company & report", "Document processing", "Human verification", "Results & analysis", "Evaluation"])
@@ -46,7 +53,8 @@ with st.sidebar.expander("Open a saved run"):
             st.caption("No saved runs yet.")
     except (OSError, sqlite3.Error, ValueError):
         st.warning("Saved runs are unavailable. Check the database path and file permissions.")
-st.sidebar.caption("Saving stores extracted page text and review history locally. The original PDF stays in the current session only.")
+st.sidebar.caption("Saved runs on this shared version are visible to all testers and are cleared on restart." if shared_deployment()
+                   else "Saving stores extracted page text and review history locally. The original PDF stays in the current session only.")
 if step == "Company & report":
     setup_screen()
 elif not run:
