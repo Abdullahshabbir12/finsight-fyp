@@ -53,6 +53,10 @@ class Review(Record):
     source_page: int | None = None
     source_text: str = ""
     note: str = ""
+    reason: str = ""  # chosen from a fixed list in the review table, so corrections can be counted by type
+
+    def explanation(self) -> str:
+        return " — ".join(part for part in (self.reason, self.note) if part)
 
 
 class Metric(Record):
@@ -108,6 +112,8 @@ class Run(Record):
     created_at: str
     verified_at: str | None = None
     analysis_seconds: float = 0
+    # Unfinished review decisions ("Save progress"); cleared when verification is finished.
+    review_draft: list[dict] = Field(default_factory=list)
 
 
 def upgrade_run(run: Run) -> Run:

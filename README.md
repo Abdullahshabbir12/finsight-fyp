@@ -133,26 +133,30 @@ The calculation engine uses Python Decimal arithmetic. Rounding happens for disp
 
 ## Using the workflow
 
-1. **Company & report:** enter the name, ticker, industry, year, statement basis and optional benchmarks. Upload a PDF and click **Process annual report**. Creating a new run replaces the active session; save a run first if you want to keep it.
-2. **Document processing:** inspect processing time, page count, sparse-page warnings and the suggested pages. FinSight suggests the primary statements (financial position, profit or loss, cash flows) for your chosen basis plus the share-capital note; it skips analysis, summary and contents pages. Two-page spreads are read as left page then right page. Compare the suggestion with the report's contents page, change it if needed, then click **Extract financial fields**. Selected text goes to the API provider. Limit the selection to the actual statements and relevant notes; processing is limited to 24 bounded text chunks per attempt.
-3. **Human verification:** inspect the original number, unit, normalized proposal, source and confidence. For every field, select **accept**, **edit**, or **unavailable**. If editing, enter the final number in the Entry Unit, give evidence text and add a review note. **Unavailable** also needs a note explaining why (for example "not reported as a single line"). If two pages give different values, the Extraction Notes column shows both, with their pages. Page references must exist in this PDF; if an external manual source is used, leave the page blank and identify the source in the note. Use the bulk-accept checkbox only after checking the available values. It never accepts missing or flagged fields. Mark remaining missing fields unavailable, or enter them manually.
-4. Click **Save verification**. Unsaved table edits do not change calculations. All rows must be decided. Saving a revised review clears previous calculations and interpretations, so the next analysis uses the new review.
-5. **Results & analysis:** review reconciliation warnings and deterministic ratios. Then click **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure; retry runs only the missing perspectives and synthesis. If the AI's answer fails a check, FinSight automatically asks again (up to 3 times) and tells the AI what was wrong.
-6. Inspect the Overview, Financial Data, Ratios, four analyst tabs, Final Synthesis and Sources / Evidence tabs. References lead back to verified inputs. Use the page viewer and optional original-page image to check context.
-7. Download **Markdown**, **PDF**, **full audit JSON**, and **evaluation JSON**. Reports generated before the council finishes are explicitly labeled partial. The PDF and Markdown contain internal evidence links; PDF page references identify pages in the original annual report, which is not embedded in the export.
-8. Click **Save run locally** in the sidebar. Use **Open a saved run** later. Saving is explicit, not automatic. The SQLite file is `data/finsight.sqlite3` by default. It contains extracted page text, original proposals, final review records, metrics and analysis; it does not contain API keys or PDF binaries. Original page images are available only while the uploaded PDF remains in that browser session. Reopened runs retain extracted page text and references.
+The step bar at the top (**1 · Upload → 2 · Extract → 3 · Verify → 4 · Results → 5 · Evaluate**) shows where you are, every screen starts with a short **What to do here** box, and a **Next** button appears when a step is done. It works the same on a phone.
 
-For a report with no usable API response, you can still fill the verification table manually, calculate ratios, export a partial report, and save the run. The demo supports the full council and synthesis offline.
+1. **Upload:** enter the company name, industry, year and statement basis (optional benchmarks are under a fold), upload the PDF and click **Read the report**. Non-bank companies only: if the PDF looks like a bank's report, FinSight says so before any AI call, because banks do not report revenue, current assets or inventory.
+2. **Extract:** FinSight suggests the primary statements for your basis plus the share-capital note, skipping analysis, summary and contents pages; two-page spreads are read left page then right page. Compare the suggestion with the report's contents page, then click **Extract financial fields**. A summary shows how many values are 🟢 Ready, 🟠 Check and ⚪ Missing.
+3. **Verify:** each row shows the AI's value, unit and page. Choose **accept**, **edit** or **unavailable**:
+   - **✓ Accept all ready** accepts every 🟢 row; **Mark remaining unavailable** gives the rest one reason. Check accepted values against the PDF before finishing.
+   - **Edit** needs evidence (a quote or source) and a **Reason** from the list (wrong number, wrong unit, wrong year, sign, missing, flagged). **Unavailable** needs a reason too. Notes are optional unless you pick *Other*.
+   - Type values in the unit shown (e.g. `184,390,517` with PKR thousand). Expenses are positive.
+   - **Save progress** keeps unfinished work. **Finish verification** lists every remaining problem at once; ratios and AI analysis only use finished verifications.
+   - **Check a field against the PDF**, under the table, shows the quote, extraction notes and the original page image.
+4. **Results:** deterministic ratios and growth, then **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure, and rejected AI answers are retried automatically with the reason. Download the **PDF**, **Markdown** or **full audit JSON** report.
+5. **Evaluate:** extraction outcomes per field, precision and recall, CSV downloads, and the combined table of all saved live runs.
+
+Click **💾 Save run** (top of the page) to keep a run; reopen it from **Open a saved analysis** on the Upload screen. The SQLite file is `data/finsight.sqlite3` by default and holds extracted page text, proposals, reviews, metrics and analysis, never API keys or the PDF itself.
 
 ## A two-minute university demo
 
-1. Click **Load synthetic demo**.
-2. Open **Human verification**. Read the source examples, then check the bulk-accept box and click **Save verification**.
-3. Open **Results & analysis**. The unedited example shows revenue of PKR 1,000 million, net profit of PKR 105 million, ROA of 7%, ROE of about 12.35%, current ratio of 2.00x and debt-to-equity of about 0.47x.
+1. Click **Load synthetic demo**. FinSight opens **3 · Verify**.
+2. Click **✓ Accept all ready**, then **Finish verification**, then **Next: results →**.
+3. The unedited example shows revenue of PKR 1,000 million, net profit of PKR 105 million, ROA of 7%, ROE of about 12.35%, current ratio of 2.00x and debt-to-equity of about 0.47x, plus revenue growth of about 11%.
 4. Click **Generate demo council & synthesis**, inspect the tabs and download the report.
-5. Open **Evaluation** to explain accuracy, completeness and corrections. These are synthetic demonstration metrics, not empirical performance results.
+5. Open **5 · Evaluate** to explain the measures. These are synthetic demonstration metrics, not empirical performance results.
 
-To demonstrate correction tracking, edit revenue to `990000000`, select **edit**, and explain the simulated correction in the review note. Save, recalculate, and inspect the changed ratio and evaluation metrics. Load a fresh synthetic demo to reset the example.
+To demonstrate correction tracking, in Verify set revenue to **edit**, type `990`, choose the reason **Wrong number**, and finish again. The ratios and evaluation update. Load a fresh demo to reset.
 
 ## Evaluation for the FYP
 

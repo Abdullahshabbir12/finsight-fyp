@@ -50,7 +50,7 @@ def markdown_report(run: Run) -> str:
         value = f"{r.verified_value:,.2f}" if r.verified_value is not None else "N/A"
         lines.append(f"| {FIELDS[f.field_name]} | {clean(f.raw_value or 'N/A')} / {clean(f.unit)} | {value} | {internal_unit(f.field_name)} | {r.decision} |")
     lines += ["", "### Unavailable fields: review notes", ""]
-    lines += [f"- **{FIELDS[r.field_name]}**: {clean(r.note or 'No supported value available.')}"
+    lines += [f"- **{FIELDS[r.field_name]}**: {clean(r.explanation() or 'No supported value available.')}"
               for r in run.reviews if r.decision == "unavailable"]
     lines += ["", "## Deterministic Financial Ratios", "", "Computed by Python from verified values. Single-year returns and turnover use year-end balances; average-balance versions and growth rates use the verified prior-year comparatives.", "",
               "| Metric | Result | Formula / N/A reason |", "|---|---|---|"]

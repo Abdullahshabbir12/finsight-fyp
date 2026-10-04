@@ -84,7 +84,7 @@ def reference_registry(run: Run) -> dict[str, dict]:
         r = reviews[key]
         registry["field:" + key] = {"label": FIELDS[key], "value": str(value), "unit": internal_unit(key),
             "year": r.reporting_year, "page": r.source_page, "source_text": r.source_text,
-            "review_decision": r.decision, "review_note": r.note, "short": short_value(key, value),
+            "review_decision": r.decision, "review_note": r.explanation(), "short": short_value(key, value),
             "display": f"{FIELDS[key]}: {value:,.2f} {internal_unit(key)} — " + ((f"Synthetic source page {r.source_page}" if run.is_demo else f"Annual report PDF page {r.source_page}") if r.source_page else "human-supplied source")}
     for metric in run.metrics:
         if metric.value is not None:
@@ -210,7 +210,7 @@ def analysis_payload(run: Run) -> dict:
     registry = reference_registry(run)
     return {"company": run.company.model_dump(), "reference_registry": registry,
             "verified_comparisons": verified_comparisons(registry),
-            "unavailable_fields": [{"field_name": r.field_name, "reason": r.note}
+            "unavailable_fields": [{"field_name": r.field_name, "reason": r.explanation()}
                                    for r in run.reviews if r.decision == "unavailable"],
             "unavailable_metrics": [{"name": m.name, "reason": m.reason} for m in run.metrics if m.value is None],
             "limitations": years_limitations(run) + ["Human verification is not an audit; evidence may need further review."]}

@@ -77,3 +77,54 @@ def test_saved_review_reopens_in_base_units():
     commit_review(run, accepted_rows(run))
     row = review_rows(run)[0]
     assert row["Entry Unit"] == "PKR" and row["Verified Value"] == "1000000000"
+
+
+
+def test_every_problem_is_reported_at_once():
+    from src.validation.review import ReviewError
+    run = demo_run()
+    rows = review_rows(run)  # all pending
+    rows[0].update({"Decision": "accept"})
+    with pytest.raises(ReviewError) as exc:
+        commit_review(run, rows)
+    assert len(exc.value.problems) == len(rows) - 1
+    assert not run.reviews
+
+
+def test_reasons_replace_typed_notes():
+    from src.validation.review import accept_ready, mark_remaining_unavailable
+    run = demo_run()
+    rows = review_rows(run)
+    rows[0].update({"Decision": "edit", "Verified Value": "900", "Reason": "Wrong number"})  # evidence prefilled
+    rows[1].update({"Decision": "unavailable", "Reason": "Not reported as a single line"})
+    assert accept_ready(run, rows) == len(rows) - 2
+    assert mark_remaining_unavailable(rows, "Not reported in this document") == 0
+    commit_review(run, rows)
+    assert run.reviews[0].reason == "Wrong number" and run.reviews[1].explanation() == "Not reported as a single line"
+    assert run.reviews[2].reason == ""
+
+
+def test_edit_needs_evidence_and_reason_or_note():
+    from src.validation.review import ReviewError
+    run = demo_run()
+    rows = accepted_rows(run)
+    rows[0].update({"Decision": "edit", "Verified Value": "900", "Evidence Text": "", "Reason": "Wrong number"})
+    rows[1].update({"Decision": "edit", "Verified Value": "640"})  # evidence prefilled, but no reason or note
+    rows[2].update({"Decision": "unavailable", "Reason": "Other (explain in note)"})
+    with pytest.raises(ReviewError) as exc:
+        commit_review(run, rows)
+    assert len(exc.value.problems) == 3
+
+
+def test_draft_survives_and_is_cleared_on_finish():
+    from src.validation.review import save_draft
+    run = demo_run()
+    rows = review_rows(run)
+    rows[0].update({"Decision": "edit", "Verified Value": "900", "Reason": "Wrong number", "Review Note": float("nan")})
+    save_draft(run, rows)
+    reopened = review_rows(run)
+    assert reopened[0]["Decision"] == "edit" and reopened[0]["Verified Value"] == "900" and reopened[0]["Review Note"] == ""
+    for row in reopened[1:]:
+        row["Decision"] = "accept"
+    commit_review(run, reopened)
+    assert run.review_draft == [] and verified_values(run)["revenue"] == Decimal("900000000")

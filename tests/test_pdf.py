@@ -93,3 +93,12 @@ def test_title_glued_to_its_date_is_recognised():
                                           "DIRECT METHOD\nSTATEMENT OF CASH FLOWSFor the year ended 30 June 2024\n" + AMOUNTS]))
     from src.pdf.reader import statement_title
     assert statement_title(pages[0].text) == "" and statement_title(pages[1].text) == ""
+
+
+
+def test_bank_reports_are_recognised():
+    from src.pdf.reader import looks_like_bank
+    bank = [Page(number=1, text="Deposits and other accounts 1,000\nLendings to financial institutions 500\nAdvances - net 900")]
+    company = [Page(number=1, text="Trade debts 1,000\nBills payable 200\nStock in trade 300")]
+    assert looks_like_bank(bank) and not looks_like_bank(company)
+    assert looks_like_bank(company, industry="Commercial banking")

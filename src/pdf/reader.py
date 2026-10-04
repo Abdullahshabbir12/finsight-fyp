@@ -129,6 +129,22 @@ def keyword_pages(pages: list[Page], limit: int = 12) -> list[int]:
     return sorted(selected or [p.number for p in pages[:min(3, limit)]])
 
 
+# Lines that appear in banks' statements and never in a manufacturing or services company's (checked on 7 reports).
+BANK_TERMS = ("deposits and other accounts", "lendings to financial institutions", "balances with other banks",
+              "due to financial institutions", "mark-up / return / interest earned", "mark-up/return/interest earned",
+              "advances - net")
+BANK_WARNING = ("This looks like a bank's annual report. FinSight's fields are designed for non-financial companies: banks do "
+                "not report revenue, cost of sales, current assets or inventory, so most fields will be unavailable. "
+                "Choose a non-bank company, or continue to see the limited result.")
+
+
+def looks_like_bank(pages: list[Page], industry: str = "") -> bool:
+    if re.search(r"\b(bank|banking|microfinance)\b", industry, re.I):
+        return True
+    text = " ".join(" ".join(p.text.split()).lower() for p in pages)
+    return sum(term in text for term in BANK_TERMS) >= 2
+
+
 def chunk_pages(pages: list[Page], selected: list[int], max_chars: int = 14000) -> list[str]:
     """Split even long pages with overlap; retain physical page identifiers per segment."""
     chunks = []

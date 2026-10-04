@@ -53,7 +53,7 @@ def field_outcomes(run: Run) -> list[dict]:
         rows.append({"field": f.field_name, "label": FIELDS[f.field_name], "outcome": outcome,
                      "ai_proposed": None if proposed is None else str(proposed),
                      "verified": None if r is None or r.verified_value is None else str(r.verified_value),
-                     "extraction_status": f.status, "review_note": r.note if r else ""})
+                     "extraction_status": f.status, "review_reason": r.reason if r else "", "review_note": r.note if r else ""})
     return rows
 
 
