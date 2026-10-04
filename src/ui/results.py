@@ -1,24 +1,27 @@
 """Verified values, reproducible metrics and clearly labeled interpretation."""
 import json
+import sqlite3
 from time import perf_counter
 import pandas as pd
 import streamlit as st
 from reportlab.platypus import LayoutError
 from src.ai.client import AIClient, AIError
-from src.ai.council import ROLES, reference_registry, run_council
+from src.ai.council import ROLES, reference_registry, render_text, run_council
 from src.ai.synthesis import run_synthesis
 from src.calculations.ratios import calculate, display_metric
 from src.catalog import FIELDS, internal_unit
 from src.models import Claim, Run
 from src.reporting.export import markdown_report, pdf_report
 from src.ui.workflow import source_viewer
-from src.utils.evaluation import evaluation
+from src.database.store import list_runs, load_run
+from src.utils.evaluation import OUTCOMES, aggregate, evaluation, field_outcomes
 from src.validation.accounting import validate_run
 from src.validation.review import verified_values
 
 
 def show_claim(claim: Claim, registry: dict) -> None:
-    st.markdown(f"**{claim.kind}** · {claim.text}")
+    # Values inside the sentence are inserted by Python from the verified registry, not typed by the AI.
+    st.markdown(f"**{claim.kind}** · {render_text(claim.text, registry)}")
     for ref in claim.references:
         item = registry[ref]
         st.caption(f"{ref} · {item['display']}")
@@ -42,21 +45,50 @@ def show_analyst(run: Run, role: str, registry: dict) -> None:
             st.write(registry[ref]["display"])
 
 
+def pct(value) -> str:
+    return f"{value:.1%}" if value is not None else "N/A"
+
+
 def evaluation_screen(run: Run) -> None:
     stats = evaluation(run)
     st.subheader("Evaluation")
-    st.caption("Accuracy compares the original normalized number and reporting year with the saved human review. It is an agreement measure, not independently audited accuracy.")
+    st.caption("All measures compare the AI's original extraction with the saved human review. They are agreement measures, not independently audited accuracy.")
     a, b, c, d = st.columns(4)
-    a.metric("Extraction accuracy", f'{stats["extraction_accuracy"]:.1%}' if stats["extraction_accuracy"] is not None else "N/A")
-    b.metric("Extraction completeness", f'{stats["extraction_completeness"]:.1%}')
-    c.metric("Numeric / year corrections", stats["numeric_or_year_correction_count"])
+    a.metric("Proposal precision", pct(stats["proposal_precision"]), help="Of the numbers the AI proposed, the share that matched the final verified value (sign and flags aside).")
+    b.metric("Field recall", pct(stats["field_recall"]), help="Of the fields with a verified value, the share where the AI proposed the right number.")
+    c.metric("Strict accuracy", pct(stats["extraction_accuracy"]), help="Fields accepted with no change at all / fields with a verified value. Counts flags, sign fixes and human-filled fields as errors.")
     d.metric("Unavailable", stats["unavailable_fields"])
-    st.write("Accuracy = correctly extracted fields / fields with a final verified value. Missing extractions later entered manually count as incorrect. Unavailable fields are excluded. Completeness = non-null extracted fields / all predefined fields.")
+    st.markdown("#### What happened to each field")
+    st.dataframe(pd.DataFrame([{"Outcome": OUTCOMES[k], "Fields": stats["outcome_" + k]} for k in OUTCOMES if stats["outcome_" + k]]),
+                 hide_index=True, width="stretch")
+    outcomes = field_outcomes(run)
+    with st.expander("Per-field outcomes"):
+        st.dataframe(pd.DataFrame(outcomes), hide_index=True, width="stretch")
     st.caption("Observed workflow time includes active-session human review. Processing time sums measured PDF and API stages, including failed attempts. Demo results and timings are illustrative and must be excluded from live extraction evaluation.")
-    st.dataframe(pd.DataFrame([{"Measure": k, "Value": "N/A" if v is None else str(v)} for k, v in stats.items()]), hide_index=True, width="stretch")
-    st.download_button("Download evaluation JSON", json.dumps(stats, indent=2), file_name=f"finsight-{run.id}-evaluation.json", mime="application/json")
+    with st.expander("All measures"):
+        st.dataframe(pd.DataFrame([{"Measure": k, "Value": "N/A" if v is None else str(v)} for k, v in stats.items()]), hide_index=True, width="stretch")
+    x, y = st.columns(2)
+    x.download_button("Download evaluation JSON", json.dumps(stats, indent=2), file_name=f"finsight-{run.id}-evaluation.json", mime="application/json")
+    y.download_button("Download per-field CSV", pd.DataFrame(outcomes).to_csv(index=False), file_name=f"finsight-{run.id}-fields.csv", mime="text/csv")
     if run.usage:
-        st.dataframe(pd.DataFrame(run.usage), hide_index=True, width="stretch")
+        with st.expander("API calls"):
+            st.dataframe(pd.DataFrame(run.usage), hide_index=True, width="stretch")
+    st.markdown("#### All saved live runs")
+    st.caption("Combines every reviewed, non-demo run saved with 'Save run locally'. Use this table for your FYP results across several annual reports.")
+    try:
+        runs = [load_run(row[0]) for row in list_runs() if not row[3]]
+    except (OSError, sqlite3.Error, ValueError):
+        st.warning("Saved runs are unavailable. Check the database path and file permissions.")
+        return
+    summaries, per_field = aggregate(runs)
+    if not summaries:
+        st.info("No reviewed live runs saved yet. Save this run after verification to include it.")
+        return
+    st.dataframe(pd.DataFrame(summaries), hide_index=True, width="stretch")
+    st.dataframe(pd.DataFrame(per_field), hide_index=True, width="stretch")
+    x, y = st.columns(2)
+    x.download_button("Download runs CSV", pd.DataFrame(summaries).to_csv(index=False), file_name="finsight-all-runs.csv", mime="text/csv")
+    y.download_button("Download per-field totals CSV", pd.DataFrame(per_field).to_csv(index=False), file_name="finsight-field-totals.csv", mime="text/csv")
 
 
 def results_screen(run: Run) -> None:

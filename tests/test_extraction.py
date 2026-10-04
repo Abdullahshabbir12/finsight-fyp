@@ -28,7 +28,9 @@ def test_evidence_and_year_guard():
                   source_page=1, source_text=item.source_text, confidence=.9, statement_basis="consolidated")
     chunk = "[PDF PAGE 1]\n" + run.pages[0].text
     assert checked_candidate(c, run, chunk).normalized_value == Decimal("1000000000")
-    for update in [{"reporting_year": 2024}, {"source_page": 100}, {"raw_value": "100"},
+    corrected = checked_candidate(c.model_copy(update={"source_page": 100}), run, chunk)
+    assert corrected.source_page == 1 and corrected.normalized_value == Decimal("1000000000")
+    for update in [{"reporting_year": 2024}, {"raw_value": "100"},
                    {"source_text": "invented 1000"}, {"unit": "USD million"}, {"statement_basis": "standalone"}]:
         result = checked_candidate(c.model_copy(update=update), run, chunk)
         assert result.normalized_value is None
@@ -38,3 +40,48 @@ def test_evidence_and_year_guard():
 def test_eps_cannot_use_statement_scale():
     with pytest.raises(ValueError):
         normalize("5", "PKR million", "eps")
+
+
+def test_bracketed_expenses_are_stored_positive_with_a_visible_note():
+    run = demo_run()
+    chunk = "[PDF PAGE 1]\nCost of sales 28 (54,345,821)\nRevenue 80,026,226"
+    run.pages[0].text = chunk
+    c = Candidate(field_name="cost_of_sales", reporting_year=2025, raw_value="(54,345,821)", unit="PKR thousand",
+                  source_page=1, source_text="Cost of sales 28 (54,345,821)", confidence=.9, statement_basis="consolidated")
+    field = checked_candidate(c, run, chunk)
+    assert field.normalized_value == Decimal("54345821000") and field.status == "extracted"
+    assert field.raw_value == "(54,345,821)" and field.notes and not field.issues
+    # A non-expense field keeps its sign: a negative operating cash flow is real information.
+    ocf = checked_candidate(c.model_copy(update={"field_name": "operating_cash_flow"}), run, chunk)
+    assert ocf.normalized_value == Decimal("-54345821000") and not ocf.notes
+
+
+def test_conflicts_show_both_candidates():
+    from src.extraction.service import ExtractionResponse, extract_fields
+    run = demo_run()
+    run.pages[0].text = "Finance cost 32 (4,128,579)"
+    run.pages[1].text = "Finance cost paid (3,018,963)"
+    replies = iter([("(4,128,579)", 1, "Finance cost 32 (4,128,579)"), ("(3,018,963)", 2, "Finance cost paid (3,018,963)")])
+    class Fake:
+        usage = []
+        def request(self, *args):
+            raw, page, quote = next(replies)
+            return ExtractionResponse(fields=[{"field_name": "finance_cost", "reporting_year": 2025, "raw_value": raw,
+                "unit": "PKR thousand", "source_page": page, "source_text": quote, "confidence": .9, "statement_basis": "consolidated"}])
+    extract_fields(run, [1, 2], Fake())
+    field = next(f for f in run.fields if f.field_name == "finance_cost")
+    assert field.status == "needs_review" and field.normalized_value is None
+    assert "4,128,579" in field.issues[0] and "3,018,963" in field.issues[0] and "page 2" in field.issues[0]
+
+
+def test_wrong_page_number_is_corrected_from_the_verified_quote():
+    run = demo_run()
+    chunk = "[PDF PAGE 2]\n" + run.pages[1].text
+    item = run.fields[8]  # total assets, on synthetic page 2
+    c = Candidate(field_name="total_assets", reporting_year=2025, raw_value="1500", unit="PKR million",
+                  source_page=3, source_text=item.source_text, confidence=.9, statement_basis="consolidated")
+    field = checked_candidate(c, run, chunk)
+    assert field.source_page == 2 and field.status == "extracted" and "page 3" in field.notes[0]
+    # Without a verified quote, the page is not trusted and the row stays blocked.
+    invented = checked_candidate(c.model_copy(update={"source_text": "Total assets 1500 invented"}), run, chunk)
+    assert invented.normalized_value is None and invented.source_page == 3

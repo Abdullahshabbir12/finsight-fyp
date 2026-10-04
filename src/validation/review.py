@@ -1,9 +1,20 @@
 """The only gate from extracted proposals to calculation inputs."""
 from datetime import datetime, timezone
 from decimal import Decimal
-from src.catalog import FIELDS
-from src.extraction.service import parse_number
+from src.catalog import FIELDS, internal_unit
+from src.extraction.service import UNITS, allowed_units, parse_number
 from src.models import Review, Run
+
+
+def plain(value: Decimal) -> str:
+    """Show a Decimal without exponent notation, e.g. 184390517 rather than 1.84390517E+8."""
+    text = format(value, "f")
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
+def entry_unit(field) -> str:
+    """Reviewers type values in the statement's own unit, avoiding hand-added zeros."""
+    return field.unit if field.unit in allowed_units(field.field_name) else internal_unit(field.field_name)
 
 
 def review_rows(run: Run) -> list[dict]:
@@ -11,11 +22,20 @@ def review_rows(run: Run) -> list[dict]:
     rows = []
     for f in run.fields:
         r = existing.get(f.field_name)
+        # Saved reviews are stored in base units; new reviews start in the statement unit.
+        unit = internal_unit(f.field_name) if r else entry_unit(f)
+        if r and r.verified_value is not None:
+            value = plain(r.verified_value)
+        elif not r and f.normalized_value is not None:
+            value = plain(f.normalized_value / UNITS[unit])
+        else:
+            value = ""
         rows.append({"Field": FIELDS[f.field_name], "Extracted Value": f.raw_value or "N/A",
                      "Unit": f.unit, "Normalized (base units)": str(f.normalized_value) if f.normalized_value is not None else "N/A",
                      "Page": f.source_page, "Confidence": f.confidence, "Status": f.status,
+                     "Extraction Notes": " ".join(f.issues + f.notes),
                      "Decision": r.decision if r else "pending",
-                     "Verified Value": str(r.verified_value) if r and r.verified_value is not None else str(f.normalized_value) if f.normalized_value is not None else "",
+                     "Verified Value": value, "Entry Unit": unit,
                      "Verified Year": r.reporting_year if r else run.company.financial_year,
                      "Evidence Page": str(r.source_page or "") if r else str(f.source_page or ""),
                      "Evidence Text": r.source_text if r else f.source_text,
@@ -39,8 +59,13 @@ def commit_review(run: Run, rows: list[dict]) -> None:
         page = None
         source = ""
         note = str(row.get("Review Note") or "").strip()
+        if decision == "unavailable" and not note:
+            raise ValueError(f"{label}: explain in Review Note why the value is unavailable (for example 'not reported as a single line').")
         if decision != "unavailable":
-            value = parse_number(str(row["Verified Value"]))
+            unit = str(row.get("Entry Unit") or internal_unit(f.field_name))
+            if unit not in allowed_units(f.field_name):
+                raise ValueError(f"{label}: Entry Unit must be one of {', '.join(allowed_units(f.field_name))}.")
+            value = parse_number(str(row["Verified Value"])) * UNITS[unit]
             if decision == "accept":
                 if f.normalized_value is None or f.status != "extracted" or f.reporting_year != year:
                     raise ValueError(f"{label}: no valid extraction to accept. Use edit with evidence, or unavailable.")
@@ -53,8 +78,6 @@ def commit_review(run: Run, rows: list[dict]) -> None:
                 source = str(row.get("Evidence Text") or "").strip()
                 if not source or not note:
                     raise ValueError(f"{label}: edited values need evidence text and a review note explaining the correction or manual entry.")
-                if page is None and not note:
-                    raise ValueError(f"{label}: identify the manual source in your note.")
             if page is not None and page not in {p.number for p in run.pages}:
                 raise ValueError(f"{label}: evidence page is outside this document.")
         reviews.append(Review(field_name=f.field_name, decision=decision, verified_value=value,

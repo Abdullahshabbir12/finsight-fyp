@@ -7,7 +7,7 @@ from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
-from src.ai.council import reference_registry
+from src.ai.council import reference_registry, render_text
 from src.calculations.ratios import display_metric
 from src.catalog import FIELDS, internal_unit
 from src.models import Claim, Run
@@ -25,9 +25,9 @@ def anchor(ref: str) -> str:
     return ref.replace(":", "-")
 
 
-def claim_markdown(claim: Claim) -> str:
+def claim_markdown(claim: Claim, registry: dict) -> str:
     links = ", ".join(f"[{ref}](#{anchor(ref)})" for ref in claim.references)
-    return f"- **{claim.kind}**: {clean(claim.text)}" + (f" Sources: {links}." if links else "")
+    return f"- **{claim.kind}**: {clean(render_text(claim.text, registry))}" + (f" Sources: {links}." if links else "")
 
 
 def markdown_report(run: Run) -> str:
@@ -35,6 +35,7 @@ def markdown_report(run: Run) -> str:
     if not run.metrics:
         raise ValueError("Calculate verified metrics before exporting.")
     c = run.company
+    registry = reference_registry(run)
     lines = ["# FinSight | Financial Research", "", f"**Company:** {clean(c.name)} ({clean(c.ticker)})",
              f"**Financial year:** {c.financial_year} | **Industry:** {clean(c.industry)} | **Basis:** {c.statement_basis}",
              f"**Document:** {clean(run.filename)}", f"**Run:** {run.id}", f"**Verification saved:** {run.verified_at}", "",
@@ -60,10 +61,10 @@ def markdown_report(run: Run) -> str:
     lines += ["- " + clean(w) for w in warnings] or ["No warnings from the limited accounting checks. This is not an audit."]
     lines += ["", "## AI Council", "", "Sample template outputs (offline synthetic demo)." if run.is_demo else "AI-generated interpretation; check the cited evidence."]
     for name, result in run.analysts.items():
-        lines += ["", "### " + name, "", claim_markdown(result.overall_observation)]
+        lines += ["", "### " + name, "", claim_markdown(result.overall_observation, registry)]
         for title, claims in [("Positive factors", result.positive_factors), ("Risk factors", result.risk_factors), ("Limitations", result.limitations)]:
             lines += ["", "**" + title + "**"]
-            lines += [claim_markdown(claim) for claim in claims] or ["- None identified in this output."]
+            lines += [claim_markdown(claim, registry) for claim in claims] or ["- None identified in this output."]
         if result.key_metrics:
             lines += ["", "Key references: " + ", ".join(f"[{r}](#{anchor(r)})" for r in result.key_metrics)]
     if not run.analysts:
@@ -71,11 +72,11 @@ def markdown_report(run: Run) -> str:
     lines += ["", "## Final Synthesis", ""]
     if run.synthesis:
         for section in run.synthesis.sections:
-            lines += ["### " + section.heading, ""] + [claim_markdown(c) for c in section.claims] + [""]
+            lines += ["### " + section.heading, ""] + [claim_markdown(c, registry) for c in section.claims] + [""]
     else:
         lines += ["Not generated. This export is a partial report."]
     lines += ["", "## Sources / Evidence", "", "Page numbers refer to physical PDF pages, which may differ from printed page labels. Corrected values and notes reflect the human review."]
-    for ref, item in reference_registry(run).items():
+    for ref, item in registry.items():
         lines += ["", f'<a id="{anchor(ref)}"></a>', "### " + ref, "", clean(item["display"])]
         if item.get("source_text"):
             lines.append("Source excerpt / supplied context: " + clean(item["source_text"]))

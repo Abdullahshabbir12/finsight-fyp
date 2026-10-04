@@ -34,6 +34,8 @@ class FinancialField(Record):
     confidence: float = Field(default=0, ge=0, le=1)
     status: Literal["extracted", "missing", "needs_review"] = "missing"
     issues: list[str] = Field(default_factory=list)
+    # Informational conventions applied by Python (e.g. expense sign); unlike issues, they never block acceptance.
+    notes: list[str] = Field(default_factory=list)
 
     @field_validator("field_name")
     @classmethod

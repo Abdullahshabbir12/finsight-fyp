@@ -32,3 +32,25 @@ Final validation details are recorded below after the last checks. Live provider
 - Prepared local `.env` without overwriting existing credentials; `.env` remains ignored by Git.
 - Added actionable access/quota errors and provider isolation tests.
 - **146 tests passed**, including the Streamlit demo smoke tests. Gemini request/response checks use mocks; live quota and access still need the user's own key.
+
+## October 4: real-report review (Fauji Cement 2024, Engro Fertilizers 2024)
+
+Two non-bank annual reports were run end to end and every extracted value, ratio and AI claim was checked against an independent reading of the PDF. All ratios were always correct; the problems were in page selection, extraction handling, review usability, evaluation and AI text checks. Fixes:
+
+| # | Problem found | Fix |
+|---|---|---|
+| 1 | Engro report (34.5 MB) rejected by 30 MB limit | Limit raised to 100 MB (reader and Streamlit config) |
+| 2 | Page suggestions contained 0 of the actual statements in both reports | Title-line detection for primary statements, basis matching, untitled continuation pages, share-capital note; analysis/summary/contents/notes pages excluded |
+| 3 | Two-page spreads interleaved left and right columns | Landscape spreads read left half then right half |
+| 4 | Bracketed expenses stored negative, causing false reconciliation warnings | Cost of sales, finance cost, tax and capex stored positive with a visible note; raw value kept |
+| 5 | Conflicts from cash-flow lines (finance cost paid, taxes paid, borrowing proceeds); one wrong value | Prompt rule: each field from its own statement; conflict message shows both values and pages |
+| 6 | AI cited the wrong page for a verified quote | Page recorded from the page where the quote was verified, with a note |
+| 7 | Verified values typed in base PKR (adding zeros); "unavailable" allowed with no reason | Entry Unit column (defaults to statement unit); unavailable requires a note |
+| 8 | Accuracy counted sign fixes, conflict flags and correct abstentions as errors | Per-field outcomes, proposal precision, field recall, per-field CSV, all-runs aggregation |
+| 9 | AI stated "total liabilities exceed total assets" (false), used "strong/robust" without benchmarks, copied bank-only rules, placed raw reference IDs in prose, one bad sentence discarded whole output | Comparison/sign contradiction checks and verified comparisons in payload; evaluative-word check; bank rules only for banks; IDs rendered as verified values; malformed IDs rejected; automatic retry with feedback (3 attempts) |
+| 10 | Free-tier per-minute limit stopped extraction; daily limit (20 requests/model) gave a vague error | One automatic wait-and-retry for short limits; clear "resets in about N hours" message for daily limits |
+| 11 | Formula "(Gross Profit) / Revenue / Sales" read as two divisions; app tests read the real local database | Bracketed labels; tests use a temporary database |
+
+Engro (consolidated, FY2024), same pages, before vs after: clean extracted fields 14 → 18; conflicts 5 → 0; wrong values 1 → 0; proposal precision 89.5% → 100%; field recall 81% → 86% (the remaining 3 were correct abstentions: no EBIT line, debt across several lines, shares in tranches). Post-fix AI text contained no contradicted comparisons and no evaluative words. Note: the post-fix run used `gemini-3.5-flash-lite` for extraction because the `gemini-2.5-flash` daily free quota was exhausted; pages 150–151 were also re-run on `gemini-2.5-flash` with identical clean results.
+
+**183 tests passed** (147 before).

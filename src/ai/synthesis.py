@@ -1,7 +1,7 @@
 """A neutral synthesis over all four validated perspectives."""
 from time import perf_counter
-from src.ai.client import AIClient, AIError
-from src.ai.council import POLICY, ROLES, analysis_payload, validate_claim
+from src.ai.client import AIClient, AIError, AIOutputRejected
+from src.ai.council import ROLES, analysis_payload, policy, request_validated, validate_claim
 from src.models import Claim, Run, Section, Synthesis
 
 HEADINGS = ["Executive Summary", "Profitability Assessment", "Liquidity and Credit Risk",
@@ -12,10 +12,10 @@ HEADINGS = ["Executive Summary", "Profitability Assessment", "Liquidity and Cred
 
 def validate_synthesis(result: Synthesis, registry: dict) -> None:
     if [s.heading for s in result.sections] != HEADINGS:
-        raise AIError("Synthesis did not contain all required sections in order. Retry synthesis.")
+        raise AIOutputRejected("Synthesis must contain exactly the required section headings, in order. Retry synthesis.")
     for section in result.sections:
         if not section.claims:
-            raise AIError("A synthesis section was empty. Retry synthesis.")
+            raise AIOutputRejected(f"Synthesis section '{section.heading}' was empty. Retry synthesis.")
         for claim in section.claims:
             validate_claim(claim, registry)
 
@@ -56,7 +56,8 @@ def run_synthesis(run: Run, client: AIClient | None = None) -> None:
         else:
             if client is None:
                 raise AIError("Configure an API key before requesting synthesis.")
-            result = client.request(Synthesis, POLICY + "\nSynthesize all four perspectives into exactly the supplied sections. Acknowledge disagreements and missing evidence. Remain neutral.", payload, "synthesis")
+            result = request_validated(client, Synthesis, policy(run) + "\nSynthesize all four perspectives into exactly the supplied sections. Acknowledge disagreements and missing evidence. Remain neutral.",
+                                       payload, "synthesis", lambda r: validate_synthesis(r, payload["reference_registry"]))
         validate_synthesis(result, payload["reference_registry"])
         run.synthesis = result
     finally:

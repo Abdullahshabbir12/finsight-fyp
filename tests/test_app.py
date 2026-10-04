@@ -1,5 +1,12 @@
 from pathlib import Path
+import pytest
 from streamlit.testing.v1 import AppTest
+
+
+@pytest.fixture(autouse=True)
+def isolated_database(tmp_path, monkeypatch):
+    # Never read or write the user's real saved runs during tests.
+    monkeypatch.setenv("FINSIGHT_DB_PATH", str(tmp_path / "runs.sqlite3"))
 
 
 def test_app_starts_and_demo_loads():
@@ -40,6 +47,7 @@ def test_complete_demo_workflow_and_export():
     assert not app.exception
     assert len(app.session_state.run.analysts) == 4
     assert len(app.session_state.run.synthesis.sections) == 11
-    assert len(app.get("download_button")) == 4
+    labels = {b.label for b in app.get("download_button")}
+    assert {"Download Markdown", "Download PDF", "Download full audit JSON", "Download per-field CSV"} <= labels
     app.sidebar.radio[0].set_value("Evaluation").run()
     assert not app.exception

@@ -37,9 +37,12 @@ SPECS = {
 def calculate_ratio(name: str, values: Mapping[str, Decimal | None]) -> Metric:
     spec = SPECS[name]
     inputs = list(spec.numerator) + [spec.denominator]
-    numerator_label = " - ".join(FIELDS[k] for k in spec.numerator)
+    # Square brackets keep labels such as "Revenue / Sales" from reading as a second division.
+    numerator_label = " - ".join(f"[{FIELDS[k]}]" for k in spec.numerator)
+    if len(spec.numerator) > 1:
+        numerator_label = f"({numerator_label})"
     metric = Metric(name=name, label=spec.label, value=None, format="percent" if spec.percent else "multiple",
-                    formula=f"({numerator_label}) / {FIELDS[spec.denominator]}", inputs=inputs)
+                    formula=f"{numerator_label} / [{FIELDS[spec.denominator]}]", inputs=inputs)
     if any(values.get(key) is None for key in inputs):
         metric.reason = "Missing verified input: " + ", ".join(FIELDS[k] for k in inputs if values.get(k) is None)
         return metric

@@ -85,12 +85,23 @@ src/ui/                Workflow and results screens
 tests/                Financial, pipeline, and UI tests
 ```
 
+### How AI text is checked
+
+The AI never types numbers. Where a value belongs in a sentence it writes a reference ID such as `metric:current_ratio`, and Python replaces it with the verified value (for example `0.76x`). Before any AI text is accepted, Python rejects it if it:
+
+- cites a field or metric that is not verified;
+- contains typed numbers, investment advice or allegations of fraud;
+- contradicts a verified comparison or sign (e.g. "total liabilities exceed total assets" when they do not, or "positive operating cash flow" when it is negative);
+- uses evaluative words such as "strong" or "efficient" without user-supplied benchmarks.
+
+Bank-specific guidance (deposits, net interest income) is only given to the AI when the industry is banking. A citation shows where a claim came from; it does not prove the claim, so these checks are deliberately strict.
+
 Python 3.12, Streamlit, PyMuPDF, Pydantic, pandas, SQLite, and pytest follow the requested stack. `httpx` is the small HTTP client for the supported compatible chat APIs. `reportlab` creates PDF exports, and `python-dotenv` loads local environment settings.
 
 ## Accounting conventions
 
-- All monetary inputs are normalized to **base PKR**, not millions. EPS stays PKR/share; shares stay a count. For example, PKR 12.5 million becomes 12,500,000 PKR. The verification table states its entry unit explicitly.
-- Costs and interest are entered as positive expense magnitudes. Cash outflows such as capital expenditure may be negative. Losses, negative cash flow, and negative equity are preserved. Nothing silently flips signs.
+- All monetary inputs are stored in **base PKR**, not millions. EPS stays PKR/share; shares stay a count. During verification you type values in the **Entry Unit**, which starts as the statement's own unit (e.g. `184,390,517` with `PKR thousand`); Python does the scaling, so you never add zeros by hand.
+- **Expense convention:** cost of sales, finance cost, tax expense and capital expenditure are stored as positive amounts. Statements print them in brackets as deductions, so extraction converts `(54,345,821)` to a positive amount, keeps the raw bracketed value, and shows a note on that row. Every other field keeps its sign: losses, negative operating cash flow and negative equity are preserved.
 - ROA, ROE, asset turnover, and receivables turnover use **year-end balances**, because the MVP extracts a single selected year. They are not average-balance ratios.
 - Profit margins and cash flow margins can be negative. A nonpositive denominator returns N/A: negative equity does not produce a misleading ROE or debt-to-equity figure. Quick ratio also returns N/A when inventory exceeds current assets.
 - Debt is interest-bearing borrowings, not all liabilities. EBIT must be reported or explicitly verified by a human; the model must not derive it from other lines. The same applies to totals that are not explicitly reported.
@@ -119,10 +130,10 @@ The calculation engine uses Python Decimal arithmetic. Rounding happens for disp
 ## Using the workflow
 
 1. **Company & report:** enter the name, ticker, industry, year, statement basis and optional benchmarks. Upload a PDF and click **Process annual report**. Creating a new run replaces the active session; save a run first if you want to keep it.
-2. **Document processing:** inspect processing time, page count, sparse-page warnings and the suggested pages. Use the page viewer to check headings and years. Change the selected pages if needed, then click **Extract financial fields**. Selected text goes to the API provider. Limit the selection to the actual statements and relevant notes; processing is limited to 24 bounded text chunks per attempt.
-3. **Human verification:** inspect the original number, unit, normalized proposal, source and confidence. For every field, select **accept**, **edit**, or **unavailable**. If editing, enter the final number in base units, give evidence text and add a review note. Page references must exist in this PDF; if an external manual source is used, leave the page blank and identify the source in the note. Use the bulk-accept checkbox only after checking the available values. It never accepts missing or flagged fields. Mark remaining missing fields unavailable, or enter them manually.
+2. **Document processing:** inspect processing time, page count, sparse-page warnings and the suggested pages. FinSight suggests the primary statements (financial position, profit or loss, cash flows) for your chosen basis plus the share-capital note; it skips analysis, summary and contents pages. Two-page spreads are read as left page then right page. Compare the suggestion with the report's contents page, change it if needed, then click **Extract financial fields**. Selected text goes to the API provider. Limit the selection to the actual statements and relevant notes; processing is limited to 24 bounded text chunks per attempt.
+3. **Human verification:** inspect the original number, unit, normalized proposal, source and confidence. For every field, select **accept**, **edit**, or **unavailable**. If editing, enter the final number in the Entry Unit, give evidence text and add a review note. **Unavailable** also needs a note explaining why (for example "not reported as a single line"). If two pages give different values, the Extraction Notes column shows both, with their pages. Page references must exist in this PDF; if an external manual source is used, leave the page blank and identify the source in the note. Use the bulk-accept checkbox only after checking the available values. It never accepts missing or flagged fields. Mark remaining missing fields unavailable, or enter them manually.
 4. Click **Save verification**. Unsaved table edits do not change calculations. All rows must be decided. Saving a revised review clears previous calculations and interpretations, so the next analysis uses the new review.
-5. **Results & analysis:** review reconciliation warnings and deterministic ratios. Then click **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure; retry runs only the missing perspectives and synthesis.
+5. **Results & analysis:** review reconciliation warnings and deterministic ratios. Then click **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure; retry runs only the missing perspectives and synthesis. If the AI's answer fails a check, FinSight automatically asks again (up to 3 times) and tells the AI what was wrong.
 6. Inspect the Overview, Financial Data, Ratios, four analyst tabs, Final Synthesis and Sources / Evidence tabs. References lead back to verified inputs. Use the page viewer and optional original-page image to check context.
 7. Download **Markdown**, **PDF**, **full audit JSON**, and **evaluation JSON**. Reports generated before the council finishes are explicitly labeled partial. The PDF and Markdown contain internal evidence links; PDF page references identify pages in the original annual report, which is not embedded in the export.
 8. Click **Save run locally** in the sidebar. Use **Open a saved run** later. Saving is explicit, not automatic. The SQLite file is `data/finsight.sqlite3` by default. It contains extracted page text, original proposals, final review records, metrics and analysis; it does not contain API keys or PDF binaries. Original page images are available only while the uploaded PDF remains in that browser session. Reopened runs retain extracted page text and references.
@@ -141,7 +152,10 @@ To demonstrate correction tracking, edit revenue to `990000000`, select **edit**
 
 ## Evaluation for the FYP
 
-- **Numeric extraction accuracy:** original normalized value and reporting year match the final verified value/year, divided by all fields with a final verified value. A missing extraction entered by a human is a failed extraction in this denominator. Fields marked unavailable are excluded. If no fields can be verified, accuracy is N/A.
+- **Proposal precision:** of the numbers the AI proposed, the share that matched the final verified value (including correct numbers that a check flagged). **Field recall:** of the fields with a verified value, the share where the AI proposed the right number. These two measures separate "the AI read it wrong" from "the AI did not find it".
+- **Outcome per field:** correct, correct but flagged, sign corrected, wrong year, wrong value, filled by human, unavailable. Download the per-field CSV for your appendix.
+- **All saved live runs:** the Evaluation screen combines every reviewed, non-demo run you saved with **Save run locally**, with CSV downloads per run and per field. Use this for results across several annual reports.
+- **Strict accuracy** (shown for continuity): original normalized value and reporting year match the final verified value/year, divided by all fields with a final verified value. A missing extraction entered by a human is a failed extraction in this denominator. Fields marked unavailable are excluded. If no fields can be verified, accuracy is N/A.
 - **Extraction completeness:** non-null normalized extracted values divided by all 21 predefined fields. This is separate from correctness.
 - **Accepted without changes:** fields with the accept decision. **Edited by user:** fields with the edit decision, including evidence-only edits. **Numeric/year correction count:** verified fields whose original number or year did not match. An evidence-only edit may count as an edit without reducing numeric accuracy.
 - **Unavailable and pending fields** are reported separately. Unavailable does not mean zero.

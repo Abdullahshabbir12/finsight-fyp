@@ -43,11 +43,30 @@ def parse_number(raw: str) -> Decimal:
     return value
 
 
+def allowed_units(field: str) -> list[str]:
+    if field == "eps":
+        return ["PKR/share"]
+    if field == "number_of_shares":
+        return [u for u in UNITS if u.startswith("shares")]
+    return ["PKR", "PKR thousand", "PKR million", "PKR billion"]
+
+
 def normalize(raw: str, unit: str, field: str) -> Decimal:
-    allowed = {"PKR/share"} if field == "eps" else {u for u in UNITS if u.startswith("shares")} if field == "number_of_shares" else {"PKR", "PKR thousand", "PKR million", "PKR billion"}
-    if unit not in allowed:
+    if unit not in allowed_units(field):
         raise ValueError("Unknown or inconsistent unit; human review required.")
     return parse_number(raw) * UNITS[unit]
+
+
+# Statements print these as deductions or outflows in brackets. FinSight stores them as positive
+# amounts so that Gross Profit = Revenue - Cost of Sales and the ratio formulas read naturally.
+EXPENSE_FIELDS = {"cost_of_sales", "finance_cost", "tax_expense", "capital_expenditure"}
+EXPENSE_NOTE = "Printed as a deduction/outflow; stored as a positive amount (FinSight expense convention). The raw value is unchanged."
+
+
+def apply_expense_convention(field: str, value: Decimal) -> tuple[Decimal, list[str]]:
+    if field in EXPENSE_FIELDS and value < 0:
+        return -value, [EXPENSE_NOTE]
+    return value, []
 
 
 def compact(text: str) -> str:
@@ -61,6 +80,13 @@ def checked_candidate(candidate: Candidate, run: Run, chunk: str) -> FinancialFi
     if candidate.raw_value is None:
         return field
     issues = []
+    quote_found = bool(candidate.source_text.strip()) and compact(candidate.source_text) in compact(chunk)
+    chunk_page = re.match(r"\[PDF PAGE (\d+)\]", chunk)
+    # Each chunk holds exactly one page, so a verified quote proves which page the value came from.
+    if quote_found and chunk_page and candidate.source_page != int(chunk_page.group(1)):
+        field.notes.append(f"AI cited page {candidate.source_page}; the quotation was found on PDF page {chunk_page.group(1)}, so that page is recorded.")
+        candidate = candidate.model_copy(update={"source_page": int(chunk_page.group(1))})
+        field.source_page = candidate.source_page
     if candidate.reporting_year != run.company.financial_year:
         issues.append("Reporting-period mismatch.")
     if candidate.statement_basis != run.company.statement_basis:
@@ -68,13 +94,15 @@ def checked_candidate(candidate: Candidate, run: Run, chunk: str) -> FinancialFi
     page = next((p for p in run.pages if p.number == candidate.source_page), None)
     if page is None or f"[PDF PAGE {candidate.source_page}]" not in chunk:
         issues.append("Source page is outside the submitted evidence.")
-    if not candidate.source_text.strip() or compact(candidate.source_text) not in compact(chunk):
+    if not quote_found:
         issues.append("Source quotation was not found in the submitted page text.")
     # Match a whole numeric token, so '100' cannot be accepted from '1000'.
     if not re.search(r"(?<![\d.,])" + re.escape(candidate.raw_value.strip()) + r"(?![\d.,])", candidate.source_text):
         issues.append("Raw number is not present in the supporting quotation.")
     try:
-        value = normalize(candidate.raw_value, candidate.unit, candidate.field_name)
+        value, expense_notes = apply_expense_convention(candidate.field_name,
+                                                        normalize(candidate.raw_value, candidate.unit, candidate.field_name))
+        field.notes += expense_notes
     except ValueError as exc:
         issues.append(str(exc))
         value = None
@@ -92,6 +120,14 @@ quote containing the number. source_page is the supplied physical PDF page, not 
 Read column headings to distinguish the reporting year from comparative columns. Identify currency and scale
 from the page header; never guess PKR. EPS uses PKR/share even when statements use PKR million.
 Debt is explicitly reported interest-bearing borrowings, not liabilities. Do not mix consolidated and standalone.
+Take each field only from its own primary statement: income-statement fields and EPS from the statement of
+profit or loss; assets, liabilities, equity, cash and debt from the statement of financial position; operating
+cash flow and capital expenditure from the statement of cash flows; share count from the share capital note.
+Never use cash-flow movements (finance cost paid, taxes paid, proceeds or repayments of borrowings) or
+statement-of-changes-in-equity rows as values for any other field. Return at most one candidate per field.
+When a field is not printed as one line (for example total debt spread over several borrowing lines, or
+share counts listed in tranches), return null instead of choosing one component.
+Include the printed line label in source_text whenever it is on the same line as the number.
 Return {"fields": [...]} using the candidate schema supplied in the request. Confidence is informational only."""
 
 
@@ -130,7 +166,9 @@ def extract_fields(run: Run, selected: list[int], client: AIClient, progress=Non
                         if prior.normalized_value != field.normalized_value:
                             prior.normalized_value = None
                             prior.status = "needs_review"
-                            prior.issues.append("Conflicting reported values across selected pages; review manually.")
+                            prior.issues.append(f"Conflicting values: {prior.raw_value} (PDF page {prior.source_page}: "
+                                                f"'{prior.source_text[:80]}') versus {field.raw_value} (PDF page "
+                                                f"{field.source_page}: '{field.source_text[:80]}'). Choose the correct one.")
                         continue
                     if prior and any("Conflicting" in issue for issue in prior.issues):
                         continue

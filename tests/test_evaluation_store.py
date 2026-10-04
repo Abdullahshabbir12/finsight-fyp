@@ -40,3 +40,46 @@ def test_sqlite_round_trip_and_update(tmp_path):
     assert load_run(run.id, path).company.name == "Updated synthetic name"
     with pytest.raises(ValueError):
         load_run("' OR 1=1", path)
+
+
+def test_field_outcomes_separate_error_types():
+    from src.utils.evaluation import field_outcomes
+    run = demo_run()
+    run.fields[1].normalized_value = Decimal(-650000000)                     # sign fixed by reviewer
+    run.fields[4].status, run.fields[4].normalized_value = "needs_review", None  # flagged but right number
+    run.fields[17].raw_value, run.fields[17].normalized_value, run.fields[17].status = None, None, "missing"
+    run.fields[2].normalized_value = Decimal(1)                               # wrong number
+    run = reviewed_after_edits(run, {1, 2, 4, 17})
+    outcomes = {row["field"]: row["outcome"] for row in field_outcomes(run)}
+    assert outcomes["revenue"] == "correct"
+    assert outcomes["cost_of_sales"] == "sign_corrected"
+    assert outcomes["gross_profit"] == "wrong_value"
+    assert outcomes["finance_cost"] == "correct_but_flagged"
+    assert outcomes["operating_cash_flow"] == "filled_by_human"
+    stats = evaluation(run)
+    assert stats["proposal_precision"] == 18 / 20 and stats["field_recall"] == 18 / 21
+    assert stats["extraction_accuracy"] == 17 / 21
+
+
+def reviewed_after_edits(run, edited):
+    from src.validation.review import commit_review, review_rows
+    from src.demo import demo_run as fresh
+    truth = {f.field_name: f.normalized_value for f in fresh().fields}
+    rows = review_rows(run)
+    for i, (f, row) in enumerate(zip(run.fields, rows)):
+        if i in edited:
+            row.update({"Decision": "edit", "Verified Value": str(truth[f.field_name]), "Entry Unit": "PKR" if f.field_name != "eps" else "PKR/share",
+                        "Evidence Text": "Synthetic source", "Review Note": "Corrected."})
+        else:
+            row["Decision"] = "accept"
+    commit_review(run, rows)
+    return run
+
+
+def test_aggregate_skips_demo_and_unreviewed_runs():
+    from src.utils.evaluation import aggregate
+    live = reviewed_demo()
+    live.is_demo = False
+    summaries, per_field = aggregate([live, reviewed_demo(), demo_run()])
+    assert len(summaries) == 1 and summaries[0]["proposal_precision"] == 1
+    assert next(r for r in per_field if r["field"] == "Revenue / Sales")["correct"] == 1

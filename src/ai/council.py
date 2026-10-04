@@ -1,7 +1,9 @@
 """Four bounded perspectives over verified evidence. No financial arithmetic by AI."""
 import re
+from decimal import Decimal
 from time import perf_counter
-from src.ai.client import AIClient, AIError
+from typing import Callable
+from src.ai.client import AIClient, AIError, AIOutputRejected
 from src.calculations.ratios import calculate, display_metric
 from src.catalog import FIELDS, internal_unit
 from src.models import AnalystOutput, Claim, Run
@@ -21,24 +23,55 @@ recalculate, derive growth rates, or invent quantities. Never give investment ad
 buy/sell/hold ratings or price targets. Never allege fraud, manipulation or misconduct.
 Separate FACT, INTERPRETATION and LIMITATION. Every FACT and INTERPRETATION requires one or more references
 from the supplied reference registry. Use exact identifiers. Limitations may be uncited.
-PROSE RULE: use no numeric literals, numeric percentages, years or numeric ratios in claim text.
-Do not spell out invented amounts. Instead cite the reference ID; the application displays its exact value.
+PROSE RULE: never type numeric literals, percentages, years or ratios in claim text. Where a value belongs in
+a sentence, write its exact reference ID instead, for example "a current ratio of metric:current_ratio";
+the application replaces the ID with the verified value. Always name the measure before its ID, never list bare IDs.
+List every reference you rely on in the references array.
 The only permissible quantitative source is the reference registry. Interpretations must accurately follow
 those references. Do not infer growth from a single period. Do not treat confidence as correctness.
+COMPARISONS: verified_comparisons states, computed by the application, which amounts are greater or smaller
+and which are negative. Never state a comparison or sign that contradicts verified_comparisons.
+Without a benchmark:user reference, never use evaluative words such as strong, robust, healthy, solid,
+superior, efficient, weak or poor; describe what the metric measures instead.
 Output structured JSON. Keep claims concise. key_metrics lists reference IDs; evidence lists reference IDs.
 Include limitations about year-end balances, single-year data and human review.
 Respect every supplied field's review_note and unavailable-field reason when interpreting metrics.
-Do not describe results as strong, healthy, superior or typical without supplied comparative evidence.
-For banks, cash flow includes deposit and funding movements; positive cash flow alone does not establish
+Do not include page or note numbers or reporting years in prose; use 'the reporting period' instead.
+Unavailable fields and metrics are NOT valid reference IDs. Discuss their absence as LIMITATION with
+an empty references array. Every reference must be an exact key of reference_registry.
+If previous_attempts_rejected_because is present, fix exactly those problems in this answer.
+"""
+
+# Banking-specific guidance; applying it to other industries produced irrelevant statements.
+BANK_POLICY = """For banks, cash flow includes deposit and funding movements; positive cash flow alone does not establish
 cash conversion quality, liquidity adequacy or financial resilience. Explain this beside cash-flow claims.
 If revenue is mapped to net interest plus other income, it is already after interest expense: do not
 present interest expense relative to that net income measure as a separate profitability warning.
 Liabilities including deposits are not identical to borrowings; do not infer distress from their ratio alone.
-Write natural prose without reference placeholders inside text; references belong in the references array.
-Do not include page or note numbers or reporting years in prose; use 'the reporting period' instead.
-Unavailable fields and metrics are NOT valid reference IDs. Discuss their absence as LIMITATION with
-an empty references array. Every reference must be an exact key of reference_registry.
 """
+
+MAX_ATTEMPTS = 3
+
+
+def is_bank(run: Run) -> bool:
+    return bool(re.search(r"\b(bank|banking|microfinance)\b", run.company.industry, re.I))
+
+
+def policy(run: Run) -> str:
+    return POLICY + (BANK_POLICY if is_bank(run) else "")
+
+
+def short_value(key: str, value: Decimal) -> str:
+    """Readable value that replaces a reference ID inside AI prose."""
+    unit = internal_unit(key)
+    if unit == "PKR/share":
+        return f"PKR {value:,.2f} per share"
+    if unit == "shares":
+        return f"{value:,.0f} shares"
+    for scale, word in ((Decimal(10) ** 9, "billion"), (Decimal(10) ** 6, "million")):
+        if abs(value) >= scale:
+            return f"PKR {value / scale:,.2f} {word}"
+    return f"PKR {value:,.0f}"
 
 
 def reference_registry(run: Run) -> dict[str, dict]:
@@ -49,22 +82,114 @@ def reference_registry(run: Run) -> dict[str, dict]:
         r = reviews[key]
         registry["field:" + key] = {"label": FIELDS[key], "value": str(value), "unit": internal_unit(key),
             "year": r.reporting_year, "page": r.source_page, "source_text": r.source_text,
-            "review_decision": r.decision, "review_note": r.note,
+            "review_decision": r.decision, "review_note": r.note, "short": short_value(key, value),
             "display": f"{FIELDS[key]}: {value:,.2f} {internal_unit(key)} — " + ((f"Synthetic source page {r.source_page}" if run.is_demo else f"Annual report PDF page {r.source_page}") if r.source_page else "human-supplied source")}
     for metric in run.metrics:
         if metric.value is not None:
             registry["metric:" + metric.name] = {"label": metric.label, "value": str(metric.value),
+                "short": display_metric(metric),
                 "display": f"{metric.label}: {display_metric(metric)} — calculated from verified " + ", ".join(FIELDS[k] for k in metric.inputs),
                 "formula": metric.formula, "inputs": ["field:" + k for k in metric.inputs]}
     if run.company.benchmarks.strip():
-        registry["benchmark:user"] = {"display": "User-supplied benchmark context (not independently verified)", "source_text": run.company.benchmarks}
+        registry["benchmark:user"] = {"display": "User-supplied benchmark context (not independently verified)",
+                                      "short": "the user-supplied benchmark context", "source_text": run.company.benchmarks}
     return registry
+
+
+TOKEN = re.compile(r"\b(?:field|metric|benchmark):[a-z_]+")
+# Anything shaped like an identifier followed directly by a colon, e.g. "metric:" or "net:net_profit".
+REFERENCE_LIKE = re.compile(r"\b([a-z_]+):(?!\s)([a-z_]*)")
+
+
+def render_text(text: str, registry: dict) -> str:
+    """Replace reference IDs in AI prose with the exact verified values computed by Python."""
+    return TOKEN.sub(lambda m: registry.get(m.group(0), {}).get("short", m.group(0)), text)
+
+
+def numeric_values(registry: dict) -> dict[str, Decimal]:
+    return {k: Decimal(v["value"]) for k, v in registry.items() if "value" in v}
+
+
+PAIRS = [("total_liabilities", "total_assets"), ("current_assets", "current_liabilities"),
+         ("net_profit", "operating_cash_flow"), ("total_debt", "equity")]
+
+
+def verified_comparisons(registry: dict) -> list[str]:
+    """Directional facts computed in Python, so the AI never has to judge which amount is larger."""
+    values = numeric_values(registry)
+    facts = []
+    for a, b in PAIRS:
+        if "field:" + a in values and "field:" + b in values:
+            x, y = values["field:" + a], values["field:" + b]
+            facts.append(f"{FIELDS[a]} is {'GREATER than' if x > y else 'LESS than' if x < y else 'EQUAL to'} {FIELDS[b]}.")
+    facts += [f"{registry[k]['label']} is NEGATIVE." for k, v in values.items() if k.startswith("field:") and v < 0]
+    for name in ("current_ratio", "quick_ratio", "debt_to_equity"):
+        if "metric:" + name in values:
+            v = values["metric:" + name]
+            facts.append(f"{registry['metric:' + name]['label']} is {'ABOVE' if v > 1 else 'BELOW' if v < 1 else 'EQUAL to'} one.")
+    return facts
+
+
+# Plain-English names the AI uses for amounts; a following "margin", "ratio" etc. means a different measure.
+FIELD_ALIASES = {"total liabilities": "total_liabilities", "total assets": "total_assets", "current assets": "current_assets",
+                 "current liabilities": "current_liabilities", "net profit": "net_profit", "profit after tax": "net_profit",
+                 "operating cash flow": "operating_cash_flow", "operating cash flows": "operating_cash_flow",
+                 "total debt": "total_debt", "shareholders' equity": "equity", "shareholders equity": "equity",
+                 "total equity": "equity", "revenue": "revenue", "net sales": "revenue", "cost of sales": "cost_of_sales",
+                 "gross profit": "gross_profit", "operating profit": "operating_profit", "finance cost": "finance_cost",
+                 "finance costs": "finance_cost", "inventory": "inventory"}
+FIELD_ALIASES.update({"field:" + k: k for k in FIELDS})
+METRIC_ALIASES = {"current ratio": "current_ratio", "quick ratio": "quick_ratio", "debt to equity ratio": "debt_to_equity",
+                  "debt-to-equity ratio": "debt_to_equity", "debt to equity": "debt_to_equity", "interest coverage": "interest_coverage"}
+METRIC_ALIASES.update({"metric:" + k: k for k in ("current_ratio", "quick_ratio", "debt_to_equity", "interest_coverage")})
+
+
+def _items(aliases: dict) -> str:
+    names = sorted(aliases, key=len, reverse=True)
+    return "(" + "|".join(re.escape(n) for n in names) + r")(?![a-z_])(?!\s+(?:margin|ratio|to\b|turnover|coverage|per\b))"
+
+
+GREATER = r"exceed(?:s|ed|ing)?|surpass(?:es|ed)?|(?:is|are|was|were)\s+(?:greater|higher|larger|more)\s+than|above"
+LESS = (r"(?:is|are|was|were)\s+(?:less|lower|smaller)\s+than|below|fall(?:s|ing)?\s+short\s+of|"
+        r"(?:is|are|was|were)\s+(?:not\s+sufficient|insufficient)\s+to\s+cover")
+PAIR_CLAIM = re.compile(_items(FIELD_ALIASES) + r"([^.;]{0,40}?)\b(" + GREATER + "|" + LESS + r")\b[^.;]{0,30}?" + _items(FIELD_ALIASES))
+SIGN_BEFORE = re.compile(r"\b(positive|negative)\s+" + _items(FIELD_ALIASES))
+SIGN_AFTER = re.compile(_items(FIELD_ALIASES) + r"[^.;]{0,30}?\b(?:is|was|were|are|remained|turned|became)\s+(positive|negative)\b")
+VERSUS_ONE = re.compile(_items(METRIC_ALIASES) + r"[^.;]{0,30}?\b(" + GREATER + "|" + LESS + r")\s+(?:one|unity)\b")
+NEGATION = re.compile(r"\b(not|no|never|neither|nor)\b")
+
+
+def contradiction(text: str, registry: dict) -> str:
+    """Return a reason when a comparison or sign in the prose contradicts the verified values."""
+    values = numeric_values(registry)
+    low = text.lower()
+    for m in PAIR_CLAIM.finditer(low):
+        a, b = "field:" + FIELD_ALIASES[m.group(1)], "field:" + FIELD_ALIASES[m.group(4)]
+        if a in values and b in values and a != b and not NEGATION.search(m.group(2)):
+            greater = re.match(GREATER, m.group(3)) is not None
+            if (greater and values[a] < values[b]) or (not greater and values[a] > values[b]):
+                return f"states that {FIELDS[a[6:]]} {'exceeds' if greater else 'is below'} {FIELDS[b[6:]]}, which contradicts the verified values"
+    for regex, item_group, sign_group in ((SIGN_BEFORE, 2, 1), (SIGN_AFTER, 1, 2)):
+        for m in regex.finditer(low):
+            key = "field:" + FIELD_ALIASES[m.group(item_group)]
+            if key in values and not NEGATION.search(low[max(0, m.start() - 20):m.start()]):
+                if (m.group(sign_group) == "positive") != (values[key] > 0) and values[key] != 0:
+                    return f"describes {FIELDS[key[6:]]} as {m.group(sign_group)}, which contradicts the verified value"
+    for m in VERSUS_ONE.finditer(low):
+        key = "metric:" + METRIC_ALIASES[m.group(1)]
+        if key in values:
+            greater = re.match(GREATER, m.group(2)) is not None
+            if (greater and values[key] < 1) or (not greater and values[key] > 1):
+                return f"states that {registry[key]['label']} is {'above' if greater else 'below'} one, which contradicts the calculated metric"
+    return ""
 
 
 def analysis_payload(run: Run) -> dict:
     verified_values(run)
     run.metrics = calculate(run)
-    return {"company": run.company.model_dump(), "reference_registry": reference_registry(run),
+    registry = reference_registry(run)
+    return {"company": run.company.model_dump(), "reference_registry": registry,
+            "verified_comparisons": verified_comparisons(registry),
             "unavailable_fields": [{"field_name": r.field_name, "reason": r.note}
                                    for r in run.reviews if r.decision == "unavailable"],
             "unavailable_metrics": [{"name": m.name, "reason": m.reason} for m in run.metrics if m.value is None],
@@ -73,33 +198,63 @@ def analysis_payload(run: Run) -> dict:
 
 
 FORBIDDEN = re.compile(r"\b(buy|sell|hold|fraud|fraudulent|manipulat\w*|price\s+target|invest(?:ment)?\s+recommendation|recommend\s+investing)\b", re.I)
+EVALUATIVE = re.compile(r"\b(strong(?:ly|er)?|robust|healthy|superior|excellent|solid|impressive|weak(?:er)?|poor(?:ly)?|(?:in)?efficient(?:ly)?)\b", re.I)
+
+
+def reject(reason: str, claim: Claim) -> None:
+    raise AIOutputRejected(f'{reason}: "{claim.text[:140]}". Output rejected; retry.')
 
 
 def validate_claim(claim: Claim, registry: dict) -> None:
+    inline = TOKEN.findall(claim.text)
+    if any(ref not in registry for ref in [*claim.references, *inline]):
+        reject("AI cited an unavailable or unknown financial reference", claim)
+    if any(f"{a}:{b}" not in registry for a, b in REFERENCE_LIKE.findall(claim.text)):
+        reject("AI wrote a malformed reference ID in the text; use an exact registry key", claim)
+    # IDs written inside the prose are evidence too, so they always appear in the reference list.
+    claim.references = list(dict.fromkeys([*claim.references, *inline]))
     if re.search(r"\d", claim.text):
-        raise AIError("AI prose contained numbers instead of citing verified metrics. Output rejected; retry.")
+        reject("AI prose contained numbers instead of citing verified metrics", claim)
     if FORBIDDEN.search(claim.text):
-        raise AIError("AI output did not meet the neutral decision-support policy. Output rejected; retry.")
-    if any(ref not in registry for ref in claim.references):
-        raise AIError("AI cited an unavailable or unknown financial reference. Output rejected; retry.")
+        reject("AI output did not meet the neutral decision-support policy", claim)
     if claim.kind != "LIMITATION" and not claim.references:
-        raise AIError("AI statement was missing a supporting reference. Output rejected; retry.")
+        reject("AI statement was missing a supporting reference", claim)
+    word = EVALUATIVE.search(claim.text) if claim.kind != "LIMITATION" and "benchmark:user" not in registry else None
+    if word:
+        reject(f"AI used the evaluative word '{word.group(0)}' without benchmark evidence", claim)
+    problem = contradiction(claim.text, registry)
+    if problem:
+        reject("AI statement " + problem, claim)
 
 
 def validate_analyst(output: AnalystOutput, role: str, registry: dict, has_benchmarks: bool) -> None:
     if output.analyst_name != role:
-        raise AIError("AI returned the wrong analyst identity. Retry.")
+        raise AIOutputRejected(f"AI returned the wrong analyst identity; it must be exactly '{role}'. Retry.")
     claims = [output.overall_observation, *output.positive_factors, *output.risk_factors, *output.limitations]
     for claim in claims:
         validate_claim(claim, registry)
     if any(ref not in registry for ref in [*output.key_metrics, *output.evidence]):
-        raise AIError("AI metric or evidence reference was not in the verified data. Retry.")
+        raise AIOutputRejected("AI metric or evidence reference was not in the verified data. Retry.")
     if not output.limitations or any(c.kind != "LIMITATION" for c in output.limitations):
-        raise AIError("AI must provide explicit limitations. Retry.")
+        raise AIOutputRejected("AI must provide explicit limitations, each of kind LIMITATION. Retry.")
     if role == "Industry Analyst" and not has_benchmarks:
         text = " ".join(c.text.lower() for c in claims)
         if "insufficient benchmark information" not in text:
-            raise AIError("Industry analysis must state insufficient benchmark information. Retry.")
+            raise AIOutputRejected("Industry analysis must state 'insufficient benchmark information'. Retry.")
+
+
+def request_validated(client: AIClient, schema, system: str, payload: dict, stage: str, validate: Callable) -> object:
+    """Ask again, with the rejection reasons, when output fails a check. Network/quota errors are not retried."""
+    reasons: list[str] = []
+    for _ in range(MAX_ATTEMPTS):
+        request = {**payload, "previous_attempts_rejected_because": reasons} if reasons else payload
+        try:
+            result = client.request(schema, system, request, stage)
+            validate(result)
+            return result
+        except AIOutputRejected as exc:
+            reasons.append(str(exc))
+    raise AIOutputRejected(f"{reasons[-1]} All {MAX_ATTEMPTS} automatic attempts were rejected; click the button to try again.")
 
 
 def demo_analyst(run: Run, role: str) -> AnalystOutput:
@@ -116,7 +271,7 @@ def demo_analyst(run: Run, role: str) -> AnalystOutput:
     positives, risks = [], []
     if role == "Fundamental Analyst" and "metric:net_profit_margin" in registry:
         margin = next(m.value for m in run.metrics if m.name == "net_profit_margin")
-        claim = Claim(kind="FACT", text="The verified period reports a positive net profit margin." if margin > 0 else "The verified period does not report a positive net profit margin.", references=["metric:net_profit_margin"])
+        claim = Claim(kind="FACT", text="The verified period reports a net profit margin of metric:net_profit_margin." if margin > 0 else "The verified period does not report a positive net profit margin.", references=["metric:net_profit_margin"])
         (positives if margin > 0 else risks).append(claim)
     if role == "Credit Risk Analyst" and "metric:current_ratio" in registry:
         value = next(m.value for m in run.metrics if m.name == "current_ratio")
@@ -138,6 +293,8 @@ def demo_analyst(run: Run, role: str) -> AnalystOutput:
 
 def run_council(run: Run, client: AIClient | None = None, progress=None) -> None:
     payload = analysis_payload(run)
+    registry = payload["reference_registry"]
+    has_benchmarks = bool(run.company.benchmarks.strip())
     start = perf_counter()
     try:
         for role, focus in ROLES.items():
@@ -150,9 +307,8 @@ def run_council(run: Run, client: AIClient | None = None, progress=None) -> None
             else:
                 if client is None:
                     raise AIError("Configure an API key before running live analysis.")
-                result = client.request(AnalystOutput, POLICY + "\nYour exact analyst_name: " + role + "\nFocus: " + focus,
-                                        payload, role)
-                validate_analyst(result, role, payload["reference_registry"], bool(run.company.benchmarks.strip()))
+                result = request_validated(client, AnalystOutput, policy(run) + "\nYour exact analyst_name: " + role + "\nFocus: " + focus,
+                                           payload, role, lambda r, role=role: validate_analyst(r, role, registry, has_benchmarks))
             run.analysts[role] = result
     finally:
         elapsed = perf_counter() - start

@@ -17,6 +17,7 @@ def client(monkeypatch):
     monkeypatch.setenv("AI_PROVIDER", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key-not-real")
     monkeypatch.setenv("OPENROUTER_MODEL", "test/free")
+    monkeypatch.setenv("FINSIGHT_RATE_LIMIT_WAIT", "0")
     return AIClient()
 
 
@@ -127,3 +128,23 @@ def test_strict_extraction_schema_has_defined_fields(client, monkeypatch):
     assert "Candidate" in schema["$defs"]
     assert schema["$defs"]["Candidate"]["additionalProperties"] is False
     assert set(schema["$defs"]["Candidate"]["required"]) == set(schema["$defs"]["Candidate"]["properties"])
+
+
+def test_rate_limit_waits_once_then_succeeds(client, monkeypatch):
+    replies = iter([httpx.Response(429, json={}),
+                    httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": '{"fields": []}'}}]})])
+    monkeypatch.setattr(httpx.Client, "post", lambda *args, **kwargs: next(replies))
+    assert client.request(ExtractionResponse, "system", {}, "test").fields == []
+    assert client.usage[-1]["success"] and client.usage[-1]["rate_limit_retry"]
+
+
+def test_daily_quota_is_reported_without_waiting(client, monkeypatch):
+    body = {"error": {"details": [{"retryDelay": "53779s"}]}}
+    calls = []
+    def post(*args, **kwargs):
+        calls.append(1)
+        return httpx.Response(429, json=body)
+    monkeypatch.setattr(httpx.Client, "post", post)
+    with pytest.raises(AIError, match="resets in about 15 hours"):
+        client.request(ExtractionResponse, "system", {}, "test")
+    assert len(calls) == 1

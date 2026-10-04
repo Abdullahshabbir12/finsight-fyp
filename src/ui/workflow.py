@@ -7,7 +7,7 @@ import streamlit as st
 from src.ai.client import AIClient, AIError
 from src.catalog import FIELDS
 from src.demo import demo_run
-from src.extraction.service import extract_fields
+from src.extraction.service import UNITS, extract_fields
 from src.models import Company, FinancialField, Run
 from src.pdf.reader import candidate_pages, read_pdf, render_page
 from src.validation.review import commit_review, review_rows
@@ -34,7 +34,7 @@ def setup_screen() -> None:
         year = b.number_input("Financial year", 1900, 2200, 2025)
         basis = a.selectbox("Statement basis", ["consolidated", "standalone"])
         benchmark = st.text_area("Optional industry benchmarks", placeholder="Metric, value, unit, period, and source. Leave blank if unavailable.", max_chars=4000)
-        upload = st.file_uploader("Annual report PDF (up to 30 MB)", type=["pdf"])
+        upload = st.file_uploader("Annual report PDF (up to 100 MB)", type=["pdf"])
         submitted = st.form_submit_button("Process annual report", type="primary")
     if submitted:
         if not name.strip() or upload is None:
@@ -83,8 +83,8 @@ def processing_screen(run: Run) -> None:
         st.info("This extraction has been reviewed. Start a new run to re-extract; use Human verification to correct this run.")
     else:
         selected = st.multiselect("Pages to send to AI (review or change the suggested pages)", [p.number for p in run.pages],
-                                  default=candidate_pages(run.pages), key="selected_" + run.id)
-        st.caption("Physical PDF page numbers. Only selected pages are searched. Missing fields can be entered manually during verification.")
+                                  default=candidate_pages(run.pages, run.company.statement_basis), key="selected_" + run.id)
+        st.caption(f"Suggested: the {run.company.statement_basis} primary statements and the share capital note. Check them against the report's contents page; physical PDF page numbers. Only selected pages are searched. Missing fields can be entered manually during verification.")
         if st.button("Extract financial fields", type="primary", disabled=not selected):
             progress = st.empty()
             try:
@@ -100,17 +100,18 @@ def processing_screen(run: Run) -> None:
 
 def verification_screen(run: Run) -> None:
     st.subheader("03 / Human verification")
-    st.info("Verify every row: accept, edit, or unavailable. Verified Value uses base PKR, EPS uses PKR/share, and shares use a count. Example: PKR 12 million → 12000000.")
-    st.caption("An edit requires supporting evidence and a review note. Accept preserves the original source. Confidence is not proof of correctness. Saving a review clears previous ratios and AI outputs.")
+    st.info("Verify every row: accept, edit, or unavailable. Type Verified Value in its Entry Unit, which starts as the statement's own unit. Example: 184,390,517 with PKR thousand. Expenses (cost of sales, finance cost, tax, capex) are positive amounts.")
+    st.caption("An edit requires supporting evidence and a review note. Unavailable requires a note explaining why. Accept preserves the original source. Confidence is not proof of correctness. Saving a review clears previous ratios and AI outputs.")
     rows = review_rows(run)
     st.caption("Scroll the table horizontally, or use its fullscreen button, to inspect original values and edit evidence or notes.")
     with st.form("review_form_" + run.id):
         edited = st.data_editor(pd.DataFrame(rows), hide_index=True, width="stretch", height=650,
             key=f"review_{run.id}_{st.session_state.get('review_version', 0)}",
-            column_order=["Field", "Decision", "Verified Value", "Extracted Value", "Unit", "Page", "Confidence", "Status", "Normalized (base units)", "Verified Year", "Evidence Page", "Evidence Text", "Review Note"],
-            disabled=["Field", "Extracted Value", "Unit", "Normalized (base units)", "Page", "Confidence", "Status"],
+            column_order=["Field", "Decision", "Verified Value", "Entry Unit", "Extracted Value", "Unit", "Page", "Status", "Extraction Notes", "Confidence", "Normalized (base units)", "Verified Year", "Evidence Page", "Evidence Text", "Review Note"],
+            disabled=["Field", "Extracted Value", "Unit", "Normalized (base units)", "Page", "Confidence", "Status", "Extraction Notes"],
             column_config={"Decision": st.column_config.SelectboxColumn(options=["pending", "accept", "edit", "unavailable"], required=True),
-                           "Verified Value": st.column_config.TextColumn("Verified Value (base units)"),
+                           "Verified Value": st.column_config.TextColumn("Verified Value"),
+                           "Entry Unit": st.column_config.SelectboxColumn(options=list(UNITS), required=True),
                            "Confidence": st.column_config.ProgressColumn(min_value=0, max_value=1),
                            "Verified Year": st.column_config.NumberColumn(format="%d", step=1)})
         all_accept = st.checkbox("I reviewed every available extracted value against its source; accept them all (remaining rows must be edited or unavailable).")
@@ -134,4 +135,6 @@ def verification_screen(run: Run) -> None:
         st.code(item.source_text or "No extracted evidence. Supply a source when entering a value manually.", language=None)
         for issue in item.issues:
             st.warning(issue)
+        for note in item.notes:
+            st.info(note)
         source_viewer(run, "verification_source_" + run.id)

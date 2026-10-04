@@ -1,7 +1,7 @@
 """Small Gemini/OpenRouter/OpenAI client. Keys never enter saved runs or errors."""
 import json
 import os
-from time import perf_counter
+from time import perf_counter, sleep
 from typing import TypeVar
 import httpx
 from dotenv import load_dotenv
@@ -18,6 +18,36 @@ PROVIDERS = {
 
 class AIError(ValueError):
     """A retryable, user-facing AI failure."""
+
+
+class AIOutputRejected(AIError):
+    """The model answered, but its output failed a check. Re-asking with the reason often fixes it."""
+
+
+def provider_retry_seconds(response: httpx.Response) -> float | None:
+    """The provider's requested delay, from Retry-After or Gemini's retryDelay (e.g. "53779s")."""
+    try:
+        if response.headers.get("retry-after"):
+            return float(response.headers["retry-after"])
+        body = response.json()
+        body = body[0] if isinstance(body, list) and body else body
+        for detail in body.get("error", {}).get("details", []):
+            if str(detail.get("retryDelay", "")).endswith("s"):
+                return float(detail["retryDelay"][:-1])
+    except (ValueError, AttributeError, TypeError):
+        pass
+    return None
+
+
+def rate_limit_wait(response: httpx.Response) -> float | None:
+    """Seconds to wait before one retry after HTTP 429, or None when the quota will not reset within a minute."""
+    delay = provider_retry_seconds(response)
+    if delay is None:
+        try:
+            delay = float(os.getenv("FINSIGHT_RATE_LIMIT_WAIT", "30"))
+        except ValueError:
+            delay = 30
+    return delay if delay <= 60 else None
 
 
 class AIClient:
@@ -74,6 +104,16 @@ class AIClient:
         try:
             with httpx.Client(timeout=httpx.Timeout(90, connect=15)) as client:
                 response = client.post(self.url, headers={"Authorization": f"Bearer {self.key}"}, json=body)
+                if response.status_code == 429:
+                    wait = rate_limit_wait(response)
+                    if wait is None:
+                        hours = (provider_retry_seconds(response) or 0) / 3600
+                        raise AIError(f"The provider's free quota is used up and resets in about {hours:.0f} hours (daily request limit). "
+                                      "Completed work is preserved. Retry later, use another provider/model in .env, or use the demo.")
+                    # Free tiers also limit requests per minute: wait once, then try again before giving up.
+                    sleep(wait)
+                    response = client.post(self.url, headers={"Authorization": f"Bearer {self.key}"}, json=body)
+                    usage["rate_limit_retry"] = True
             if response.status_code != 200:
                 codes = {401: "API key was rejected", 402: "Provider quota or credit is unavailable",
                          403: "API access was denied; check the key's project, API permissions and supported region",
@@ -94,7 +134,7 @@ class AIClient:
         except (httpx.HTTPError, TimeoutError) as exc:
             raise AIError("Could not reach the AI provider. Check your connection and retry. Your review is preserved.") from exc
         except (ValidationError, KeyError, IndexError, TypeError, AttributeError, json.JSONDecodeError) as exc:
-            raise AIError("The model returned invalid structured JSON. No output was accepted. Retry or select another model.") from exc
+            raise AIOutputRejected("The model returned invalid structured JSON. No output was accepted. Retry or select another model.") from exc
         finally:
             usage["seconds"] = perf_counter() - start
             self.usage.append(usage)
