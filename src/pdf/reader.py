@@ -10,9 +10,10 @@ KEYWORDS = ("statement of financial position", "balance sheet", "statement of pr
 # Titles of the three primary statements that hold every predefined field. A real title starts its line.
 TITLE = re.compile(r"^(?:(?:consolidated|unconsolidated|separate|standalone)\s+)?(?:statement of financial position|"
                    r"balance sheet|statement of profit or loss|profit and loss account|income statement|"
-                   r"statement of cash flows|cash flow statement)\b")
+                   r"statement of cash flows|cash flow statement)")  # no trailing \b: some PDFs glue "positionas at"
 # Pages that repeat statement titles but are not the audited statements themselves.
-NOT_STATEMENT_HEAD = ("analysis", "summary", "six year", "ten year", "highlights", "horizontal", "vertical")
+# Pages labelled "direct method" are supplementary cash-flow summaries in the analysis section (audited statements carry no such label).
+NOT_STATEMENT_HEAD = ("analysis", "summary", "six year", "ten year", "highlights", "horizontal", "vertical", "direct method")
 NOT_STATEMENT_LINE = ("....", "notes to", "auditor", "comprise", "audited", "we have", "annexed")
 TITLE_FOLLOWERS = ("as at", "as on", "for the year", "for the period", "(", "note", "rupees", "amounts", "rs")
 SHARE_NOTE = "issued, subscribed and paid"

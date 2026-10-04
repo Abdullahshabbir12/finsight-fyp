@@ -84,3 +84,12 @@ def test_size_limit_is_one_hundred_megabytes(monkeypatch):
     monkeypatch.setattr(reader, "MAX_BYTES", 10)
     with pytest.raises(ValueError, match="100 MB"):
         read_pdf(b"x" * 11)
+
+
+def test_title_glued_to_its_date_is_recognised():
+    pages, _, _ = read_pdf(statement_pdf(["abbott pakistan / 2025 annual report\nStatement of Financial Positionas at December 31, 2025\n" + AMOUNTS]))
+    assert candidate_pages(pages, "standalone") == [1]
+    pages, _, _ = read_pdf(statement_pdf(["Statement of financial positions and other narrative\n" + AMOUNTS,
+                                          "DIRECT METHOD\nSTATEMENT OF CASH FLOWSFor the year ended 30 June 2024\n" + AMOUNTS]))
+    from src.pdf.reader import statement_title
+    assert statement_title(pages[0].text) == "" and statement_title(pages[1].text) == ""

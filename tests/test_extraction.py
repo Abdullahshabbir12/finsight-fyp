@@ -85,3 +85,39 @@ def test_wrong_page_number_is_corrected_from_the_verified_quote():
     # Without a verified quote, the page is not trusted and the row stays blocked.
     invented = checked_candidate(c.model_copy(update={"source_text": "Total assets 1500 invented"}), run, chunk)
     assert invented.normalized_value is None and invented.source_page == 3
+
+
+
+@pytest.mark.parametrize("unit,field,expected", [
+    ("Rupees", "revenue", "PKR"), ("Rs.", "revenue", "PKR"), ("Rupees ('000)", "revenue", "PKR thousand"),
+    ("Rupees in million", "net_profit", "PKR million"), ("Rupees", "eps", "PKR/share"),
+    ("Number of shares", "number_of_shares", "shares"), ("PKR thousand", "revenue", "PKR thousand"),
+])
+def test_unit_spellings_are_mapped(unit, field, expected):
+    from src.extraction.service import canonical_unit
+    assert canonical_unit(unit, field)[0] == expected
+
+
+@pytest.mark.parametrize("unit", ["US$ '000", "USD thousand", "unknown", "Rupees per share"])
+def test_foreign_or_unclear_units_stay_rejected(unit):
+    from src.extraction.service import canonical_unit
+    assert canonical_unit(unit, "revenue")[0] == unit
+
+
+def test_one_rejected_answer_does_not_stop_other_pages():
+    from src.ai.client import AIOutputRejected
+    from src.extraction.service import ExtractionResponse, extract_fields
+    run = demo_run()
+    calls = []
+    class Fake:
+        usage = []
+        def request(self, *args):
+            calls.append(1)
+            if len(calls) == 1:
+                raise AIOutputRejected("The model returned invalid structured JSON.")
+            return ExtractionResponse(fields=[{"field_name": "total_assets", "reporting_year": 2025, "raw_value": "1500",
+                "unit": "Rupees in million", "source_page": 2, "source_text": run.fields[8].source_text,
+                "confidence": .9, "statement_basis": "consolidated"}])
+    extract_fields(run, [1, 2], Fake())
+    field = next(f for f in run.fields if f.field_name == "total_assets")
+    assert len(calls) == 2 and field.normalized_value == Decimal("1500000000") and field.unit == "PKR million"

@@ -54,3 +54,24 @@ Two non-bank annual reports were run end to end and every extracted value, ratio
 Engro (consolidated, FY2024), same pages, before vs after: clean extracted fields 14 → 18; conflicts 5 → 0; wrong values 1 → 0; proposal precision 89.5% → 100%; field recall 81% → 86% (the remaining 3 were correct abstentions: no EBIT line, debt across several lines, shares in tranches). Post-fix AI text contained no contradicted comparisons and no evaluative words. Note: the post-fix run used `gemini-3.5-flash-lite` for extraction because the `gemini-2.5-flash` daily free quota was exhausted; pages 150–151 were also re-run on `gemini-2.5-flash` with identical clean results.
 
 **183 tests passed** (147 before).
+
+## October 4: six-report evaluation run (gemini-3.5-flash-lite, free tier)
+
+Reports (non-bank, official company sources): Fauji Cement 2024, Engro Fertilizers 2024, Systems Ltd 2024, Nishat Chunian 2025, Attock Petroleum 2025, Abbott Pakistan 2025. PDFs in `data/` (git-ignored); reports in `output/reports/`; runs saved in the app database.
+
+New problems found and fixed during this run: "Rupees"/"Rs '000"-style units rejected (now mapped, USD and per-share units still rejected); one rejected AI answer stopped extraction of the remaining pages (now only quota/auth/network errors stop it); the model skipped unlabelled subtotals and synonyms such as stock-in-trade (field guidance and subtotal rule added); titles glued to their dates ("positionas at") were not recognised; supplementary "direct method" cash-flow summaries could be suggested. A downloaded "Indus Motor" PDF was an Indian company (lakhs, March year end) and was excluded.
+
+| Company | Proposal precision | Field recall | Strict accuracy | Reviewer additions |
+|---|---|---|---|---|
+| Fauji Cement 2024 | 100% | 85.7% | 85.7% | 3 |
+| Engro Fertilizers 2024 | 100% | 85.7% | 85.7% | 3 |
+| Systems Ltd 2024 | 100% | 85.0% | 85.0% | 3 (+1 unavailable: no inventory) |
+| Nishat Chunian 2025 | 100% | 90.5% | 90.5% | 2 |
+| Attock Petroleum 2025 | 100% | 71.4% | 66.7% | 7 |
+| Abbott Pakistan 2025 | 100% | 85.7% | 85.7% | 3 |
+
+Across the six: 105 of 105 AI-proposed numbers correct; 105 of 125 verifiable fields found (84.0%). Misses were concentrated in fields that are unlabelled subtotals or require adding lines (total debt, total liabilities, current liabilities). All 84 ratios matched an independent recalculation from the answer keys, and accounting identities (assets = liabilities + equity, gross profit, profit after tax) held for every key. 75 API calls, all successful.
+
+**Caveat:** verification decisions for these runs were made by Claude from independent answer keys, and every review note says so. For the thesis, a human must confirm each run in the Human verification screen. The manual (conventional analyst) baseline has not been collected.
+
+**196 tests passed.**
