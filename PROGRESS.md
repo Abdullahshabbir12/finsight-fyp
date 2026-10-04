@@ -75,3 +75,13 @@ Across the six: 105 of 105 AI-proposed numbers correct; 105 of 125 verifiable fi
 **Caveat:** verification decisions for these runs were made by Claude from independent answer keys, and every review note says so. For the thesis, a human must confirm each run in the Human verification screen. The manual (conventional analyst) baseline has not been collected.
 
 **196 tests passed.**
+
+## October 4: prior-year key fields
+
+Added prior-year revenue, net profit, operating cash flow, total assets, equity and trade receivables (27 fields in total), growth rates, average-balance ROA/ROE/receivables turnover and the profit-vs-cash-flow growth divergence warning. All six reports were re-run and their saved runs updated in place.
+
+- Prior-year extraction: 35 of 36 values found, all correct (the miss was an unlabelled equity subtotal).
+- Across 27 fields: 141 of 141 AI-proposed numbers correct; 141 of 161 verifiable fields found (87.6%).
+- All 120 ratios (20 per report) matched an independent recalculation.
+- Divergence warning fired for Nishat Chunian and Engro (profit up, operating cash flow negative); Attock's cash-flow growth is N/A because its prior-year cash flow was negative.
+- 75 API calls, all successful. **206 tests passed.**
