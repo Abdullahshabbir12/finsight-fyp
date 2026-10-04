@@ -64,4 +64,26 @@ def test_engine_requires_verified_values():
     for row in rows:
         row["Decision"] = "accept"
     commit_review(run, rows)
-    assert len(calculate(run)) == 14
+    assert len(calculate(run)) == 20  # 14 single-year + 3 growth + 3 average-balance
+
+
+def test_growth_and_average_balance_ratios(values):
+    from src.calculations.ratios import calculate_average, calculate_growth
+    assert calculate_growth("revenue_growth", values).value == (Decimal(1000) - 900) / 900
+    assert calculate_growth("operating_cash_flow_growth", values).value < 0
+    assert calculate_average("return_on_average_assets", values).value == Decimal(105) / ((Decimal(1500) + 1400) / 2)
+    assert calculate_average("average_receivables_turnover", values).value == Decimal(1000) / ((Decimal(150) + 140) / 2)
+
+
+@pytest.mark.parametrize("prior", [Decimal(0), Decimal(-5), None])
+def test_growth_needs_a_positive_prior_year(values, prior):
+    from src.calculations.ratios import calculate_growth
+    values["net_profit_prior_year"] = prior
+    metric = calculate_growth("net_profit_growth", values)
+    assert metric.value is None and metric.reason
+
+
+def test_average_balance_must_be_positive(values):
+    from src.calculations.ratios import calculate_average
+    values["equity"], values["equity_prior_year"] = Decimal(-100), Decimal(50)
+    assert calculate_average("return_on_average_equity", values).value is None

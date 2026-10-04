@@ -37,7 +37,7 @@ def demo_synthesis(run: Run, registry: dict) -> Synthesis:
               [cash], [quality.overall_observation, *quality.risk_factors], [industry.overall_observation],
               strengths or [limitation("The available sample outputs do not establish specific strengths.")],
               risks or [limitation("Absence of a flagged issue does not establish the absence of risk.")],
-              [limitation("Single-year data cannot establish financial trends. Benchmarks and accounting notes may be incomplete.")],
+              [limitation("Two years of data cannot establish a trend. Benchmarks and accounting notes may be incomplete.")],
               [limitation("Confirm source units, reporting period, statement basis, adjustments and reconciliation warnings before using this report.")],
               [limitation("This decision-support summary is a starting point for an analyst's review. Professional judgment and additional evidence are required for any investment decision.")]]
     return Synthesis(sections=[Section(heading=h, claims=c) for h, c in zip(HEADINGS, claims)])

@@ -121,3 +121,14 @@ def test_one_rejected_answer_does_not_stop_other_pages():
     extract_fields(run, [1, 2], Fake())
     field = next(f for f in run.fields if f.field_name == "total_assets")
     assert len(calls) == 2 and field.normalized_value == Decimal("1500000000") and field.unit == "PKR million"
+
+
+def test_prior_year_fields_must_come_from_the_comparative_year():
+    run = demo_run()
+    item = next(f for f in run.fields if f.field_name == "revenue_prior_year")
+    chunk = "[PDF PAGE 1]\n" + run.pages[0].text
+    c = Candidate(field_name="revenue_prior_year", reporting_year=2024, raw_value="900", unit="PKR million",
+                  source_page=1, source_text=item.source_text, confidence=.9, statement_basis="consolidated")
+    assert checked_candidate(c, run, chunk).normalized_value == Decimal("900000000")
+    wrong_year = checked_candidate(c.model_copy(update={"reporting_year": 2025}), run, chunk)
+    assert wrong_year.normalized_value is None and "Reporting-period mismatch." in wrong_year.issues

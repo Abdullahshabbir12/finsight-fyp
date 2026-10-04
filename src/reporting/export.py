@@ -52,7 +52,7 @@ def markdown_report(run: Run) -> str:
     lines += ["", "### Unavailable fields: review notes", ""]
     lines += [f"- **{FIELDS[r.field_name]}**: {clean(r.note or 'No supported value available.')}"
               for r in run.reviews if r.decision == "unavailable"]
-    lines += ["", "## Deterministic Financial Ratios", "", "Computed by Python from verified values. Returns and turnover use year-end balances.", "",
+    lines += ["", "## Deterministic Financial Ratios", "", "Computed by Python from verified values. Single-year returns and turnover use year-end balances; average-balance versions and growth rates use the verified prior-year comparatives.", "",
               "| Metric | Result | Formula / N/A reason |", "|---|---|---|"]
     for m in run.metrics:
         lines.append(f"| {m.label} | {display_metric(m)} | {clean(m.formula)}{'; ' + clean(m.reason) if m.reason else ''} |")
@@ -86,7 +86,7 @@ def markdown_report(run: Run) -> str:
             lines.append("Inputs: " + ", ".join(f"[{r}](#{anchor(r)})" for r in item["inputs"]))
     lines += ["", "## Limitations and Human Review", "", DISCLAIMER, "",
               "- Only selected PDF pages were submitted for live extraction; omissions may remain.",
-              "- A single financial year does not establish growth, trends or future performance.",
+              "- At most two financial years are captured; one year of growth does not establish a trend or future performance.",
               "- Financial ratios for banks, insurers and other specialized industries may require different definitions.",
               "- Financial-quality indicators require further investigation; they are not findings of wrongdoing.",
               "- Benchmarks, when supplied, have not been independently verified.",

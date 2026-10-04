@@ -4,7 +4,7 @@ from decimal import Decimal
 from time import perf_counter
 from typing import Callable
 from src.ai.client import AIClient, AIError, AIOutputRejected
-from src.calculations.ratios import calculate, display_metric
+from src.calculations.ratios import GROWTH, calculate, display_metric
 from src.catalog import FIELDS, internal_unit
 from src.models import AnalystOutput, Claim, Run
 from src.validation.review import verified_values
@@ -28,13 +28,15 @@ a sentence, write its exact reference ID instead, for example "a current ratio o
 the application replaces the ID with the verified value. Always name the measure before its ID, never list bare IDs.
 List every reference you rely on in the references array.
 The only permissible quantitative source is the reference registry. Interpretations must accurately follow
-those references. Do not infer growth from a single period. Do not treat confidence as correctness.
+those references. Never compute growth yourself: describe change over time only through supplied growth
+metrics (metric:revenue_growth and similar), and never claim a trend when they are absent. Do not treat
+confidence as correctness.
 COMPARISONS: verified_comparisons states, computed by the application, which amounts are greater or smaller
 and which are negative. Never state a comparison or sign that contradicts verified_comparisons.
 Without a benchmark:user reference, never use evaluative words such as strong, robust, healthy, solid,
 superior, efficient, weak or poor; describe what the metric measures instead.
 Output structured JSON. Keep claims concise. key_metrics lists reference IDs; evidence lists reference IDs.
-Include limitations about year-end balances, single-year data and human review.
+Include limitations about the balances used, the number of years available and human review.
 Respect every supplied field's review_note and unavailable-field reason when interpreting metrics.
 Do not include page or note numbers or reporting years in prose; use 'the reporting period' instead.
 Unavailable fields and metrics are NOT valid reference IDs. Discuss their absence as LIMITATION with
@@ -123,6 +125,10 @@ def verified_comparisons(registry: dict) -> list[str]:
             x, y = values["field:" + a], values["field:" + b]
             facts.append(f"{FIELDS[a]} is {'GREATER than' if x > y else 'LESS than' if x < y else 'EQUAL to'} {FIELDS[b]}.")
     facts += [f"{registry[k]['label']} is NEGATIVE." for k, v in values.items() if k.startswith("field:") and v < 0]
+    for name, (label, field) in GROWTH.items():
+        if "metric:" + name in values:
+            v = values["metric:" + name]
+            facts.append(f"{FIELDS[field]} {'INCREASED' if v > 0 else 'DECREASED' if v < 0 else 'was UNCHANGED'} versus the prior year.")
     for name in ("current_ratio", "quick_ratio", "debt_to_equity"):
         if "metric:" + name in values:
             v = values["metric:" + name]
@@ -157,6 +163,12 @@ SIGN_BEFORE = re.compile(r"\b(positive|negative)\s+" + _items(FIELD_ALIASES))
 SIGN_AFTER = re.compile(_items(FIELD_ALIASES) + r"[^.;]{0,30}?\b(?:is|was|were|are|remained|turned|became)\s+(positive|negative)\b")
 VERSUS_ONE = re.compile(_items(METRIC_ALIASES) + r"[^.;]{0,30}?\b(" + GREATER + "|" + LESS + r")\s+(?:one|unity)\b")
 NEGATION = re.compile(r"\b(not|no|never|neither|nor)\b")
+GROWTH_ALIASES = {"revenue": "revenue_growth", "net sales": "revenue_growth", "sales": "revenue_growth",
+                  "net profit": "net_profit_growth", "profit after tax": "net_profit_growth",
+                  "operating cash flow": "operating_cash_flow_growth", "operating cash flows": "operating_cash_flow_growth"}
+UP = r"increased|increases|grew|grown|rose|risen|improved|expanded"
+DOWN = r"decreased|decreases|declined|fell|fallen|dropped|contracted|deteriorated"
+GROWTH_CLAIM = re.compile(_items(GROWTH_ALIASES) + r"([^.;]{0,40}?)\b(" + UP + "|" + DOWN + r")\b")
 
 
 def contradiction(text: str, registry: dict) -> str:
@@ -175,6 +187,14 @@ def contradiction(text: str, registry: dict) -> str:
             if key in values and not NEGATION.search(low[max(0, m.start() - 20):m.start()]):
                 if (m.group(sign_group) == "positive") != (values[key] > 0) and values[key] != 0:
                     return f"describes {FIELDS[key[6:]]} as {m.group(sign_group)}, which contradicts the verified value"
+    for m in GROWTH_CLAIM.finditer(low):
+        if NEGATION.search(m.group(2)):
+            continue
+        key, rose = "metric:" + GROWTH_ALIASES[m.group(1)], re.fullmatch(UP, m.group(3)) is not None
+        if key not in values:
+            return f"describes {m.group(1)} as having {m.group(3)} without verified prior-year data"
+        if (rose and values[key] < 0) or (not rose and values[key] > 0):
+            return f"states that {m.group(1)} {m.group(3)}, which contradicts the calculated growth rate"
     for m in VERSUS_ONE.finditer(low):
         key = "metric:" + METRIC_ALIASES[m.group(1)]
         if key in values:
@@ -193,8 +213,14 @@ def analysis_payload(run: Run) -> dict:
             "unavailable_fields": [{"field_name": r.field_name, "reason": r.note}
                                    for r in run.reviews if r.decision == "unavailable"],
             "unavailable_metrics": [{"name": m.name, "reason": m.reason} for m in run.metrics if m.value is None],
-            "limitations": ["Single reporting year; growth analysis unavailable.", "Returns and turnover use year-end balances.",
-                            "Human verification is not an audit; evidence may need further review."]}
+            "limitations": years_limitations(run) + ["Human verification is not an audit; evidence may need further review."]}
+
+
+def years_limitations(run: Run) -> list[str]:
+    if any(m.value is not None for m in run.metrics if m.name in GROWTH):
+        return ["Two reporting years only: growth rates cover a single year and do not establish a trend.",
+                "Single-year ratios use year-end balances; average-balance versions are supplied where prior-year data exists."]
+    return ["Single reporting year; growth analysis unavailable.", "Returns and turnover use year-end balances."]
 
 
 FORBIDDEN = re.compile(r"\b(buy|sell|hold|fraud|fraudulent|manipulat\w*|price\s+target|invest(?:ment)?\s+recommendation|recommend\s+investing)\b", re.I)
@@ -286,7 +312,7 @@ def demo_analyst(run: Run, role: str) -> AnalystOutput:
     result = AnalystOutput(analyst_name=role, overall_observation=observation, positive_factors=positives,
         risk_factors=risks, key_metrics=refs, evidence=refs,
         limitations=[Claim(kind="LIMITATION", text="Synthetic teaching output generated from predefined templates, not a live AI response."),
-                     Claim(kind="LIMITATION", text="Single-year data cannot establish trends. Returns and turnover use year-end balances. Human review remains necessary.")])
+                     Claim(kind="LIMITATION", text=" ".join(years_limitations(run)) + " Human review remains necessary.")])
     validate_analyst(result, role, registry, bool(run.company.benchmarks.strip()))
     return result
 

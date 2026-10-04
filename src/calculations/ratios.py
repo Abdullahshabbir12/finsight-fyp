@@ -72,11 +72,73 @@ def calculate_ratio(name: str, values: Mapping[str, Decimal | None]) -> Metric:
     return metric
 
 
+# Year-on-year growth: (current - prior) / prior. A zero or negative prior year makes growth meaningless.
+GROWTH = {
+    "revenue_growth": ("Revenue Growth", "revenue"),
+    "net_profit_growth": ("Net Profit Growth", "net_profit"),
+    "operating_cash_flow_growth": ("Operating Cash Flow Growth", "operating_cash_flow"),
+}
+# Returns and turnover on the average of opening and closing balances, the textbook definition.
+AVERAGE = {
+    "return_on_average_assets": ("Return on Average Assets", "net_profit", "total_assets", True),
+    "return_on_average_equity": ("Return on Average Equity", "net_profit", "equity", True),
+    "average_receivables_turnover": ("Receivables Turnover (average)", "revenue", "trade_receivables", False),
+}
+
+
+def _amounts(values: Mapping[str, Decimal | None], keys: list[str]) -> dict[str, Decimal] | str:
+    missing = [FIELDS[k] for k in keys if values.get(k) is None]
+    if missing:
+        return "Missing verified input: " + ", ".join(missing)
+    amounts = {k: Decimal(str(values[k])) for k in keys}
+    return amounts if all(v.is_finite() for v in amounts.values()) else "Inputs must be finite numbers."
+
+
+def calculate_growth(name: str, values: Mapping[str, Decimal | None]) -> Metric:
+    label, field = GROWTH[name]
+    prior = field + "_prior_year"
+    metric = Metric(name=name, label=label, value=None, format="percent", inputs=[field, prior],
+                    formula=f"([{FIELDS[field]}] - [{FIELDS[prior]}]) / [{FIELDS[prior]}]")
+    amounts = _amounts(values, [field, prior])
+    if isinstance(amounts, str):
+        metric.reason = amounts
+    elif amounts[prior] <= 0:
+        metric.reason = "Prior-year value is zero or negative; a growth rate is not meaningful."
+    else:
+        with localcontext() as ctx:
+            ctx.prec = 28
+            metric.value = (amounts[field] - amounts[prior]) / amounts[prior]
+    return metric
+
+
+def calculate_average(name: str, values: Mapping[str, Decimal | None]) -> Metric:
+    label, numerator, balance, percent = AVERAGE[name]
+    prior = balance + "_prior_year"
+    metric = Metric(name=name, label=label, value=None, format="percent" if percent else "multiple",
+                    inputs=[numerator, balance, prior],
+                    formula=f"[{FIELDS[numerator]}] / (([{FIELDS[balance]}] + [{FIELDS[prior]}]) / 2)")
+    amounts = _amounts(values, [numerator, balance, prior])
+    if isinstance(amounts, str):
+        metric.reason = amounts
+        return metric
+    average = (amounts[balance] + amounts[prior]) / 2
+    if average <= 0:
+        metric.reason = "Average balance is zero or negative; this ratio is not meaningful."
+    elif not percent and amounts[numerator] < 0:
+        metric.reason = "Negative numerator requires review before this ratio is meaningful."
+    else:
+        with localcontext() as ctx:
+            ctx.prec = 28
+            metric.value = amounts[numerator] / average
+    return metric
+
+
 def calculate(run: Run) -> list[Metric]:
     values = verified_values(run)
     if not values:
         raise ValueError("No verified values are available. Review at least one financial field first.")
-    return [calculate_ratio(name, values) for name in SPECS]
+    return ([calculate_ratio(name, values) for name in SPECS] + [calculate_growth(name, values) for name in GROWTH]
+            + [calculate_average(name, values) for name in AVERAGE])
 
 
 def display_metric(metric: Metric) -> str:

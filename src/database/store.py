@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
-from src.models import Run
+from src.models import Run, upgrade_run
 
 
 @contextmanager
@@ -31,4 +31,4 @@ def load_run(run_id: str, path: str | None = None) -> Run:
         row = conn.execute("SELECT payload FROM runs WHERE id = ?", (run_id,)).fetchone()
     if not row:
         raise ValueError("Saved run was not found.")
-    return Run.model_validate_json(row[0])
+    return upgrade_run(Run.model_validate_json(row[0]))

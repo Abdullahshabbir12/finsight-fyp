@@ -75,7 +75,7 @@ def test_extraction_partial_failure_preserves_evidence_and_accounts_usage():
                 "unit": "PKR million", "source_page": 1, "source_text": run.fields[0].source_text,
                 "confidence": .9, "statement_basis": "consolidated"}])
     extract_fields(run, [1, 2, 3], Fake())
-    assert len(run.fields) == 21
+    assert len(run.fields) == 27
     assert run.fields[0].normalized_value == 1000000000
     assert run.fields[1].normalized_value is None
     assert any("Rate limit" in w for w in run.warnings)

@@ -2,7 +2,7 @@
 from decimal import Decimal
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from src.catalog import FIELDS
+from src.catalog import FIELDS, expected_year
 
 
 class Record(BaseModel):
@@ -108,3 +108,24 @@ class Run(Record):
     created_at: str
     verified_at: str | None = None
     analysis_seconds: float = 0
+
+
+def upgrade_run(run: Run) -> Run:
+    """Add fields introduced after a run was saved, so older runs still open and calculate.
+
+    A verified run gets an 'unavailable' review for each new field; nothing is invented.
+    """
+    present = {f.field_name for f in run.fields}
+    for key in FIELDS:
+        if key not in present:
+            run.fields.append(FinancialField(field_name=key))
+    run.fields.sort(key=lambda f: list(FIELDS).index(f.field_name))
+    if run.verified_at:
+        reviewed = {r.field_name for r in run.reviews}
+        for key in FIELDS:
+            if key not in reviewed:
+                run.reviews.append(Review(field_name=key, decision="unavailable", verified_value=None,
+                                          reporting_year=expected_year(key, run.company.financial_year),
+                                          note="Field added to FinSight after this run was verified; not captured."))
+        run.reviews.sort(key=lambda r: list(FIELDS).index(r.field_name))
+    return run

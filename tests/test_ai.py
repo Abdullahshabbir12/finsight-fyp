@@ -169,3 +169,19 @@ def test_malformed_reference_ids_are_rejected(text):
         validate_claim(Claim(kind="INTERPRETATION", text=text, references=["field:revenue"]), reference_registry(run))
     # Ordinary colons in prose remain allowed.
     validate_claim(Claim(kind="LIMITATION", text="Note: single-year data only."), reference_registry(run))
+
+
+def test_growth_direction_is_checked_and_trends_need_prior_year_data():
+    run = reviewed_demo()
+    run_council(run)
+    registry = reference_registry(run)
+    validate_claim(Claim(kind="FACT", text="Revenue increased by metric:revenue_growth."), registry)
+    for text in ("Operating cash flow increased during the reporting period.", "Revenue declined year on year."):
+        with pytest.raises(AIError, match="contradicts"):
+            validate_claim(Claim(kind="FACT", text=text, references=["field:revenue"]), registry)
+    assert "Revenue / Sales INCREASED versus the prior year." in analysis_payload(run)["verified_comparisons"]
+    review = next(r for r in run.reviews if r.field_name == "revenue_prior_year")
+    review.decision, review.verified_value = "unavailable", None
+    run_council_registry = reference_registry(run.model_copy(update={"metrics": [m for m in run.metrics if m.name != "revenue_growth"]}))
+    with pytest.raises(AIError, match="without verified prior-year data"):
+        validate_claim(Claim(kind="FACT", text="Revenue increased.", references=["field:revenue"]), run_council_registry)

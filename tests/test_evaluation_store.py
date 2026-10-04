@@ -13,8 +13,8 @@ def test_accuracy_counts_and_unavailable_denominator():
     run.reviews[1].decision = "unavailable"
     run.reviews[1].verified_value = None
     metrics = evaluation(run)
-    assert metrics["extraction_accuracy"] == 19 / 20
-    assert metrics["fields_accepted_without_changes"] == 19
+    assert metrics["extraction_accuracy"] == 25 / 26
+    assert metrics["fields_accepted_without_changes"] == 25
     assert metrics["fields_edited_by_user"] == 1
     assert metrics["numeric_or_year_correction_count"] == 1
     assert metrics["unavailable_fields"] == 1
@@ -25,7 +25,7 @@ def test_accuracy_counts_and_unavailable_denominator():
 def test_no_review_accuracy_is_na():
     metrics = evaluation(demo_run())
     assert metrics["extraction_accuracy"] is None
-    assert metrics["pending_review_fields"] == 21
+    assert metrics["pending_review_fields"] == 27
 
 
 def test_sqlite_round_trip_and_update(tmp_path):
@@ -57,8 +57,8 @@ def test_field_outcomes_separate_error_types():
     assert outcomes["finance_cost"] == "correct_but_flagged"
     assert outcomes["operating_cash_flow"] == "filled_by_human"
     stats = evaluation(run)
-    assert stats["proposal_precision"] == 18 / 20 and stats["field_recall"] == 18 / 21
-    assert stats["extraction_accuracy"] == 17 / 21
+    assert stats["proposal_precision"] == 24 / 26 and stats["field_recall"] == 24 / 27
+    assert stats["extraction_accuracy"] == 23 / 27
 
 
 def reviewed_after_edits(run, edited):

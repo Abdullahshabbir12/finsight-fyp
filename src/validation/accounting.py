@@ -1,11 +1,13 @@
 """Warnings only. Reconciliation never changes a financial value."""
 from decimal import Decimal
-from src.catalog import FIELDS
+from src.catalog import FIELDS, expected_year
 from src.models import Run
 from src.validation.review import verified_values
 
 NONNEGATIVE = {"revenue", "cost_of_sales", "finance_cost", "total_assets", "current_assets", "inventory",
-               "trade_receivables", "cash_equivalents", "total_liabilities", "current_liabilities", "total_debt", "number_of_shares"}
+               "trade_receivables", "cash_equivalents", "total_liabilities", "current_liabilities", "total_debt", "number_of_shares",
+               "revenue_prior_year", "total_assets_prior_year", "trade_receivables_prior_year"}
+DIVERGENCE_POINTS = Decimal("0.25")  # profit growth exceeding cash-flow growth by 25 percentage points
 
 
 def reconcile(left: Decimal, right: Decimal) -> tuple[bool, Decimal]:
@@ -20,7 +22,7 @@ def validate_run(run: Run) -> list[str]:
     warnings = []
     for field in run.fields:
         warnings.extend(f"{FIELDS[field.field_name]} extraction: {issue}" for issue in field.issues)
-        if field.normalized_value is not None and field.reporting_year != run.company.financial_year:
+        if field.normalized_value is not None and field.reporting_year != expected_year(field.field_name, run.company.financial_year):
             warnings.append(f"{FIELDS[field.field_name]}: extracted reporting-period mismatch.")
     missing = [FIELDS[k] for k in ("revenue", "net_profit", "total_assets", "total_liabilities", "equity", "operating_cash_flow") if k not in values]
     if missing:
@@ -45,6 +47,12 @@ def validate_run(run: Run) -> list[str]:
         warnings.append("Current assets are below current liabilities. Potential liquidity warning indicator; consider the operating cycle and industry.")
     if all(k in values for k in ("total_debt", "equity")) and values["total_debt"] > values["equity"]:
         warnings.append("Debt exceeds equity. Potential leverage warning indicator; the threshold is a simple teaching heuristic, not an industry benchmark.")
+    growth = {k: (values[k] - values[k + "_prior_year"]) / values[k + "_prior_year"]
+              for k in ("net_profit", "operating_cash_flow")
+              if k in values and values.get(k + "_prior_year", 0) > 0}
+    if len(growth) == 2 and growth["net_profit"] - growth["operating_cash_flow"] > DIVERGENCE_POINTS:
+        warnings.append("Net profit grew materially faster than operating cash flow year on year. Divergence between profit growth "
+                        "and cash flow is an indicator requiring further review; it is not evidence of misconduct.")
     for smaller, larger in [("inventory", "current_assets"), ("current_assets", "total_assets"), ("current_liabilities", "total_liabilities"), ("total_debt", "total_liabilities")]:
         if smaller in values and larger in values and values[smaller] > values[larger]:
             warnings.append(f"{FIELDS[smaller]} exceeds {FIELDS[larger]}. Check units, classification, and statement basis.")

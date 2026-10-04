@@ -1,7 +1,7 @@
 """The only gate from extracted proposals to calculation inputs."""
 from datetime import datetime, timezone
 from decimal import Decimal
-from src.catalog import FIELDS, internal_unit
+from src.catalog import FIELDS, expected_year, internal_unit
 from src.extraction.service import UNITS, allowed_units, parse_number
 from src.models import Review, Run
 
@@ -36,7 +36,7 @@ def review_rows(run: Run) -> list[dict]:
                      "Extraction Notes": " ".join(f.issues + f.notes),
                      "Decision": r.decision if r else "pending",
                      "Verified Value": value, "Entry Unit": unit,
-                     "Verified Year": r.reporting_year if r else run.company.financial_year,
+                     "Verified Year": r.reporting_year if r else expected_year(f.field_name, run.company.financial_year),
                      "Evidence Page": str(r.source_page or "") if r else str(f.source_page or ""),
                      "Evidence Text": r.source_text if r else f.source_text,
                      "Review Note": r.note if r else ""})
@@ -53,8 +53,8 @@ def commit_review(run: Run, rows: list[dict]) -> None:
         if decision not in {"accept", "edit", "unavailable"}:
             raise ValueError(f"{label}: choose accept, edit or unavailable.")
         year = int(row["Verified Year"])
-        if year != run.company.financial_year:
-            raise ValueError(f"{label}: verified year must match the selected reporting year.")
+        if year != expected_year(f.field_name, run.company.financial_year):
+            raise ValueError(f"{label}: verified year must be {expected_year(f.field_name, run.company.financial_year)}.")
         value = None
         page = None
         source = ""
@@ -95,7 +95,7 @@ def verified_values(run: Run) -> dict[str, Decimal]:
         raise ValueError("Complete and save human verification before calculating or analyzing.")
     values = {}
     for r in run.reviews:
-        if r.reporting_year != run.company.financial_year:
+        if r.reporting_year != expected_year(r.field_name, run.company.financial_year):
             raise ValueError("Verified reporting year does not match the run.")
         if r.decision != "unavailable" and r.verified_value is not None:
             if not r.verified_value.is_finite():

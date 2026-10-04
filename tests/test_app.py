@@ -15,7 +15,7 @@ def test_app_starts_and_demo_loads():
     next(b for b in app.button if b.label == "Load synthetic demo").click().run()
     assert not app.exception
     assert app.session_state.run.is_demo
-    assert len(app.session_state.run.fields) == 21
+    assert len(app.session_state.run.fields) == 27  # 21 current-year + 6 prior-year
 
 
 def test_verification_gate_and_demo_ratios():

@@ -106,7 +106,11 @@ Python 3.12, Streamlit, PyMuPDF, Pydantic, pandas, SQLite, and pytest follow the
 - Profit margins and cash flow margins can be negative. A nonpositive denominator returns N/A: negative equity does not produce a misleading ROE or debt-to-equity figure. Quick ratio also returns N/A when inventory exceeds current assets.
 - Debt is interest-bearing borrowings, not all liabilities. EBIT must be reported or explicitly verified by a human; the model must not derive it from other lines. The same applies to totals that are not explicitly reported.
 - One statement basis (consolidated or standalone) and one financial year are selected per run. Industry benchmarks are optional user-supplied context and are not independently verified.
-- Financial-quality flags are indicators requiring further review, never findings of fraud. Single-year data cannot establish growth or divergence between growth rates.
+- **Prior year (key fields only):** revenue, net profit, operating cash flow, total assets, equity and trade receivables are also captured from the comparative column (6 extra rows to verify). They give:
+  - **Growth:** revenue, net profit and operating cash flow growth = (current − prior) ÷ prior. N/A when the prior year is zero or negative, because a growth rate from a loss or negative base is not meaningful.
+  - **Average balances:** return on average assets, return on average equity and average receivables turnover use (opening + closing) ÷ 2.
+  - **Profit vs cash-flow divergence:** a warning when net profit growth exceeds operating cash flow growth by more than 25 percentage points (a teaching threshold).
+- Financial-quality flags are indicators requiring further review, never findings of fraud. Two years of data give one growth rate, not a trend.
 
 | Metric | Python calculation |
 |---|---|
@@ -182,7 +186,7 @@ Tests cover every ratio's ordinary, missing-input, zero-denominator, negative-de
 - Text chunk selection is heuristic and deliberately visible. Missing pages, lost table headers, unfamiliar terminology, units and comparative columns can cause missing or incorrect proposals. Exact source matching catches unsupported quotations but does not establish semantic correctness.
 - No automatic derivation of missing extracted fields. Debt totals, gross profit and EBIT may remain unavailable if not explicitly reported. A human may enter a supported figure with an explanation.
 - Currency support is PKR only for monetary ratios. Other currencies are rejected for manual review; no FX conversions are performed.
-- Single-year analysis only. Growth and profit/cash-flow growth divergence cannot be established. Industry-specific bank/insurance ratios, average balances and multi-year trend analysis are not implemented.
+- Two years at most: prior-year data covers six key fields, so growth is a single year-on-year change, not a trend. Industry-specific bank/insurance ratios and multi-year trend analysis are not implemented. Runs saved before prior-year support show those fields as unavailable.
 - Structured JSON is always parsed and validated locally. `AI_RESPONSE_FORMAT=json_schema` is the recommended Gemini setting. For OpenRouter free endpoints, `json_object` may have broader compatibility; some endpoints reject strict schema requests. The app fails visibly and allows retry rather than accepting unstructured text.
 - Prompts and output checks reduce unsupported claims and investment-advice language but cannot prove qualitative correctness or eliminate every possible model error. Human review remains essential.
 - Local SQLite snapshots keep the original extraction and latest saved review, not a multi-user revision ledger. Save runs and export audit JSON for experiments. No auto-save or cross-device synchronization.
