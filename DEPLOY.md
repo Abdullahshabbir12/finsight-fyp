@@ -12,7 +12,7 @@ This puts FinSight on a free web address so friends can test it in their browser
 
 ## Step 1: put the code on GitHub (private)
 
-Your code must be in a GitHub repository. A **private** repository is fine.
+Your code must be in a GitHub repository. It is **public**, because FinSight's PDF library (PyMuPDF) is AGPL-licensed and users of a hosted copy must be able to get the source; the app footer links to it.
 
 If Claude has not already done this for you, run these in the project folder (replace the name if you like):
 
@@ -56,10 +56,6 @@ Send testers the link and the password separately. Tell them: public annual repo
 - **Change the password or key:** app menu (⋮) → **Settings** → **Secrets**, then save.
 - **See errors:** app menu → **Manage app** shows the logs.
 - **Stop sharing:** app menu → **Settings** → **Delete app**. The GitHub repository is unaffected.
-
-## Checking the PSX download on the hosted app
-
-Streamlit Cloud runs on servers outside Pakistan. After deploying, open **1 · Upload → Get it from PSX** and fetch one report. If the company list does not load, PSX is not answering those servers: testers can still use **Upload a PDF**.
 
 ## Using testers for your thesis data
 

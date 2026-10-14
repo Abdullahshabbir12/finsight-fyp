@@ -12,7 +12,6 @@ from src.demo import demo_run
 from src.extraction.service import UNITS, extract_fields
 from src.models import Company, FinancialField, Run
 from src.pdf.reader import BANK_WARNING, candidate_pages, looks_like_bank, read_pdf, render_page, statement_bases
-from src.sources import psx
 from src.ui.layout import STEPS, flash, next_button, page_header, request_step, show_flash
 from src.validation.review import (REASONS, UNAVAILABLE_REASONS, ReviewError, accept_ready, commit_review,
                                    mark_remaining_unavailable, review_rows, save_draft)
@@ -27,16 +26,6 @@ def set_run(run: Run, pdf: bytes | None = None) -> None:
     st.session_state.pdf_bytes = pdf
     st.session_state.workflow_start = perf_counter()
     st.session_state.review_version = st.session_state.get("review_version", 0) + 1
-
-
-@st.cache_data(ttl=86400, show_spinner=False)
-def psx_companies() -> dict[str, str]:
-    return psx.list_companies()
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def psx_annual_reports(ticker: str) -> dict:
-    return psx.annual_reports(ticker)
 
 
 def start_run(content: bytes, filename: str, name: str, ticker: str, industry: str, year: int, basis: str,
@@ -64,41 +53,17 @@ def start_run(content: bytes, filename: str, name: str, ticker: str, industry: s
     st.rerun()
 
 
-def psx_tab() -> None:
-    try:
-        companies = psx_companies()
-    except psx.PSXError as exc:
-        st.warning(f"{exc} Use the **Upload a PDF** tab.")
-        return
-    ticker = st.selectbox("Company", list(companies), index=None, format_func=lambda t: f"{companies[t]} ({t})",
-                          placeholder="Type a company name or ticker...")
-    if not ticker:
-        st.caption(f"Annual reports for {len(companies)} PSX-listed companies, from PSX's financial reports library.")
-        return
-    try:
-        reports = psx_annual_reports(ticker)
-    except psx.PSXError as exc:
-        st.warning(f"{exc} Use the **Upload a PDF** tab.")
-        return
-    if not reports:
-        st.info("PSX has no annual reports for this company. Use the **Upload a PDF** tab.")
-        return
-    a, b = st.columns(2)
-    year = a.selectbox("Financial year", list(reports), help="The year the reporting period ends in.")
-    industry = b.text_input("Industry", placeholder="Optional, e.g. Cement", key="psx_industry")
-    with st.expander("Optional: industry benchmarks"):
-        benchmark = st.text_area("Benchmarks", placeholder="Metric, value, unit, period, and source.", max_chars=4000,
-                                 label_visibility="collapsed", key="psx_benchmarks")
-    report = reports[year]
-    st.caption(f"PSX document {report.doc_id}, posted {report.posted}. FinSight picks consolidated or standalone from the report.")
-    if st.button("Fetch annual report", type="primary", width="stretch"):
-        try:
-            with st.spinner("Downloading from PSX. Large reports can take a minute..."):
-                content = psx.download(report)
-            start_run(content, f"{ticker}-annual-report-{year}.pdf", companies[ticker], ticker, industry, year, "auto",
-                      benchmark, source=f"PSX financial reports library, document {report.doc_id} ({report.url})")
-        except (psx.PSXError, ValueError) as exc:
-            st.error(f"{exc}")
+PSX_LIBRARY = "https://financials.psx.com.pk/"
+
+
+def find_report_help() -> None:
+    """Where to get a report. PSX's terms forbid automated access, so FinSight links instead of fetching."""
+    with st.container(border=True):
+        st.markdown("**Don't have the PDF yet?**")
+        st.markdown("1. Open PSX's financial reports library, choose the company, then **Annual** for your year.\n"
+                    "2. Save the PDF, then drop it in the box below and fill in the company details.")
+        st.link_button("Open PSX financial reports ↗", PSX_LIBRARY, width="stretch")
+        st.caption("Most companies also publish annual reports on their own websites under Investor Relations.")
 
 
 def upload_tab() -> None:
@@ -129,8 +94,7 @@ def setup_screen() -> None:
     show_flash()
     page_header("Start an analysis", [
         "New here? Try the **synthetic demo** first: it walks through every step with sample data.",
-        "For a real report, **Get it from PSX**: pick the company and year and FinSight downloads the annual report. "
-        "Or upload a PDF you already have.",
+        "For a real report, upload its annual report PDF. Don't have it? Use **Open PSX financial reports** to download it first.",
         "Non-bank companies only: banks report different lines from the ones FinSight extracts.",
     ])
     demo, start = st.columns([1, 2], gap="large")
@@ -144,13 +108,10 @@ def setup_screen() -> None:
                 st.rerun()
         saved_runs_card()
     with start:
+        find_report_help()
         with st.container(border=True):
             st.markdown("**Analyse an annual report**")
-            from_psx, from_file = st.tabs(["📥 Get it from PSX", "⬆️ Upload a PDF"])
-            with from_psx:
-                psx_tab()
-            with from_file:
-                upload_tab()
+            upload_tab()
 
 
 def saved_runs_card() -> None:

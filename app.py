@@ -50,4 +50,5 @@ elif step == STEPS[4]:
 else:
     results_screen(run)
 st.divider()
-st.caption("Decision-support prototype. Outputs require human review and do not replace professional judgment.")
+st.caption("Decision-support prototype. Outputs require human review and do not replace professional judgment. "
+           "[Source code](https://github.com/Abdullahshabbir12/finsight-fyp) (AGPL-3.0).")
