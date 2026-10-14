@@ -4,8 +4,8 @@ from decimal import Decimal
 from time import perf_counter
 from typing import Callable
 from src.ai.client import AIClient, AIError, AIOutputRejected
-from src.calculations.ratios import GROWTH, calculate, display_metric
-from src.catalog import FIELDS, internal_unit
+from src.calculations.ratios import ALL_GROWTH, calculate, display_metric
+from src.catalog import LABELS, base_field, internal_unit
 from src.models import AnalystOutput, Claim, Run
 from src.validation.review import verified_values
 
@@ -45,18 +45,28 @@ If previous_attempts_rejected_because is present, fix exactly those problems in 
 """
 
 # Banking-specific guidance; applying it to other industries produced irrelevant statements.
-BANK_POLICY = """For banks, cash flow includes deposit and funding movements; positive cash flow alone does not establish
-cash conversion quality, liquidity adequacy or financial resilience. Explain this beside cash-flow claims.
-If revenue is mapped to net interest plus other income, it is already after interest expense: do not
-present interest expense relative to that net income measure as a separate profitability warning.
-Liabilities including deposits are not identical to borrowings; do not infer distress from their ratio alone.
+BANK_POLICY = """This company is a bank. Its liabilities are mostly customer deposits, so total liabilities relative to
+total assets is normal for a bank and is not distress; describe leverage through equity to assets and the reported
+capital adequacy ratio. Operating cash flow includes deposit and lending movements, so do not judge cash conversion
+from it. Asset quality is described by the non-performing loan ratio and provision coverage; funding by the
+advances-to-deposits and current-and-savings deposit ratios. A capital adequacy ratio is reported by the bank under
+State Bank of Pakistan rules; do not recalculate or second-guess it.
 """
+# What each analyst concentrates on for a bank, where margins, liquidity and leverage mean different things.
+BANK_FOCUS = {
+    "Fundamental Analyst": "Discuss net interest margin, cost to income, non-interest income share, returns and the supplied growth rates.",
+    "Credit Risk Analyst": "Discuss asset quality (non-performing loan ratio, provision coverage), capital adequacy, equity to assets, "
+                           "and funding (advances to deposits, current and savings deposits), with appropriate limitations.",
+    "Forensic Analyst": "Discuss consistency between interest income, provisions and profit, and indicators requiring further review. "
+                        "Never accuse the bank of fraud, manipulation or misconduct.",
+    "Industry Analyst": ROLES["Industry Analyst"],
+}
 
 MAX_ATTEMPTS = 3
 
 
 def is_bank(run: Run) -> bool:
-    return bool(re.search(r"\b(bank|banking|microfinance)\b", run.company.industry, re.I))
+    return run.company.sector == "bank" or bool(re.search(r"\b(bank|banking|microfinance)\b", run.company.industry, re.I))
 
 
 def policy(run: Run) -> str:
@@ -70,6 +80,10 @@ def short_value(key: str, value: Decimal) -> str:
         return f"PKR {value:,.2f} per share"
     if unit == "shares":
         return f"{value:,.0f} shares"
+    if unit == "%":
+        return f"{value:,.2f}%"
+    if key == "provisions" and value < 0:  # FinSight stores a net reversal as a negative charge
+        return "a net reversal of " + short_value(key, -value)
     for scale, word in ((Decimal(10) ** 9, "billion"), (Decimal(10) ** 6, "million")):
         if abs(value) >= scale:
             return f"PKR {value / scale:,.2f} {word}"
@@ -82,15 +96,15 @@ def reference_registry(run: Run) -> dict[str, dict]:
     registry = {}
     for key, value in values.items():
         r = reviews[key]
-        registry["field:" + key] = {"label": FIELDS[key], "value": str(value), "unit": internal_unit(key),
+        registry["field:" + key] = {"label": LABELS[key], "value": str(value), "unit": internal_unit(key),
             "year": r.reporting_year, "page": r.source_page, "source_text": r.source_text,
             "review_decision": r.decision, "review_note": r.explanation(), "short": short_value(key, value),
-            "display": f"{FIELDS[key]}: {value:,.2f} {internal_unit(key)} — " + ((f"Synthetic source page {r.source_page}" if run.is_demo else f"Annual report PDF page {r.source_page}") if r.source_page else "human-supplied source")}
+            "display": f"{LABELS[key]}: {value:,.2f} {internal_unit(key)} — " + ((f"Synthetic source page {r.source_page}" if run.is_demo else f"Annual report PDF page {r.source_page}") if r.source_page else "human-supplied source")}
     for metric in run.metrics:
         if metric.value is not None:
             registry["metric:" + metric.name] = {"label": metric.label, "value": str(metric.value),
                 "short": display_metric(metric),
-                "display": f"{metric.label}: {display_metric(metric)} — calculated from verified " + ", ".join(FIELDS[k] for k in metric.inputs),
+                "display": f"{metric.label}: {display_metric(metric)} — calculated from verified " + ", ".join(LABELS[k] for k in metric.inputs),
                 "formula": metric.formula, "inputs": ["field:" + k for k in metric.inputs]}
     if run.company.benchmarks.strip():
         registry["benchmark:user"] = {"display": "User-supplied benchmark context (not independently verified)",
@@ -112,7 +126,8 @@ def numeric_values(registry: dict) -> dict[str, Decimal]:
     return {k: Decimal(v["value"]) for k, v in registry.items() if "value" in v}
 
 
-PAIRS = [("total_liabilities", "total_assets"), ("current_assets", "current_liabilities"),
+PAIRS = [("total_liabilities", "total_assets"), ("current_assets", "current_liabilities"), ("advances_net", "deposits"),
+         ("non_performing_loans", "npl_provisions"),
          ("net_profit", "operating_cash_flow"), ("total_debt", "equity")]
 
 
@@ -123,12 +138,12 @@ def verified_comparisons(registry: dict) -> list[str]:
     for a, b in PAIRS:
         if "field:" + a in values and "field:" + b in values:
             x, y = values["field:" + a], values["field:" + b]
-            facts.append(f"{FIELDS[a]} is {'GREATER than' if x > y else 'LESS than' if x < y else 'EQUAL to'} {FIELDS[b]}.")
+            facts.append(f"{LABELS[a]} is {'GREATER than' if x > y else 'LESS than' if x < y else 'EQUAL to'} {LABELS[b]}.")
     facts += [f"{registry[k]['label']} is NEGATIVE." for k, v in values.items() if k.startswith("field:") and v < 0]
-    for name, (label, field) in GROWTH.items():
+    for name, (label, field) in ALL_GROWTH.items():
         if "metric:" + name in values:
             v = values["metric:" + name]
-            facts.append(f"{FIELDS[field]} {'INCREASED' if v > 0 else 'DECREASED' if v < 0 else 'was UNCHANGED'} versus the prior year.")
+            facts.append(f"{LABELS[field]} {'INCREASED' if v > 0 else 'DECREASED' if v < 0 else 'was UNCHANGED'} versus the prior year.")
     for name in ("current_ratio", "quick_ratio", "debt_to_equity"):
         if "metric:" + name in values:
             v = values["metric:" + name]
@@ -143,8 +158,13 @@ FIELD_ALIASES = {"total liabilities": "total_liabilities", "total assets": "tota
                  "total debt": "total_debt", "shareholders' equity": "equity", "shareholders equity": "equity",
                  "total equity": "equity", "revenue": "revenue", "net sales": "revenue", "cost of sales": "cost_of_sales",
                  "gross profit": "gross_profit", "operating profit": "operating_profit", "finance cost": "finance_cost",
-                 "finance costs": "finance_cost", "inventory": "inventory"}
-FIELD_ALIASES.update({"field:" + k: k for k in FIELDS})
+                 "finance costs": "finance_cost", "inventory": "inventory",
+                 # Bank lines
+                 "deposits": "deposits", "net advances": "advances_net", "advances": "advances_net", "gross advances": "gross_advances",
+                 "non-performing loans": "non_performing_loans", "non-performing advances": "non_performing_loans",
+                 "net interest income": "net_interest_income", "net mark-up income": "net_interest_income", "total income": "total_income",
+                 "operating expenses": "operating_expenses", "investments": "investments", "borrowings": "borrowings"}
+FIELD_ALIASES.update({"field:" + k: k for k in LABELS})
 METRIC_ALIASES = {"current ratio": "current_ratio", "quick ratio": "quick_ratio", "debt to equity ratio": "debt_to_equity",
                   "debt-to-equity ratio": "debt_to_equity", "debt to equity": "debt_to_equity", "interest coverage": "interest_coverage"}
 METRIC_ALIASES.update({"metric:" + k: k for k in ("current_ratio", "quick_ratio", "debt_to_equity", "interest_coverage")})
@@ -163,12 +183,63 @@ SIGN_BEFORE = re.compile(r"\b(positive|negative)\s+" + _items(FIELD_ALIASES))
 SIGN_AFTER = re.compile(_items(FIELD_ALIASES) + r"[^.;]{0,30}?\b(?:is|was|were|are|remained|turned|became)\s+(positive|negative)\b")
 VERSUS_ONE = re.compile(_items(METRIC_ALIASES) + r"[^.;]{0,30}?\b(" + GREATER + "|" + LESS + r")\s+(?:one|unity)\b")
 NEGATION = re.compile(r"\b(not|no|never|neither|nor)\b")
-GROWTH_ALIASES = {"revenue": "revenue_growth", "net sales": "revenue_growth", "sales": "revenue_growth",
-                  "net profit": "net_profit_growth", "profit after tax": "net_profit_growth",
-                  "operating cash flow": "operating_cash_flow_growth", "operating cash flows": "operating_cash_flow_growth"}
+# Lines whose change over time the AI might describe. The direction is checked against the growth metric, or the
+# current and prior-year values; lines without a prior-year comparative (e.g. provisions) cannot be said to change.
+GROWTH_ALIASES = {"revenue": "revenue", "net sales": "revenue", "sales": "revenue", "net profit": "net_profit",
+                  "profit after tax": "net_profit", "operating cash flow": "operating_cash_flow",
+                  "operating cash flows": "operating_cash_flow", "deposits": "deposits", "advances": "advances_net",
+                  "net advances": "advances_net", "net interest income": "net_interest_income",
+                  "net mark-up income": "net_interest_income", "total assets": "total_assets",
+                  "shareholders' equity": "equity", "shareholders equity": "equity", "total equity": "equity",
+                  "trade receivables": "trade_receivables",
+                  "provisions": "provisions", "provision": "provisions", "credit loss allowance": "provisions",
+                  "credit loss allowances": "provisions", "credit loss provisions": "provisions",
+                  "total income": "total_income", "operating expenses": "operating_expenses",
+                  "non-performing loans": "non_performing_loans", "non-performing advances": "non_performing_loans",
+                  "investments": "investments", "borrowings": "borrowings", "total liabilities": "total_liabilities"}
+GROWTH_METRIC = {field: name for name, (_, field) in ALL_GROWTH.items()}
 UP = r"increased|increases|grew|grown|rose|risen|improved|expanded"
 DOWN = r"decreased|decreases|declined|fell|fallen|dropped|contracted|deteriorated"
-GROWTH_CLAIM = re.compile(_items(GROWTH_ALIASES) + r"([^.;]{0,40}?)\b(" + UP + "|" + DOWN + r")\b")
+# The gap stops at another cited value or a contrasting clause, so "provisions of field:provisions while profit
+# decreased" is not read as a claim about provisions.
+GAP = r"((?:(?!field:|metric:|\bwhile\b|\bwhereas\b|\bbut\b|\balthough\b)[^.;]){0,40}?)"
+GROWTH_CLAIM = re.compile(_items(GROWTH_ALIASES) + GAP + r"\b(" + UP + "|" + DOWN + r")\b")
+UP_BEFORE = r"higher|increased|rising|growing|an increase in|a rise in|growth in"
+DOWN_BEFORE = r"lower|reduced|falling|declining|a decrease in|a decline in|a fall in|a drop in|a reduction in"
+GROWTH_BEFORE = re.compile(r"\b(" + UP_BEFORE + "|" + DOWN_BEFORE + r")\s+(?:the\s+)?" + _items(GROWTH_ALIASES))
+# Field names written in prose (not reference IDs), for checking that a cited value sits under its own label.
+NAME_ALIASES = {k: v for k, v in FIELD_ALIASES.items() if not k.startswith("field:")}
+NAME = re.compile(_items(NAME_ALIASES))
+CLAUSE = re.compile(r",|;|\band\b|\bwhile\b|\bwhereas\b|\bbut\b")
+WORD = re.compile(r"[a-z][a-z'-]*")
+STOPWORDS = {"and", "of", "the", "to", "in", "for", "a", "an", "or"}
+
+
+def change(field: str, values: dict) -> Decimal | None:
+    """Verified direction of a line year on year: its growth metric, else current less prior year; None without a prior year."""
+    metric = "metric:" + GROWTH_METRIC.get(field, "")
+    if metric in values:
+        return values[metric]
+    current, prior = values.get("field:" + field), values.get(f"field:{field}_prior_year")
+    return None if current is None or prior is None else current - prior
+
+
+def mislabelled(text: str) -> str:
+    """'total liabilities of field:total_assets': a cited value placed under another line's name."""
+    for clause in CLAUSE.split(text):
+        start = 0
+        for token in TOKEN.finditer(clause):
+            span, start = clause[start:token.start()], token.end()
+            names = list(NAME.finditer(span))
+            if not token.group(0).startswith("field:") or not names:
+                continue
+            cited, name = base_field(token.group(0)[6:]), names[-1].group(1)
+            if NAME_ALIASES[name] == cited:
+                continue
+            own = set(WORD.findall(LABELS[cited].lower())) - STOPWORDS - set(WORD.findall(name))
+            if not own & set(WORD.findall(span)):
+                return f"places the value of {LABELS[cited]} after '{name}'; cite the value that matches each label"
+    return ""
 
 
 def contradiction(text: str, registry: dict) -> str:
@@ -180,21 +251,27 @@ def contradiction(text: str, registry: dict) -> str:
         if a in values and b in values and a != b and not NEGATION.search(m.group(2)):
             greater = re.match(GREATER, m.group(3)) is not None
             if (greater and values[a] < values[b]) or (not greater and values[a] > values[b]):
-                return f"states that {FIELDS[a[6:]]} {'exceeds' if greater else 'is below'} {FIELDS[b[6:]]}, which contradicts the verified values"
+                return f"states that {LABELS[a[6:]]} {'exceeds' if greater else 'is below'} {LABELS[b[6:]]}, which contradicts the verified values"
     for regex, item_group, sign_group in ((SIGN_BEFORE, 2, 1), (SIGN_AFTER, 1, 2)):
         for m in regex.finditer(low):
             key = "field:" + FIELD_ALIASES[m.group(item_group)]
             if key in values and not NEGATION.search(low[max(0, m.start() - 20):m.start()]):
                 if (m.group(sign_group) == "positive") != (values[key] > 0) and values[key] != 0:
-                    return f"describes {FIELDS[key[6:]]} as {m.group(sign_group)}, which contradicts the verified value"
-    for m in GROWTH_CLAIM.finditer(low):
-        if NEGATION.search(m.group(2)):
+                    return f"describes {LABELS[key[6:]]} as {m.group(sign_group)}, which contradicts the verified value"
+    problem = mislabelled(low)
+    if problem:
+        return problem
+    claims = [(m.group(1), m.group(3), re.fullmatch(UP, m.group(3)) is not None, m.group(2)) for m in GROWTH_CLAIM.finditer(low)]
+    claims += [(m.group(2), m.group(1), re.fullmatch(UP_BEFORE, m.group(1)) is not None, low[max(0, m.start() - 20):m.start()])
+               for m in GROWTH_BEFORE.finditer(low)]
+    for item, word, rose, context in claims:
+        if NEGATION.search(context):
             continue
-        key, rose = "metric:" + GROWTH_ALIASES[m.group(1)], re.fullmatch(UP, m.group(3)) is not None
-        if key not in values:
-            return f"describes {m.group(1)} as having {m.group(3)} without verified prior-year data"
-        if (rose and values[key] < 0) or (not rose and values[key] > 0):
-            return f"states that {m.group(1)} {m.group(3)}, which contradicts the calculated growth rate"
+        delta = change(GROWTH_ALIASES[item], values)
+        if delta is None:
+            return f"describes {item} as {word} without verified prior-year data"
+        if (rose and delta < 0) or (not rose and delta > 0):
+            return f"states that {item} {word}, which contradicts the verified prior-year comparison"
     for m in VERSUS_ONE.finditer(low):
         key = "metric:" + METRIC_ALIASES[m.group(1)]
         if key in values:
@@ -217,22 +294,43 @@ def analysis_payload(run: Run) -> dict:
 
 
 def years_limitations(run: Run) -> list[str]:
-    if any(m.value is not None for m in run.metrics if m.name in GROWTH):
+    if any(m.value is not None for m in run.metrics if m.name in ALL_GROWTH):
         return ["Two reporting years only: growth rates cover a single year and do not establish a trend.",
                 "Single-year ratios use year-end balances; average-balance versions are supplied where prior-year data exists."]
     return ["Single reporting year; growth analysis unavailable.", "Returns and turnover use year-end balances."]
 
 
 FORBIDDEN = re.compile(r"\b(buy|sell|hold|fraud|fraudulent|manipulat\w*|price\s+target|invest(?:ment)?\s+recommendation|recommend\s+investing)\b", re.I)
-EVALUATIVE = re.compile(r"\b(strong(?:ly|er)?|robust|healthy|superior|excellent|solid|impressive|weak(?:er)?|poor(?:ly)?|(?:in)?efficient(?:ly)?)\b", re.I)
+EVALUATIVE = re.compile(r"\b(strong(?:ly|er)?|robust|healthy|superior|excellent|solid|impressive|weak(?:er)?|poor(?:ly)?|(?:in)?efficient(?:ly)?|"
+                        r"stable|stability|sound|resilien(?:t|ce)|comfortable|prudent(?:ly)?)\b", re.I)
 
 
 def reject(reason: str, claim: Claim) -> None:
     raise AIOutputRejected(f'{reason}: "{claim.text[:140]}". Output rejected; retry.')
 
 
+# Caveats FinSight itself supplies (payload limitations, bank policy, the industry rule). Written without a citation
+# and labelled FACT, they are still limitations.
+CAVEAT = re.compile(r"insufficient benchmark information|operating cash flow includes deposit|normal for a bank|not an audit|"
+                    r"two reporting years|single reporting year|year-end balances", re.I)
+
+
+def repair_prefix(ref: str, registry: dict) -> str:
+    """'metric:net_profit' for the verified field 'field:net_profit' (or the reverse) still names exactly one value;
+    no name is both a field and a metric, so swapping the prefix cannot change which number is cited."""
+    if ref in registry:
+        return ref
+    kind, _, name = ref.partition(":")
+    swapped = {"field": "metric", "metric": "field"}.get(kind, kind) + ":" + name
+    return swapped if swapped in registry else ref
+
+
 def validate_claim(claim: Claim, registry: dict) -> None:
+    claim.text = TOKEN.sub(lambda m: repair_prefix(m.group(0), registry), claim.text)
+    claim.references = [repair_prefix(ref, registry) for ref in claim.references]
     inline = TOKEN.findall(claim.text)
+    if claim.kind != "LIMITATION" and not claim.references and not inline and CAVEAT.search(claim.text):
+        claim.kind = "LIMITATION"  # one of FinSight's own caveats, mislabelled; relabelling it cannot add an unsupported claim
     if any(ref not in registry for ref in [*claim.references, *inline]):
         reject("AI cited an unavailable or unknown financial reference", claim)
     if any(f"{a}:{b}" not in registry for a, b in REFERENCE_LIKE.findall(claim.text)):
@@ -259,6 +357,8 @@ def validate_analyst(output: AnalystOutput, role: str, registry: dict, has_bench
     claims = [output.overall_observation, *output.positive_factors, *output.risk_factors, *output.limitations]
     for claim in claims:
         validate_claim(claim, registry)
+    output.key_metrics = [repair_prefix(ref, registry) for ref in output.key_metrics]
+    output.evidence = [repair_prefix(ref, registry) for ref in output.evidence]
     if any(ref not in registry for ref in [*output.key_metrics, *output.evidence]):
         raise AIOutputRejected("AI metric or evidence reference was not in the verified data. Retry.")
     if not output.limitations or any(c.kind != "LIMITATION" for c in output.limitations):
@@ -323,7 +423,7 @@ def run_council(run: Run, client: AIClient | None = None, progress=None) -> None
     has_benchmarks = bool(run.company.benchmarks.strip())
     start = perf_counter()
     try:
-        for role, focus in ROLES.items():
+        for role, focus in (BANK_FOCUS if is_bank(run) else ROLES).items():
             if role in run.analysts:
                 continue
             if progress:

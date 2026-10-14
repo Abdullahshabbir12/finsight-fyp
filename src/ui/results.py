@@ -9,7 +9,7 @@ from src.ai.client import AIClient, AIError
 from src.ai.council import ROLES, reference_registry, render_text, run_council
 from src.ai.synthesis import run_synthesis
 from src.calculations.ratios import calculate, display_metric
-from src.catalog import FIELDS, internal_unit
+from src.catalog import LABELS, internal_unit
 from src.models import Claim, Run
 from src.reporting.export import markdown_report, pdf_report
 from src.ui.layout import STEPS, next_button, page_header
@@ -113,12 +113,18 @@ def results_screen(run: Run) -> None:
         st.warning(str(exc))
         return
     metrics = {m.name: m for m in run.metrics}
+    bank = run.company.sector == "bank"
+    top_line, top_label = ("total_income", "Total income · PKR m") if bank else ("revenue", "Revenue · PKR m")
     cols = [*st.columns(3), *st.columns(3)]
-    cols[0].metric("Revenue · PKR m", f'{values["revenue"] / 1000000:,.2f}' if "revenue" in values else "N/A")
+    cols[0].metric(top_label, f'{values[top_line] / 1000000:,.2f}' if top_line in values else "N/A")
     cols[1].metric("Net profit · PKR m", f'{values["net_profit"] / 1000000:,.2f}' if "net_profit" in values else "N/A")
-    for col, key in zip(cols[2:], ["return_on_assets", "return_on_equity", "current_ratio", "debt_to_equity"]):
+    cards = (["return_on_assets", "return_on_equity", "advances_to_deposits", "capital_adequacy"] if bank
+             else ["return_on_assets", "return_on_equity", "current_ratio", "debt_to_equity"])
+    for col, key in zip(cols[2:], cards):
         col.metric(metrics[key].label, display_metric(metrics[key]))
-    growth = [metrics[k] for k in ("revenue_growth", "net_profit_growth", "operating_cash_flow_growth") if metrics[k].value is not None]
+    growth_keys = (("net_interest_income_growth", "net_profit_growth", "deposits_growth") if bank
+                   else ("revenue_growth", "net_profit_growth", "operating_cash_flow_growth"))
+    growth = [metrics[k] for k in growth_keys if metrics[k].value is not None]
     if growth:
         for col, metric in zip(st.columns(3), growth):
             col.metric(metric.label, display_metric(metric))
@@ -144,7 +150,7 @@ def results_screen(run: Run) -> None:
         st.markdown("### Research workspace")
         st.write(f"{run.company.name} · FY {run.company.financial_year} · {run.company.statement_basis.title()} statements")
         st.success("Human verification saved. All calculations use only the saved verified values.")
-        st.write(f"{len(values)} of {len(FIELDS)} fields verified · {sum(m.value is not None for m in run.metrics)} of {len(metrics)} ratios available · {len(run.analysts)} of 4 perspectives complete")
+        st.write(f"{len(values)} of {len(run.fields)} fields verified · {sum(m.value is not None for m in run.metrics)} of {len(metrics)} ratios available · {len(run.analysts)} of 4 perspectives complete")
         if run.is_demo:
             st.info("DEMO / SYNTHETIC DATA. Analyst outputs are predefined teaching templates reflecting the saved verified values; no API request is made.")
         else:
@@ -164,7 +170,7 @@ def results_screen(run: Run) -> None:
         rows = []
         for f in run.fields:
             r = reviews[f.field_name]
-            rows.append({"Field": FIELDS[f.field_name], "Extracted raw": f.raw_value or "N/A", "Extracted unit": f.unit,
+            rows.append({"Field": LABELS[f.field_name], "Extracted raw": f.raw_value or "N/A", "Extracted unit": f.unit,
                 "Extracted normalized": str(f.normalized_value) if f.normalized_value is not None else "N/A",
                 "Human verified": str(r.verified_value) if r.verified_value is not None else "N/A", "Internal unit": internal_unit(f.field_name),
                 "Decision": r.decision, "Year": r.reporting_year, "Source page": r.source_page, "Review note": r.note})
@@ -178,7 +184,7 @@ def results_screen(run: Run) -> None:
                 st.code(m.formula, language=None)
                 for key in m.inputs:
                     item = registry.get("field:" + key)
-                    st.write(item["display"] if item else f"{FIELDS[key]}: unavailable")
+                    st.write(item["display"] if item else f"{LABELS[key]}: unavailable")
                 if m.reason:
                     st.caption(m.reason)
     for role in ROLES:

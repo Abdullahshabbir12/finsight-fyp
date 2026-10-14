@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation, localcontext
 from typing import Mapping
-from src.catalog import FIELDS
+from src.catalog import LABELS
 from src.models import Metric, Run
 from src.validation.review import verified_values
 
@@ -11,7 +11,7 @@ from src.validation.review import verified_values
 class RatioSpec:
     label: str
     numerator: tuple[str, ...]
-    denominator: str
+    denominator: str | tuple[str, ...]  # a tuple is summed, e.g. earning assets
     percent: bool = False
     allow_negative_numerator: bool = True
 
@@ -35,23 +35,27 @@ SPECS = {
 
 
 def calculate_ratio(name: str, values: Mapping[str, Decimal | None]) -> Metric:
-    spec = SPECS[name]
-    inputs = list(spec.numerator) + [spec.denominator]
+    spec = ALL_SPECS[name]
+    parts = spec.denominator if isinstance(spec.denominator, tuple) else (spec.denominator,)
+    inputs = list(spec.numerator) + list(parts)
     # Square brackets keep labels such as "Revenue / Sales" from reading as a second division.
-    numerator_label = " - ".join(f"[{FIELDS[k]}]" for k in spec.numerator)
+    numerator_label = " - ".join(f"[{LABELS[k]}]" for k in spec.numerator)
     if len(spec.numerator) > 1:
         numerator_label = f"({numerator_label})"
+    denominator_label = " + ".join(f"[{LABELS[k]}]" for k in parts)
+    if len(parts) > 1:
+        denominator_label = f"({denominator_label})"
     metric = Metric(name=name, label=spec.label, value=None, format="percent" if spec.percent else "multiple",
-                    formula=f"{numerator_label} / [{FIELDS[spec.denominator]}]", inputs=inputs)
+                    formula=f"{numerator_label} / {denominator_label}", inputs=inputs)
     if any(values.get(key) is None for key in inputs):
-        metric.reason = "Missing verified input: " + ", ".join(FIELDS[k] for k in inputs if values.get(k) is None)
+        metric.reason = "Missing verified input: " + ", ".join(LABELS[k] for k in inputs if values.get(k) is None)
         return metric
     try:
         amounts = {k: Decimal(str(values[k])) for k in inputs}
         if any(not v.is_finite() for v in amounts.values()):
             metric.reason = "Inputs must be finite numbers."
             return metric
-        denominator = amounts[spec.denominator]
+        denominator = sum((amounts[k] for k in parts), Decimal(0))
         if denominator <= 0:
             metric.reason = "Denominator is zero or negative; this ratio is not meaningful."
             return metric
@@ -87,7 +91,7 @@ AVERAGE = {
 
 
 def _amounts(values: Mapping[str, Decimal | None], keys: list[str]) -> dict[str, Decimal] | str:
-    missing = [FIELDS[k] for k in keys if values.get(k) is None]
+    missing = [LABELS[k] for k in keys if values.get(k) is None]
     if missing:
         return "Missing verified input: " + ", ".join(missing)
     amounts = {k: Decimal(str(values[k])) for k in keys}
@@ -95,10 +99,10 @@ def _amounts(values: Mapping[str, Decimal | None], keys: list[str]) -> dict[str,
 
 
 def calculate_growth(name: str, values: Mapping[str, Decimal | None]) -> Metric:
-    label, field = GROWTH[name]
+    label, field = ALL_GROWTH[name]
     prior = field + "_prior_year"
     metric = Metric(name=name, label=label, value=None, format="percent", inputs=[field, prior],
-                    formula=f"([{FIELDS[field]}] - [{FIELDS[prior]}]) / [{FIELDS[prior]}]")
+                    formula=f"([{LABELS[field]}] - [{LABELS[prior]}]) / [{LABELS[prior]}]")
     amounts = _amounts(values, [field, prior])
     if isinstance(amounts, str):
         metric.reason = amounts
@@ -116,7 +120,7 @@ def calculate_average(name: str, values: Mapping[str, Decimal | None]) -> Metric
     prior = balance + "_prior_year"
     metric = Metric(name=name, label=label, value=None, format="percent" if percent else "multiple",
                     inputs=[numerator, balance, prior],
-                    formula=f"[{FIELDS[numerator]}] / (([{FIELDS[balance]}] + [{FIELDS[prior]}]) / 2)")
+                    formula=f"[{LABELS[numerator]}] / (([{LABELS[balance]}] + [{LABELS[prior]}]) / 2)")
     amounts = _amounts(values, [numerator, balance, prior])
     if isinstance(amounts, str):
         metric.reason = amounts
@@ -133,10 +137,52 @@ def calculate_average(name: str, values: Mapping[str, Decimal | None]) -> Metric
     return metric
 
 
+# Banks: margins on earning assets, efficiency, funding, asset quality and capital instead of
+# gross margin, current ratio and debt ratios, which do not fit a deposit-funded balance sheet.
+BANK_SPECS = {
+    "net_interest_margin": RatioSpec("Net Interest Margin (year-end earning assets)", ("net_interest_income",),
+                                     ("lendings", "investments", "advances_net"), True),
+    "cost_to_income": RatioSpec("Cost to Income", ("operating_expenses",), "total_income", True, False),
+    "return_on_assets": SPECS["return_on_assets"],
+    "return_on_equity": SPECS["return_on_equity"],
+    "non_interest_income_share": RatioSpec("Non-Interest Income Share", ("non_interest_income",), "total_income", True),
+    "advances_to_deposits": RatioSpec("Advances to Deposits (ADR)", ("advances_net",), "deposits", True, False),
+    "investments_to_deposits": RatioSpec("Investments to Deposits", ("investments",), "deposits", True, False),
+    "casa_ratio": RatioSpec("Current and Savings Deposits Ratio (CASA)", ("casa_deposits",), "deposits", True, False),
+    "infection_ratio": RatioSpec("Non-Performing Loan Ratio (infection)", ("non_performing_loans",), "gross_advances", True, False),
+    "coverage_ratio": RatioSpec("Provision Coverage", ("npl_provisions",), "non_performing_loans", True, False),
+    "equity_to_assets": RatioSpec("Equity to Assets", ("equity",), "total_assets", True),
+}
+ALL_SPECS = {**SPECS, **BANK_SPECS}
+BANK_GROWTH = {
+    "net_interest_income_growth": ("Net Interest Income Growth", "net_interest_income"),
+    "net_profit_growth": ("Net Profit Growth", "net_profit"),
+    "advances_growth": ("Advances Growth", "advances_net"),
+    "deposits_growth": ("Deposits Growth", "deposits"),
+}
+BANK_AVERAGE = {k: AVERAGE[k] for k in ("return_on_average_assets", "return_on_average_equity")}
+ALL_GROWTH = {**GROWTH, **BANK_GROWTH}
+
+
+def reported_capital_adequacy(values: Mapping[str, Decimal | None]) -> Metric:
+    """CAR is calculated by the bank under SBP's Basel III rules; FinSight shows the reported figure."""
+    metric = Metric(name="capital_adequacy", label="Capital Adequacy Ratio (reported)", value=None, format="percent",
+                    formula="[Capital Adequacy Ratio (reported)], as printed by the bank", inputs=["capital_adequacy_ratio"])
+    car = values.get("capital_adequacy_ratio")
+    if car is None:
+        metric.reason = "Missing verified input: Capital Adequacy Ratio (reported)"
+    else:
+        metric.value = Decimal(str(car)) / 100
+    return metric
+
+
 def calculate(run: Run) -> list[Metric]:
     values = verified_values(run)
     if not values:
         raise ValueError("No verified values are available. Review at least one financial field first.")
+    if run.company.sector == "bank":
+        return ([calculate_ratio(name, values) for name in BANK_SPECS] + [reported_capital_adequacy(values)]
+                + [calculate_growth(name, values) for name in BANK_GROWTH] + [calculate_average(name, values) for name in BANK_AVERAGE])
     return ([calculate_ratio(name, values) for name in SPECS] + [calculate_growth(name, values) for name in GROWTH]
             + [calculate_average(name, values) for name in AVERAGE])
 

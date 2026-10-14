@@ -132,3 +132,18 @@ def test_prior_year_fields_must_come_from_the_comparative_year():
     assert checked_candidate(c, run, chunk).normalized_value == Decimal("900000000")
     wrong_year = checked_candidate(c.model_copy(update={"reporting_year": 2025}), run, chunk)
     assert wrong_year.normalized_value is None and "Reporting-period mismatch." in wrong_year.issues
+
+
+
+def test_rebuilt_quote_is_replaced_by_the_real_printed_line():
+    run = demo_run()
+    chunk = "[PDF PAGE 1]\n2,919,376 2,557,333 Mark-up / return / profit / interest earned 25 813,192,081 712,345,078"
+    run.pages[0].text = chunk
+    c = Candidate(field_name="revenue", reporting_year=2025, raw_value="813,192,081", unit="PKR thousand", source_page=1,
+                  source_text="813,192,081 712,345,078 Mark-up / return / profit / interest earned 25 813,192,081 712,345,078",
+                  confidence=.9, statement_basis="consolidated")
+    field = checked_candidate(c, run, chunk)
+    assert field.status == "extracted" and field.source_text.startswith("2,919,376") and "not verbatim" in field.notes[0]
+    # A label that is not on the page is still rejected.
+    invented = checked_candidate(c.model_copy(update={"source_text": "Interest income 813,192,081"}), run, chunk)
+    assert invented.status == "needs_review" and invented.normalized_value is None

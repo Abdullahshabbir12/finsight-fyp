@@ -5,7 +5,7 @@ from uuid import uuid4
 import pandas as pd
 import streamlit as st
 from src.ai.client import AIClient, AIError
-from src.catalog import FIELDS
+from src.catalog import LABELS, catalog
 import sqlite3
 from src.database.store import list_runs, load_run
 from src.demo import demo_run
@@ -28,9 +28,12 @@ def set_run(run: Run, pdf: bytes | None = None) -> None:
     st.session_state.review_version = st.session_state.get("review_version", 0) + 1
 
 
+SECTOR_CHOICES = {"Detect automatically": "auto", "Non-financial company": "general", "Bank": "bank"}
+
+
 def start_run(content: bytes, filename: str, name: str, ticker: str, industry: str, year: int, basis: str,
-              benchmark: str, source: str = "") -> None:
-    """Read the PDF, settle the statement basis, and open the Extract step."""
+              benchmark: str, source: str = "", sector: str = "auto") -> None:
+    """Read the PDF, settle the statement basis and company type, and open the Extract step."""
     with st.spinner("Reading PDF pages..."):
         pages, warnings, elapsed = read_pdf(content)
     found = statement_bases(pages)
@@ -42,11 +45,18 @@ def start_run(content: bytes, filename: str, name: str, ticker: str, industry: s
         flash("warning", f"You chose {basis}, but this report only contains {', '.join(sorted(found))} statements, "
                          f"so FinSight switched to **{sorted(found)[0]}**.")
         basis = sorted(found)[0]
-    if looks_like_bank(pages, industry):
+    bank = looks_like_bank(pages, industry)
+    if sector == "auto":
+        sector = "bank" if bank else "general"
+        if bank:
+            flash("info", "🏦 **Bank detected.** FinSight uses its bank fields: interest income, deposits, advances, "
+                          "non-performing loans and capital adequacy.")
+    elif sector == "general" and bank:
         warnings.insert(0, BANK_WARNING)
     run = Run(id=str(uuid4()), company=Company(name=name.strip(), ticker=ticker.strip(), industry=industry.strip(),
-              financial_year=int(year), statement_basis=basis, benchmarks=benchmark), filename=filename, source=source,
-              pages=pages, fields=[FinancialField(field_name=k) for k in FIELDS], warnings=warnings,
+              financial_year=int(year), statement_basis=basis, benchmarks=benchmark, sector=sector),
+              filename=filename, source=source,
+              pages=pages, fields=[FinancialField(field_name=k) for k in catalog(sector)], warnings=warnings,
               timings={"pdf_seconds": elapsed}, created_at=datetime.now(timezone.utc).isoformat())
     set_run(run, content)
     request_step(STEPS[1])
@@ -73,8 +83,10 @@ def upload_tab() -> None:
         ticker = b.text_input("Ticker", placeholder="Optional")
         industry = a.text_input("Industry", placeholder="e.g. Cement, Textiles")
         year = b.number_input("Financial year", 1900, 2200, 2025, help="The year the reporting period ends in.")
-        basis = st.selectbox("Statement basis", ["consolidated", "standalone"],
-                             help="If the report does not contain the basis you choose, FinSight switches and tells you.")
+        basis = a.selectbox("Statement basis", ["consolidated", "standalone"],
+                            help="If the report does not contain the basis you choose, FinSight switches and tells you.")
+        sector = b.selectbox("Company type", list(SECTOR_CHOICES),
+                             help="Banks get their own fields and ratios. Detection looks for bank-only lines such as deposits.")
         with st.expander("Optional: industry benchmarks"):
             benchmark = st.text_area("Benchmarks", placeholder="Metric, value, unit, period, and source.", max_chars=4000,
                                      label_visibility="collapsed")
@@ -85,7 +97,8 @@ def upload_tab() -> None:
             st.error("Enter a company name and upload a PDF, or load the synthetic demo.")
             return
         try:
-            start_run(upload.getvalue(), upload.name, name, ticker, industry, int(year), basis, benchmark)
+            start_run(upload.getvalue(), upload.name, name, ticker, industry, int(year), basis, benchmark,
+                      sector=SECTOR_CHOICES[sector])
         except ValueError as exc:
             st.error(str(exc))
 
@@ -95,7 +108,7 @@ def setup_screen() -> None:
     page_header("Start an analysis", [
         "New here? Try the **synthetic demo** first: it walks through every step with sample data.",
         "For a real report, upload its annual report PDF. Don't have it? Use **Open PSX financial reports** to download it first.",
-        "Non-bank companies only: banks report different lines from the ones FinSight extracts.",
+        "Banks are supported: FinSight detects them and uses bank fields (deposits, advances, capital adequacy).",
     ])
     demo, start = st.columns([1, 2], gap="large")
     with demo:
@@ -186,7 +199,7 @@ def processing_screen(run: Run) -> None:
         next_button("Next: results →", STEPS[3], "next_from_verified_extract")
     else:
         selected = st.multiselect("Pages to send to the AI", [p.number for p in run.pages],
-                                  default=candidate_pages(run.pages, run.company.statement_basis), key="selected_" + run.id,
+                                  default=candidate_pages(run.pages, run.company.statement_basis, sector=run.company.sector), key="selected_" + run.id,
                                   help="Physical PDF page numbers, which may differ from the printed page labels.")
         if st.button("Extract financial fields", type="primary", disabled=not selected):
             progress = st.empty()
@@ -279,7 +292,7 @@ def verification_screen(run: Run) -> None:
         next_button("Next: results →", STEPS[3], "next_from_verify")
     with st.container(border=True):
         st.markdown("**🔍 Check a field against the PDF**")
-        field = st.selectbox("Field", list(FIELDS), format_func=lambda k: FIELDS[k], key="evidence_" + run.id)
+        field = st.selectbox("Field", [f.field_name for f in run.fields], format_func=lambda k: LABELS[k], key="evidence_" + run.id)
         item = next(f for f in run.fields if f.field_name == field)
         st.write(f"AI value: **{item.raw_value or 'not found'}** {item.unit if item.raw_value else ''} · "
                  f"PDF page {item.source_page or '—'} · year {item.reporting_year or '—'}")

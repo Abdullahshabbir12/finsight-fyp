@@ -10,14 +10,14 @@ This puts FinSight on a free web address so friends can test it in their browser
 - **Public reports only.** Page text is sent to Google's Gemini API, whose free tier may use it to improve models.
 - The app sleeps after a period without visitors; the first visit afterwards takes about a minute to wake it.
 
-## Step 1: put the code on GitHub (private)
+## Step 1: put the code on GitHub (public)
 
 Your code must be in a GitHub repository. It is **public**, because FinSight's PDF library (PyMuPDF) is AGPL-licensed and users of a hosted copy must be able to get the source; the app footer links to it.
 
 If Claude has not already done this for you, run these in the project folder (replace the name if you like):
 
 ```bash
-gh repo create finsight-fyp --private --source=. --push
+gh repo create finsight-fyp --public --source=. --push
 ```
 
 Your API key is **not** uploaded: `.env` and `.streamlit/secrets.toml` are listed in `.gitignore`.
@@ -25,7 +25,7 @@ Your API key is **not** uploaded: `.env` and `.streamlit/secrets.toml` are liste
 ## Step 2: create the app
 
 1. Go to **share.streamlit.io** and sign in with your GitHub account.
-2. Click **Create app** → **Deploy a public app from GitHub** (the *app* is reachable by link; your *code* stays private).
+2. Click **Create app** → **Deploy a public app from GitHub** (the app is reachable by link; it still asks for the password).
 3. Choose:
    - **Repository:** `finsight-fyp`
    - **Branch:** `master`

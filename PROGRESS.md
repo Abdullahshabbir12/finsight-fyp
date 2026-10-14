@@ -93,3 +93,65 @@ New **Get it from PSX** option on the Upload screen: choose a company (about 670
 Checked live: the Abbott Pakistan 2025 report downloaded from PSX (176 pages, document 273772) produced the same suggested statement pages (106, 107, 108, 110, 111, 121) as the manually downloaded copy. Tests use a fake PSX server and never reach the real site. **226 tests passed.**
 
 **Correction (October 14):** the PSX auto-fetch was removed the same day. PSX's website terms of use prohibit software, robots or other automated tools from navigating or searching PSX websites (financials.psx.com.pk included) and allow only a single personal, non-commercial download. The Upload screen now links to PSX's library for the user to download in their own browser. The repository was made public with an AGPL-3.0 licence, as required for a hosted app that uses PyMuPDF.
+
+## October 15: banks, tested on 10 Pakistani bank reports
+
+Added bank support (company type **Bank**, or detected automatically): a 33-field bank catalogue (27 current-year, 6 prior-year), bank pages (statements plus the advances, deposits and capital adequacy notes found by their note numbers), bank ratios and growth, bank accounting checks and bank rules for the AI analysts. Islamic banks are covered. See **Banks** in the README.
+
+**Test set** (consolidated statements, downloaded from each bank's own website; PDFs in `data/`, git-ignored): MCB 2024, HBL 2024, UBL 2023, NBP 2022, Allied 2025, Bank Alfalah 2022, Bank AL Habib 2022, JS Bank 2024, Meezan 2025 (Islamic), BankIslami 2023 (Islamic). Askari, HabibMetro and Faysal blocked downloads (HTTP 403) and were replaced; Bank Alfalah 2023 (132 MB) is over the upload limit, so 2022 was used. Every one of the 330 values (33 × 10) was read independently from the PDF into an answer key, and accounting identities were checked for each key.
+
+**Extraction, first run versus after fixes** (330 values):
+
+| | First run | After fixes |
+|---|---|---|
+| Correct | 299 | 310 |
+| Wrong | 11 (8 not flagged) | 1 (flagged as a conflict) |
+| Missing | 20 | 19 |
+| 🟢 Ready values that were wrong | 8 of 274 | 0 of 305 |
+| Correct values flagged needlessly | 33 | 3 |
+
+| Bank | Correct | Wrong | Missing |
+|---|---|---|---|
+| MCB 2024 | 32 | 0 | 1 |
+| HBL 2024 | 31 | 0 | 2 |
+| UBL 2023 | 32 | 0 | 1 |
+| NBP 2022 | 32 | 0 | 1 |
+| Allied 2025 | 31 | 0 | 2 |
+| Bank Alfalah 2022 | 31 | 0 | 2 |
+| Bank AL Habib 2022 | 32 | 0 | 1 |
+| JS Bank 2024 | 31 | 1 (flagged) | 1 |
+| Meezan 2025 | 26 | 0 | 7 |
+| BankIslami 2023 | 32 | 0 | 1 |
+
+Proposal precision 99.7% (310 of 311 proposed numbers correct); field recall 93.9% (96.9% excluding CASA). Missing values: CASA in all 10 (never printed as one figure; the reviewer adds current and savings deposits by design); two non-performing allowances (run before that guidance was sharpened); Allied's lendings (printed "–"); six Meezan balance-sheet lines (model inconsistency: the same page returned all 13 values when run alone). NBP and Bank AL Habib were re-run after the share-count guidance change; the other eight are from the main after-fix run.
+
+Problems found and fixed during this test:
+
+| # | Problem | Fix |
+|---|---|---|
+| 1 | "Statement of Profit and Loss Account" titles, Islamic banking annexures and graphical pages | Title pattern extended; annexures and graphical pages excluded |
+| 2 | Bank notes (advances, deposits, capital adequacy) not suggested; share note missed when it does not repeat "consolidated" | Notes found from note numbers on the balance sheet; share note searched within the chosen section |
+| 3 | AI rebuilt quotes without the US-dollar columns, so 14 HBL and 13 JS Bank lines were flagged | The real printed line holding the same label and number is recorded instead, with a note |
+| 4 | Equity taken excluding non-controlling interest (HBL, Meezan) | Guidance: NET ASSETS including non-controlling interest |
+| 5 | Allowance against non-performing advances taken as the total allowance (UBL, BankIslami) or stored negative | Guidance points to the classification table's Total row; stored positive |
+| 6 | "Operating expenses" sub-line taken instead of total non-mark-up expenses (Allied) | Label and guidance name the total line |
+| 7 | Provisions sign: a reversal printed without brackets stored positive (Allied); a bracketed charge stored negative (Bank AL Habib) | Python sets the sign from profit before provisions less profit before tax when they match exactly, with a note |
+| 8 | Gross advances taken from the Performing column (Allied) or a single line (BankIslami) | Guidance for the Total column; new check: gross advances ≥ net advances + non-performing allowance |
+| 9 | Share count read from authorised capital (NBP) or rupee share capital (Bank AL Habib) | Guidance: issued shares only; new check (all companies): net profit ÷ shares must be within half to double reported EPS |
+
+**Ratios:** all 180 bank ratios (18 per bank) matched an independent recalculation from the answer keys. Warnings that fired are genuine: non-performing advances above 10% at UBL and NBP; the profit-before-provisions identity at MCB and Meezan, where share of associates explains the gap (stated in the warning).
+
+**AI council and synthesis** (all 10 completed). Checking the text against the PDFs found, and fixed:
+
+- `metric:net_profit` written for the field `field:net_profit` (HBL, UBL): all three attempts rejected. The prefix is now repaired, because no name is both a field and a metric.
+- A value under the wrong label in the synthesis ("total liabilities of" the total assets value, Meezan): new check that a cited field value follows its own label.
+- "Provisions increased" with no prior-year provisions figure (Bank AL Habib): direction words are now checked for every line, and rejected when no prior-year value exists.
+- "Stable asset quality" without benchmarks (Meezan): stable, sound, resilient, comfortable and prudent added to the evaluative words.
+- FinSight's own caveats (benchmarks, bank cash flow) written as uncited facts: relabelled as limitations instead of rejected.
+- A capital adequacy figure cited in prose would have shown as "PKR 19" instead of 18.74% (not yet triggered); a provisions reversal now reads "a net reversal of PKR 7.64 billion".
+
+After the fixes, all 680 saved AI claims across the 16 reports (10 banks, 6 companies) pass the current checks. About 450 Gemini free-tier calls were used, all on `gemini-3.5-flash-lite`.
+
+Reports: `output/reports/finsight-bank-*.pdf` and `.md`. Runs saved in the app database.
+
+**Caveat:** verification decisions were made by Claude from independent answer keys, and every review note says so. A human must confirm each run in the Human verification screen before thesis use.

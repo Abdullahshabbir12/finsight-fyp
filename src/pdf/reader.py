@@ -9,11 +9,13 @@ KEYWORDS = ("statement of financial position", "balance sheet", "statement of pr
             "notes to the financial statements", "revenue", "total assets")
 # Titles of the three primary statements that hold every predefined field. A real title starts its line.
 TITLE = re.compile(r"^(?:(?:consolidated|unconsolidated|separate|standalone)\s+)?(?:statement of financial position|"
-                   r"balance sheet|statement of profit or loss|profit and loss account|income statement|"
+                   r"balance sheet|statement of profit (?:or|and) loss(?: account)?|profit and loss account|income statement|"
                    r"statement of cash flows|cash flow statement)")  # no trailing \b: some PDFs glue "positionas at"
 # Pages that repeat statement titles but are not the audited statements themselves.
 # Pages labelled "direct method" are supplementary cash-flow summaries in the analysis section (audited statements carry no such label).
-NOT_STATEMENT_HEAD = ("analysis", "summary", "six year", "ten year", "highlights", "horizontal", "vertical", "direct method")
+NOT_STATEMENT_HEAD = ("analysis", "summary", "six year", "ten year", "highlights", "horizontal", "vertical", "direct method", "graphical")
+# Annexures repeat statement titles, e.g. a conventional bank's Islamic banking window; only the page head is checked.
+NOT_STATEMENT_TOP = ("annexure", "islamic banking business")
 NOT_STATEMENT_LINE = ("....", "notes to", "auditor", "comprise", "audited", "we have", "annexed")
 TITLE_FOLLOWERS = ("as at", "as on", "for the year", "for the period", "(", "note", "rupees", "amounts", "rs")
 SHARE_NOTE = "issued, subscribed and paid"
@@ -61,6 +63,8 @@ def statement_title(text: str) -> str:
     """Return a primary-statement title line, or '' when the page is not a statement page."""
     if any(word in " ".join(text.split()).lower() for word in NOT_STATEMENT_HEAD):
         return ""
+    if any(word in " ".join(text[:400].split()).lower() for word in NOT_STATEMENT_TOP):
+        return ""
     lines = [" ".join(line.split()).lower() for line in text.splitlines() if line.strip()]
     for i, line in enumerate(lines):
         # Titles are sometimes broken over two lines ("STATEMENT OF" / "FINANCIAL POSITION").
@@ -86,7 +90,34 @@ def statement_bases(pages: list[Page]) -> set[str]:
     return {"consolidated" if label == "consolidated" else "standalone" for label in labels}
 
 
-def candidate_pages(pages: list[Page], basis: str = "consolidated", limit: int = 12) -> list[int]:
+def bank_note_pages(pages: list[Page], statements: list[int]) -> list[int]:
+    """The advances, deposits and capital adequacy notes that follow the chosen statements.
+
+    The statement of financial position prints each line's note number ("Advances 9 ..."), so the note
+    heading ("9. ADVANCES") can be found exactly. Notes are searched only up to the next statement set.
+    """
+    later = [p.number for p in pages if p.number > max(statements) and statement_title(p.text)
+             and len(AMOUNT.findall(p.text)) >= 15]
+    end = min(later) if later else len(pages) + 1
+    section = [p for p in pages if min(statements) < p.number < end]
+    lines = lambda page: "\n".join(" ".join(line.split()) for line in page.text.lower().splitlines())
+    balance_sheet = next((lines(p) for p in pages if p.number in statements and "financial position" in statement_title(p.text)), "")
+    picked = []
+    for label, heading, extra in [(r"(?:advances|islamic financing[^\n]{0,40}?)(?:\s*[-–]\s*net)?", r"(?:advances|islamic financing)", 3),
+                                  (r"deposits and other accounts", r"deposits and other accounts", 1)]:
+        number = re.search(r"\b" + label + r"\s+(\d{1,2})\s+[\d(]", balance_sheet)
+        if not number:
+            continue
+        start = next((p.number for p in section if re.search(r"(?m)^" + number.group(1) + r"\.?\s+" + heading, lines(p))), None)
+        if start:
+            picked += range(start, start + extra + 1)
+    car = next((p.number for p in section if re.search(r"(?m)^\d{1,2}\.?\s+capital adequacy", lines(p))), None)
+    if car:
+        picked += [car, car + 1]
+    return [n for n in dict.fromkeys(picked) if n <= len(pages)]
+
+
+def candidate_pages(pages: list[Page], basis: str = "consolidated", limit: int = 12, sector: str = "general") -> list[int]:
     """Suggest the primary statement pages for the chosen basis, then the share-capital note.
 
     Statement pages are dense with amounts and carry a short title line. Analysis and
@@ -97,10 +128,13 @@ def candidate_pages(pages: list[Page], basis: str = "consolidated", limit: int =
     titles = {n: t for n, t in titles.items() if t}
     has_consolidated = any(title_basis(t) == "consolidated" for t in titles.values())
 
+    has_standalone = any(title_basis(t) == "standalone" for t in titles.values())
+
     def matches(label: str) -> bool:
         if basis == "consolidated":
             return label == "consolidated" or (label == "unlabelled" and not has_consolidated)
-        return label in {"standalone", "unlabelled"}
+        # Unlabelled titles are standalone statements, unless the report labels them "unconsolidated" explicitly.
+        return label == "standalone" or (label == "unlabelled" and not has_standalone)
 
     selected = [n for n, t in sorted(titles.items()) if matches(title_basis(t))]
     by_number = {p.number: p for p in pages}
@@ -111,13 +145,25 @@ def candidate_pages(pages: list[Page], basis: str = "consolidated", limit: int =
             selected.append(nxt.number)
     if not selected:
         return keyword_pages(pages, limit)
-    for p in pages:
+    if sector == "bank":
+        selected += bank_note_pages(pages, [n for n in selected if n in titles])
+        limit = max(limit, 18)
+    statements = [n for n in selected if n in titles]
+    later = [n for n in titles if n > max(statements) and not matches(title_basis(titles[n]))]
+    section_end = min(later) if later else len(pages) + 1
+    share_notes = [p for p in pages if SHARE_NOTE in p.text.lower() and "ordinary shares" in p.text.lower()]
+    # Prefer the note inside the chosen statements' section; note pages do not always repeat "consolidated".
+    def other_basis(page: Page) -> bool:
+        low = page.text.lower()
+        consolidated = "consolidated" in low and "unconsolidated" not in low
+        return consolidated if basis == "standalone" else "unconsolidated" in low[:600]
+    in_section = [p for p in share_notes if min(statements) < p.number < section_end and not other_basis(p)]
+    for p in in_section or share_notes:
         low = p.text.lower()
-        if SHARE_NOTE in low and "ordinary shares" in low:
-            label = "consolidated" if "consolidated" in low and "unconsolidated" not in low else "unlabelled"
-            if matches(label) and p.number not in selected:
-                selected.append(p.number)
-                break
+        label = "consolidated" if "consolidated" in low and "unconsolidated" not in low else "unlabelled"
+        if (in_section or matches(label)) and p.number not in selected:
+            selected.append(p.number)
+            break
     return sorted(set(selected))[:limit]
 
 
@@ -139,9 +185,9 @@ def keyword_pages(pages: list[Page], limit: int = 12) -> list[int]:
 BANK_TERMS = ("deposits and other accounts", "lendings to financial institutions", "balances with other banks",
               "due to financial institutions", "mark-up / return / interest earned", "mark-up/return/interest earned",
               "advances - net")
-BANK_WARNING = ("This looks like a bank's annual report. FinSight's fields are designed for non-financial companies: banks do "
-                "not report revenue, cost of sales, current assets or inventory, so most fields will be unavailable. "
-                "Choose a non-bank company, or continue to see the limited result.")
+BANK_WARNING = ("This looks like a bank's annual report, but the company type is set to non-financial. Banks do not report "
+                "revenue, cost of sales, current assets or inventory, so most fields will be unavailable. Start again with "
+                "company type **Bank** (or Detect automatically).")
 
 
 def looks_like_bank(pages: list[Page], industry: str = "") -> bool:

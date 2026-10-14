@@ -1,6 +1,6 @@
 """Transparent academic evaluation; human review is the reference, not an audit."""
 from decimal import Decimal
-from src.catalog import FIELDS
+from src.catalog import LABELS
 from src.extraction.service import apply_expense_convention, normalize
 from src.models import FinancialField, Run
 
@@ -50,7 +50,7 @@ def field_outcomes(run: Run) -> list[dict]:
             outcome = "sign_corrected"
         else:
             outcome = "wrong_value"
-        rows.append({"field": f.field_name, "label": FIELDS[f.field_name], "outcome": outcome,
+        rows.append({"field": f.field_name, "label": LABELS[f.field_name], "outcome": outcome,
                      "ai_proposed": None if proposed is None else str(proposed),
                      "verified": None if r is None or r.verified_value is None else str(r.verified_value),
                      "extraction_status": f.status, "review_reason": r.reason if r else "", "review_note": r.note if r else ""})
@@ -72,16 +72,16 @@ def evaluation(run: Run) -> dict:
     right_number = count["correct"] + count["correct_but_flagged"]
     return {
         "mode": "DEMO / SYNTHETIC DATA" if run.is_demo else "Live report",
-        "predefined_fields": len(FIELDS), "extracted_fields": extracted,
+        "predefined_fields": len(run.fields), "extracted_fields": extracted,
         "fields_accepted_without_changes": sum(r.decision == "accept" for r in run.reviews),
         "fields_edited_by_user": sum(r.decision == "edit" for r in run.reviews),
         "numeric_or_year_correction_count": len(verifiable) - correct,
         "unavailable_fields": sum(r.decision == "unavailable" for r in run.reviews),
-        "pending_review_fields": len(FIELDS) - reviewed,
+        "pending_review_fields": len(run.fields) - reviewed,
         "fields_that_could_be_verified": len(verifiable), "correctly_extracted_fields": correct,
         "extraction_accuracy": correct / len(verifiable) if verifiable else None,
-        "extraction_completeness": extracted / len(FIELDS),
-        "verified_coverage": len(verifiable) / len(FIELDS),
+        "extraction_completeness": extracted / len(run.fields),
+        "verified_coverage": len(verifiable) / len(run.fields),
         # Precision: of the numbers the AI proposed, how many were right. Recall: of the verified fields, how many it found.
         "proposal_precision": right_number / proposed_checked if proposed_checked else None,
         "field_recall": right_number / len(verifiable) if verifiable else None,
@@ -102,17 +102,18 @@ def evaluation(run: Run) -> dict:
 
 def aggregate(runs: list[Run]) -> tuple[list[dict], list[dict]]:
     """Combine reviewed live runs: one summary row per run, and outcome counts per field across runs."""
-    summaries, per_field = [], {k: {name: 0 for name in OUTCOMES} for k in FIELDS}
+    summaries, per_field = [], {k: {name: 0 for name in OUTCOMES} for k in LABELS}
     for run in runs:
         if run.is_demo or not run.verified_at:
             continue
         stats = evaluation(run)
-        summaries.append({"company": run.company.name, "year": run.company.financial_year, "run_id": run.id,
+        summaries.append({"company": run.company.name, "year": run.company.financial_year, "sector": run.company.sector, "run_id": run.id,
                           **{k: stats[k] for k in ("proposal_precision", "field_recall", "extraction_accuracy",
                                                    "extraction_completeness", "fields_edited_by_user", "unavailable_fields",
                                                    "ai_extraction_seconds", "total_processing_seconds", "api_calls")},
                           **{k: v for k, v in stats.items() if k.startswith("outcome_")}})
         for row in field_outcomes(run):
             per_field[row["field"]][row["outcome"]] += 1
-    fields = [{"field": FIELDS[k], **counts} for k, counts in per_field.items()] if summaries else []
+    # Only fields that appear in at least one run, so a bank-only or company-only set stays readable.
+    fields = [{"field": LABELS[k], **counts} for k, counts in per_field.items() if any(counts.values())] if summaries else []
     return summaries, fields

@@ -2,7 +2,7 @@
 from decimal import Decimal
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from src.catalog import FIELDS, expected_year
+from src.catalog import LABELS, catalog, expected_year
 
 
 class Record(BaseModel):
@@ -15,6 +15,7 @@ class Company(Record):
     industry: str = ""
     financial_year: int = Field(ge=1900, le=2200)
     statement_basis: Literal["consolidated", "standalone"] = "consolidated"
+    sector: Literal["general", "bank"] = "general"  # chooses the field catalogue and ratios
     benchmarks: str = Field(default="", max_length=4000)
 
 
@@ -40,7 +41,7 @@ class FinancialField(Record):
     @field_validator("field_name")
     @classmethod
     def known_field(cls, value: str) -> str:
-        if value not in FIELDS:
+        if value not in LABELS:
             raise ValueError("Unknown financial field")
         return value
 
@@ -122,17 +123,18 @@ def upgrade_run(run: Run) -> Run:
 
     A verified run gets an 'unavailable' review for each new field; nothing is invented.
     """
+    fields = list(catalog(run.company.sector))
     present = {f.field_name for f in run.fields}
-    for key in FIELDS:
+    for key in fields:
         if key not in present:
             run.fields.append(FinancialField(field_name=key))
-    run.fields.sort(key=lambda f: list(FIELDS).index(f.field_name))
+    run.fields.sort(key=lambda f: fields.index(f.field_name))
     if run.verified_at:
         reviewed = {r.field_name for r in run.reviews}
-        for key in FIELDS:
+        for key in fields:
             if key not in reviewed:
                 run.reviews.append(Review(field_name=key, decision="unavailable", verified_value=None,
                                           reporting_year=expected_year(key, run.company.financial_year),
                                           note="Field added to FinSight after this run was verified; not captured."))
-        run.reviews.sort(key=lambda r: list(FIELDS).index(r.field_name))
+        run.reviews.sort(key=lambda r: fields.index(r.field_name))
     return run

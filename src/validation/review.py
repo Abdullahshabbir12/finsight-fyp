@@ -1,7 +1,7 @@
 """The only gate from extracted proposals to calculation inputs."""
 from datetime import datetime, timezone
 from decimal import Decimal
-from src.catalog import FIELDS, expected_year, internal_unit
+from src.catalog import LABELS, catalog, expected_year, internal_unit
 from src.extraction.service import UNITS, allowed_units, parse_number
 from src.models import Review, Run
 
@@ -66,7 +66,7 @@ def review_rows(run: Run) -> list[dict]:
             value = plain(f.normalized_value / UNITS[unit])
         else:
             value = ""
-        row = {"Field": FIELDS[f.field_name], "Status": STATUS_LABEL[f.status], "AI value": ai_value(f),
+        row = {"Field": LABELS[f.field_name], "Status": STATUS_LABEL[f.status], "AI value": ai_value(f),
                "Extracted Value": f.raw_value or "N/A", "Unit": f.unit,
                "Normalized (base units)": str(f.normalized_value) if f.normalized_value is not None else "N/A",
                "Page": f.source_page, "Confidence": f.confidence,
@@ -109,12 +109,13 @@ def mark_remaining_unavailable(rows: list[dict], reason: str) -> int:
 
 
 def commit_review(run: Run, rows: list[dict]) -> None:
-    if len(rows) != len(FIELDS) or len(run.fields) != len(FIELDS):
+    fields = catalog(run.company.sector)
+    if len(rows) != len(fields) or [f.field_name for f in run.fields] != list(fields):
         raise ValueError("The complete field catalogue must be reviewed.")
     reviews, problems = [], []
     pages = {p.number for p in run.pages}
     for f, row in zip(run.fields, rows):
-        label = FIELDS[f.field_name]
+        label = LABELS[f.field_name]
         decision, reason, note = cell(row.get("Decision")), cell(row.get("Reason")), cell(row.get("Review Note"))
         year_text = cell(row.get("Verified Year")) or str(expected_year(f.field_name, run.company.financial_year))
         year = int(year_text) if year_text.isdigit() else 0
@@ -178,7 +179,8 @@ def commit_review(run: Run, rows: list[dict]) -> None:
 
 
 def verified_values(run: Run) -> dict[str, Decimal]:
-    if not run.verified_at or {r.field_name for r in run.reviews} != set(FIELDS) or len(run.reviews) != len(FIELDS):
+    fields = catalog(run.company.sector)
+    if not run.verified_at or {r.field_name for r in run.reviews} != set(fields) or len(run.reviews) != len(fields):
         raise ValueError("Complete and save human verification before calculating or analyzing.")
     values = {}
     for r in run.reviews:

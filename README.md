@@ -70,7 +70,7 @@ One Streamlit process, a local SQLite file, and ordinary Python modules. No vect
 
 ```text
 app.py                 Streamlit entry point
-src/catalog.py         Predefined financial fields
+src/catalog.py         Predefined financial fields (company and bank catalogues)
 src/models.py          Validated records
 src/demo.py            Synthetic teaching dataset
 src/pdf/               Page extraction and candidate selection
@@ -94,7 +94,7 @@ The AI never types numbers. Where a value belongs in a sentence it writes a refe
 - contradicts a verified comparison or sign (e.g. "total liabilities exceed total assets" when they do not, or "positive operating cash flow" when it is negative);
 - uses evaluative words such as "strong" or "efficient" without user-supplied benchmarks.
 
-Bank-specific guidance (deposits, net interest income) is only given to the AI when the industry is banking. A citation shows where a claim came from; it does not prove the claim, so these checks are deliberately strict.
+Bank-specific guidance (deposits are funding, not distress; leverage through capital adequacy) is only given to the AI when the company type is Bank. A citation shows where a claim came from; it does not prove the claim, so these checks are deliberately strict.
 
 Python 3.12, Streamlit, PyMuPDF, Pydantic, pandas, SQLite, and pytest follow the requested stack. `httpx` is the small HTTP client for the supported compatible chat APIs. `reportlab` creates PDF exports, and `python-dotenv` loads local environment settings.
 
@@ -110,6 +110,7 @@ Python 3.12, Streamlit, PyMuPDF, Pydantic, pandas, SQLite, and pytest follow the
   - **Growth:** revenue, net profit and operating cash flow growth = (current − prior) ÷ prior. N/A when the prior year is zero or negative, because a growth rate from a loss or negative base is not meaningful.
   - **Average balances:** return on average assets, return on average equity and average receivables turnover use (opening + closing) ÷ 2.
   - **Profit vs cash-flow divergence:** a warning when net profit growth exceeds operating cash flow growth by more than 25 percentage points (a teaching threshold).
+- **Share count check:** net profit ÷ shares should be roughly the reported EPS. A result below half or above double it (for example rupee share capital or authorised capital read as the share count) gives a warning. The band is wide because non-controlling interest and weighted shares make the two differ legitimately.
 - Financial-quality flags are indicators requiring further review, never findings of fraud. Two years of data give one growth rate, not a trend.
 
 | Metric | Python calculation |
@@ -131,12 +132,41 @@ Python 3.12, Streamlit, PyMuPDF, Pydantic, pandas, SQLite, and pytest follow the
 
 The calculation engine uses Python Decimal arithmetic. Rounding happens for display only. Percentage ratios are stored as fractions and displayed as percentages. The LLM receives these calculated values and is instructed not to calculate ratios. AI prose cannot contain numeric literals; cited quantities are rendered from the verified data and calculated metrics by Python. This reduces unsupported numerical claims but does not guarantee that qualitative interpretation is correct.
 
+## Banks
+
+Banks report differently: no revenue, cost of sales, current assets or inventory, and deposits are the main liability. When the company type is **Bank** (or **Detect automatically** recognises a bank's report), FinSight uses a separate 33-field catalogue, ratio set and checks. Islamic banks are covered too ("profit" for interest, "Islamic financing" for advances, "due to / from financial institutions" for borrowings and lendings).
+
+- **Fields (27 current year + 6 prior year):** interest earned and expensed, net interest income, non-interest income, total income, total non-mark-up expenses, profit before provisions, provisions (net charge), profit before and after tax, tax, EPS; total assets, cash with treasury banks, lendings, investments, net advances, total liabilities, deposits, borrowings, equity (net assets including non-controlling interest); gross advances, non-performing advances and the allowance against them, current and savings deposits (CASA), reported capital adequacy ratio and share count; prior-year net interest income, profit, assets, advances, deposits and equity.
+- **Pages:** besides the three primary statements and the share-capital note, FinSight finds the advances, deposits and capital adequacy notes by the note numbers printed on the balance sheet (e.g. `Advances 9` → note `9. ADVANCES`). Islamic banking annexures and US-dollar convenience columns are ignored.
+- **Signs:** interest expense, non-mark-up expenses and the non-performing allowance are stored positive. The provisions line is printed with or without brackets for both charges and reversals, so Python sets its sign from the profit lines either side of it (charge positive, reversal negative) when they match exactly, and notes it on the row.
+- **CASA** is rarely printed as one figure. FinSight leaves it for the reviewer, who adds current and savings deposits (customers and financial institutions) from the deposits note and records that evidence; the AI never sums.
+- **Capital adequacy** is the bank's own reported Basel III ratio (group level for consolidated statements), not recalculated. Use the actual ratio, not the minimum-requirement row printed beside it.
+
+| Metric | Python calculation |
+|---|---|
+| Net interest margin | Net interest income / (Lendings + Investments + Net advances), year-end |
+| Cost to income | Total non-mark-up expenses / Total income |
+| Return on assets, return on equity | Net profit / Total assets; Net profit / Equity (also on average balances) |
+| Non-interest income share | Non-interest income / Total income |
+| Advances to deposits (ADR) | Net advances / Deposits |
+| Investments to deposits | Investments / Deposits |
+| CASA ratio | Current and savings deposits / Deposits |
+| Infection ratio | Non-performing advances / Gross advances |
+| Provision coverage | Allowance against non-performing advances / Non-performing advances |
+| Equity to assets | Equity / Total assets |
+| Capital adequacy | Reported ratio |
+| Growth | Net interest income, net profit, advances, deposits: (current − prior) / prior |
+
+Tested on 10 Pakistani banks, conventional and Islamic: 310 of 330 values extracted correctly, no unflagged errors, and all 180 ratios matched an independent recalculation. See `PROGRESS.md`.
+
+**Bank checks** (warnings only): assets = liabilities + equity; net interest income = earned − expensed; total income = net interest + non-interest income; profit before provisions = total income − expenses (share of associates can explain a small gap); profit before tax = profit before provisions − provisions; profit after tax = profit before tax − tax; gross advances ≥ net advances + non-performing allowance; non-performing advances ≤ gross advances; CASA ≤ deposits; capital adequacy below 11.5% (a teaching reference for SBP's 10% minimum plus 1.5% conservation buffer; check current SBP rules); infection above 10% (a teaching heuristic). Deposits exceeding equity is normal for a bank and is not flagged.
+
 ## Using the workflow
 
 The step bar at the top (**1 · Upload → 2 · Extract → 3 · Verify → 4 · Results → 5 · Evaluate**) shows where you are, every screen starts with a short **What to do here** box, and a **Next** button appears when a step is done. It works the same on a phone.
 
-1. **Upload:** enter the company name, industry, year and statement basis, upload the PDF and click **Read the report**. Need the report first? **Open PSX financial reports** links to PSX's public financial reports library; download the annual report there in your browser (or from the company's website) and drop it in. FinSight does not download from PSX itself, because PSX's terms of use prohibit automated access to its websites. If you pick a basis the report does not contain, FinSight switches and tells you. Non-bank companies only: if the PDF looks like a bank's report, FinSight says so before any AI call.
-2. **Extract:** FinSight suggests the primary statements for your basis plus the share-capital note, skipping analysis, summary and contents pages; two-page spreads are read left page then right page. Compare the suggestion with the report's contents page, then click **Extract financial fields**. A summary shows how many values are 🟢 Ready, 🟠 Check and ⚪ Missing.
+1. **Upload:** enter the company name, industry, year, statement basis and company type, upload the PDF and click **Read the report**. Need the report first? **Open PSX financial reports** links to PSX's public financial reports library; download the annual report there in your browser (or from the company's website) and drop it in. FinSight does not download from PSX itself, because PSX's terms of use prohibit automated access to its websites. If you pick a basis the report does not contain, FinSight switches and tells you. **Company type** defaults to **Detect automatically**, which recognises a bank's report and switches to the bank fields; choosing **Non-financial company** for a bank's report shows a warning before any AI call.
+2. **Extract:** FinSight suggests the primary statements for your basis plus the share-capital note (and, for banks, the advances, deposits and capital adequacy notes), skipping analysis, summary and contents pages; two-page spreads are read left page then right page. Compare the suggestion with the report's contents page, then click **Extract financial fields**. A summary shows how many values are 🟢 Ready, 🟠 Check and ⚪ Missing.
 3. **Verify:** each row shows the AI's value, unit and page. Choose **accept**, **edit** or **unavailable**:
    - **✓ Accept all ready** accepts every 🟢 row; **Mark remaining unavailable** gives the rest one reason. Check accepted values against the PDF before finishing.
    - **Edit** needs evidence (a quote or source) and a **Reason** from the list (wrong number, wrong unit, wrong year, sign, missing, flagged). **Unavailable** needs a reason too. Notes are optional unless you pick *Other*.
@@ -164,7 +194,7 @@ To demonstrate correction tracking, in Verify set revenue to **edit**, type `990
 - **Outcome per field:** correct, correct but flagged, sign corrected, wrong year, wrong value, filled by human, unavailable. Download the per-field CSV for your appendix.
 - **All saved live runs:** the Evaluation screen combines every reviewed, non-demo run you saved with **Save run locally**, with CSV downloads per run and per field. Use this for results across several annual reports.
 - **Strict accuracy** (shown for continuity): original normalized value and reporting year match the final verified value/year, divided by all fields with a final verified value. A missing extraction entered by a human is a failed extraction in this denominator. Fields marked unavailable are excluded. If no fields can be verified, accuracy is N/A.
-- **Extraction completeness:** non-null normalized extracted values divided by all 21 predefined fields. This is separate from correctness.
+- **Extraction completeness:** non-null normalized extracted values divided by all predefined fields (27 for companies, 33 for banks). This is separate from correctness.
 - **Accepted without changes:** fields with the accept decision. **Edited by user:** fields with the edit decision, including evidence-only edits. **Numeric/year correction count:** verified fields whose original number or year did not match. An evidence-only edit may count as an edit without reducing numeric accuracy.
 - **Unavailable and pending fields** are reported separately. Unavailable does not mean zero.
 - **PDF/extraction/council/synthesis times:** measured wall-clock processing durations, including failed requests. Total processing excludes analyst waiting and UI rendering. Observed workflow time includes human interaction since loading the current session; reopening a saved run starts a new observed interval.
@@ -190,7 +220,7 @@ Tests cover every ratio's ordinary, missing-input, zero-denominator, negative-de
 - Text chunk selection is heuristic and deliberately visible. Missing pages, lost table headers, unfamiliar terminology, units and comparative columns can cause missing or incorrect proposals. Exact source matching catches unsupported quotations but does not establish semantic correctness.
 - No automatic derivation of missing extracted fields. Debt totals, gross profit and EBIT may remain unavailable if not explicitly reported. A human may enter a supported figure with an explanation.
 - Currency support is PKR only for monetary ratios. Other currencies are rejected for manual review; no FX conversions are performed.
-- Two years at most: prior-year data covers six key fields, so growth is a single year-on-year change, not a trend. Industry-specific bank/insurance ratios and multi-year trend analysis are not implemented. Runs saved before prior-year support show those fields as unavailable.
+- Two years at most: prior-year data covers six key fields, so growth is a single year-on-year change, not a trend. Bank ratios are implemented (see **Banks**); insurance, leasing and other financial-institution ratios and multi-year trend analysis are not. Runs saved before prior-year support show those fields as unavailable.
 - Structured JSON is always parsed and validated locally. `AI_RESPONSE_FORMAT=json_schema` is the recommended Gemini setting. For OpenRouter free endpoints, `json_object` may have broader compatibility; some endpoints reject strict schema requests. The app fails visibly and allows retry rather than accepting unstructured text.
 - Prompts and output checks reduce unsupported claims and investment-advice language but cannot prove qualitative correctness or eliminate every possible model error. Human review remains essential.
 - Local SQLite snapshots keep the original extraction and latest saved review, not a multi-user revision ledger. Save runs and export audit JSON for experiments. No auto-save or cross-device synchronization.

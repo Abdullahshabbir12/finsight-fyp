@@ -9,7 +9,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
 from src.ai.council import reference_registry, render_text
 from src.calculations.ratios import display_metric
-from src.catalog import FIELDS, internal_unit
+from src.catalog import LABELS, internal_unit
 from src.models import Claim, Run
 from src.validation.accounting import validate_run
 from src.validation.review import verified_values
@@ -48,9 +48,9 @@ def markdown_report(run: Run) -> str:
     for f in run.fields:
         r = reviews[f.field_name]
         value = f"{r.verified_value:,.2f}" if r.verified_value is not None else "N/A"
-        lines.append(f"| {FIELDS[f.field_name]} | {clean(f.raw_value or 'N/A')} / {clean(f.unit)} | {value} | {internal_unit(f.field_name)} | {r.decision} |")
+        lines.append(f"| {LABELS[f.field_name]} | {clean(f.raw_value or 'N/A')} / {clean(f.unit)} | {value} | {internal_unit(f.field_name)} | {r.decision} |")
     lines += ["", "### Unavailable fields: review notes", ""]
-    lines += [f"- **{FIELDS[r.field_name]}**: {clean(r.explanation() or 'No supported value available.')}"
+    lines += [f"- **{LABELS[r.field_name]}**: {clean(r.explanation() or 'No supported value available.')}"
               for r in run.reviews if r.decision == "unavailable"]
     lines += ["", "## Deterministic Financial Ratios", "", "Computed by Python from verified values. Single-year returns and turnover use year-end balances; average-balance versions and growth rates use the verified prior-year comparatives.", "",
               "| Metric | Result | Formula / N/A reason |", "|---|---|---|"]
