@@ -102,3 +102,11 @@ def test_bank_reports_are_recognised():
     company = [Page(number=1, text="Trade debts 1,000\nBills payable 200\nStock in trade 300")]
     assert looks_like_bank(bank) and not looks_like_bank(company)
     assert looks_like_bank(company, industry="Commercial banking")
+
+
+def test_statement_bases_are_detected():
+    from src.pdf.reader import statement_bases
+    both, _, _ = read_pdf(statement_pdf(["CONSOLIDATED STATEMENT OF FINANCIAL POSITION\nAS AT JUNE 30, 2025\n" + AMOUNTS,
+                                         "STATEMENT OF FINANCIAL POSITION\nAS AT JUNE 30, 2025\n" + AMOUNTS]))
+    single, _, _ = read_pdf(statement_pdf(["STATEMENT OF PROFIT OR LOSS\nFOR THE YEAR ENDED JUNE 30, 2025\n" + AMOUNTS]))
+    assert statement_bases(both) == {"consolidated", "standalone"} and statement_bases(single) == {"standalone"}

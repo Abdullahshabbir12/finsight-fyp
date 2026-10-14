@@ -57,6 +57,10 @@ Send testers the link and the password separately. Tell them: public annual repo
 - **See errors:** app menu → **Manage app** shows the logs.
 - **Stop sharing:** app menu → **Settings** → **Delete app**. The GitHub repository is unaffected.
 
+## Checking the PSX download on the hosted app
+
+Streamlit Cloud runs on servers outside Pakistan. After deploying, open **1 · Upload → Get it from PSX** and fetch one report. If the company list does not load, PSX is not answering those servers: testers can still use **Upload a PDF**.
+
 ## Using testers for your thesis data
 
 Testers can produce the evidence the FYP still needs: the conventional-analyst baseline and genuine human verification.

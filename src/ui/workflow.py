@@ -11,7 +11,8 @@ from src.database.store import list_runs, load_run
 from src.demo import demo_run
 from src.extraction.service import UNITS, extract_fields
 from src.models import Company, FinancialField, Run
-from src.pdf.reader import BANK_WARNING, candidate_pages, looks_like_bank, read_pdf, render_page
+from src.pdf.reader import BANK_WARNING, candidate_pages, looks_like_bank, read_pdf, render_page, statement_bases
+from src.sources import psx
 from src.ui.layout import STEPS, flash, next_button, page_header, request_step, show_flash
 from src.validation.review import (REASONS, UNAVAILABLE_REASONS, ReviewError, accept_ready, commit_review,
                                    mark_remaining_unavailable, review_rows, save_draft)
@@ -28,14 +29,111 @@ def set_run(run: Run, pdf: bytes | None = None) -> None:
     st.session_state.review_version = st.session_state.get("review_version", 0) + 1
 
 
+@st.cache_data(ttl=86400, show_spinner=False)
+def psx_companies() -> dict[str, str]:
+    return psx.list_companies()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def psx_annual_reports(ticker: str) -> dict:
+    return psx.annual_reports(ticker)
+
+
+def start_run(content: bytes, filename: str, name: str, ticker: str, industry: str, year: int, basis: str,
+              benchmark: str, source: str = "") -> None:
+    """Read the PDF, settle the statement basis, and open the Extract step."""
+    with st.spinner("Reading PDF pages..."):
+        pages, warnings, elapsed = read_pdf(content)
+    found = statement_bases(pages)
+    if basis == "auto":
+        basis = "consolidated" if "consolidated" in found else "standalone"
+        flash("info", f"Statement basis set to **{basis}**: it is what this report's primary statements show.")
+    elif found and basis not in found:
+        # Extracting the wrong basis flags every value as a mismatch; say so and use what the report contains.
+        flash("warning", f"You chose {basis}, but this report only contains {', '.join(sorted(found))} statements, "
+                         f"so FinSight switched to **{sorted(found)[0]}**.")
+        basis = sorted(found)[0]
+    if looks_like_bank(pages, industry):
+        warnings.insert(0, BANK_WARNING)
+    run = Run(id=str(uuid4()), company=Company(name=name.strip(), ticker=ticker.strip(), industry=industry.strip(),
+              financial_year=int(year), statement_basis=basis, benchmarks=benchmark), filename=filename, source=source,
+              pages=pages, fields=[FinancialField(field_name=k) for k in FIELDS], warnings=warnings,
+              timings={"pdf_seconds": elapsed}, created_at=datetime.now(timezone.utc).isoformat())
+    set_run(run, content)
+    request_step(STEPS[1])
+    st.rerun()
+
+
+def psx_tab() -> None:
+    try:
+        companies = psx_companies()
+    except psx.PSXError as exc:
+        st.warning(f"{exc} Use the **Upload a PDF** tab.")
+        return
+    ticker = st.selectbox("Company", list(companies), index=None, format_func=lambda t: f"{companies[t]} ({t})",
+                          placeholder="Type a company name or ticker...")
+    if not ticker:
+        st.caption(f"Annual reports for {len(companies)} PSX-listed companies, from PSX's financial reports library.")
+        return
+    try:
+        reports = psx_annual_reports(ticker)
+    except psx.PSXError as exc:
+        st.warning(f"{exc} Use the **Upload a PDF** tab.")
+        return
+    if not reports:
+        st.info("PSX has no annual reports for this company. Use the **Upload a PDF** tab.")
+        return
+    a, b = st.columns(2)
+    year = a.selectbox("Financial year", list(reports), help="The year the reporting period ends in.")
+    industry = b.text_input("Industry", placeholder="Optional, e.g. Cement", key="psx_industry")
+    with st.expander("Optional: industry benchmarks"):
+        benchmark = st.text_area("Benchmarks", placeholder="Metric, value, unit, period, and source.", max_chars=4000,
+                                 label_visibility="collapsed", key="psx_benchmarks")
+    report = reports[year]
+    st.caption(f"PSX document {report.doc_id}, posted {report.posted}. FinSight picks consolidated or standalone from the report.")
+    if st.button("Fetch annual report", type="primary", width="stretch"):
+        try:
+            with st.spinner("Downloading from PSX. Large reports can take a minute..."):
+                content = psx.download(report)
+            start_run(content, f"{ticker}-annual-report-{year}.pdf", companies[ticker], ticker, industry, year, "auto",
+                      benchmark, source=f"PSX financial reports library, document {report.doc_id} ({report.url})")
+        except (psx.PSXError, ValueError) as exc:
+            st.error(f"{exc}")
+
+
+def upload_tab() -> None:
+    with st.form("company"):
+        a, b = st.columns(2)
+        name = a.text_input("Company name", placeholder="e.g. Engro Fertilizers Limited")
+        ticker = b.text_input("Ticker", placeholder="Optional")
+        industry = a.text_input("Industry", placeholder="e.g. Cement, Textiles")
+        year = b.number_input("Financial year", 1900, 2200, 2025, help="The year the reporting period ends in.")
+        basis = st.selectbox("Statement basis", ["consolidated", "standalone"],
+                             help="If the report does not contain the basis you choose, FinSight switches and tells you.")
+        with st.expander("Optional: industry benchmarks"):
+            benchmark = st.text_area("Benchmarks", placeholder="Metric, value, unit, period, and source.", max_chars=4000,
+                                     label_visibility="collapsed")
+        upload = st.file_uploader("Annual report PDF (up to 100 MB)", type=["pdf"])
+        submitted = st.form_submit_button("Read the report", type="primary", width="stretch")
+    if submitted:
+        if not name.strip() or upload is None:
+            st.error("Enter a company name and upload a PDF, or load the synthetic demo.")
+            return
+        try:
+            start_run(upload.getvalue(), upload.name, name, ticker, industry, int(year), basis, benchmark)
+        except ValueError as exc:
+            st.error(str(exc))
+
+
 def setup_screen() -> None:
     show_flash()
     page_header("Start an analysis", [
         "New here? Try the **synthetic demo** first: it walks through every step with sample data.",
-        "For a real report, enter the company details and upload its annual report PDF. Non-bank companies only.",
-        "Pick **consolidated** if the report contains consolidated statements, otherwise **standalone**.",
+        "For a real report, **Get it from PSX**: pick the company and year and FinSight downloads the annual report. "
+        "Or upload a PDF you already have.",
+        "Non-bank companies only: banks report different lines from the ones FinSight extracts.",
     ])
-    demo, form = st.columns([1, 2], gap="large")
+    demo, start = st.columns([1, 2], gap="large")
     with demo:
         with st.container(border=True):
             st.markdown("**Just exploring?**")
@@ -45,39 +143,14 @@ def setup_screen() -> None:
                 request_step(STEPS[2])
                 st.rerun()
         saved_runs_card()
-    with form:
-        with st.form("company"):
+    with start:
+        with st.container(border=True):
             st.markdown("**Analyse an annual report**")
-            a, b = st.columns(2)
-            name = a.text_input("Company name", placeholder="e.g. Engro Fertilizers Limited")
-            ticker = b.text_input("Ticker", placeholder="Optional")
-            industry = a.text_input("Industry", placeholder="e.g. Cement, Textiles")
-            year = b.number_input("Financial year", 1900, 2200, 2025, help="The year the reporting period ends in.")
-            basis = st.selectbox("Statement basis", ["consolidated", "standalone"])
-            with st.expander("Optional: industry benchmarks"):
-                benchmark = st.text_area("Benchmarks", placeholder="Metric, value, unit, period, and source.", max_chars=4000,
-                                         label_visibility="collapsed")
-            upload = st.file_uploader("Annual report PDF (up to 100 MB)", type=["pdf"])
-            submitted = st.form_submit_button("Read the report", type="primary", width="stretch")
-    if submitted:
-        if not name.strip() or upload is None:
-            st.error("Enter a company name and upload a PDF, or load the synthetic demo.")
-            return
-        try:
-            with st.spinner("Reading PDF pages..."):
-                content = upload.getvalue()
-                pages, warnings, elapsed = read_pdf(content)
-            if looks_like_bank(pages, industry):
-                warnings.insert(0, BANK_WARNING)
-            run = Run(id=str(uuid4()), company=Company(name=name.strip(), ticker=ticker.strip(), industry=industry.strip(),
-                      financial_year=int(year), statement_basis=basis, benchmarks=benchmark), filename=upload.name,
-                      pages=pages, fields=[FinancialField(field_name=k) for k in FIELDS], warnings=warnings,
-                      timings={"pdf_seconds": elapsed}, created_at=datetime.now(timezone.utc).isoformat())
-            set_run(run, content)
-            request_step(STEPS[1])
-            st.rerun()
-        except ValueError as exc:
-            st.error(str(exc))
+            from_psx, from_file = st.tabs(["📥 Get it from PSX", "⬆️ Upload a PDF"])
+            with from_psx:
+                psx_tab()
+            with from_file:
+                upload_tab()
 
 
 def saved_runs_card() -> None:
@@ -138,7 +211,7 @@ def processing_screen(run: Run) -> None:
     a.metric("Pages", len(run.pages))
     b.metric("Readable pages", sum(bool(p.text.strip()) for p in run.pages))
     c.metric("Read in", f'{run.timings.get("pdf_seconds", 0):.1f}s')
-    st.caption(run.filename)
+    st.caption(run.filename + (f" · source: {run.source}" if run.source else ""))
     notes = [w for w in run.warnings if w != BANK_WARNING]
     if notes:
         with st.expander(f"Notes about this PDF ({len(notes)})"):

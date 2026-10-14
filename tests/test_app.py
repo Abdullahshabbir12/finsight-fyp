@@ -107,3 +107,42 @@ def test_theme_and_upload_settings_exist():
     assert config["theme"]["base"] == "light" and config["theme"]["primaryColor"] == "#087f8c"
     assert config["server"]["maxUploadSize"] == 100
     assert config["browser"]["gatherUsageStats"] is False
+
+
+def report_pdf() -> bytes:
+    import pymupdf
+    doc = pymupdf.open()
+    rows = "\n".join(f"Line item {i}    {i},234,567    {i},111,222" for i in range(1, 21))
+    doc.new_page().insert_text((40, 40), "STATEMENT OF FINANCIAL POSITION\nAS AT DECEMBER 31, 2024\n" + rows, fontsize=7)
+    return doc.tobytes()
+
+
+def test_fetch_from_psx_opens_extract_with_details_filled(monkeypatch):
+    import streamlit as st
+    from src.sources import psx
+    st.cache_data.clear()
+    report = psx.Report("EFERT", "Annual", "2024", "2025-03-03", "249069")
+    monkeypatch.setattr(psx, "list_companies", lambda: {"EFERT": "Engro Fertilizers Limited"})
+    monkeypatch.setattr(psx, "annual_reports", lambda ticker: {2024: report})
+    monkeypatch.setattr(psx, "download", lambda r: report_pdf())
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=20).run()
+    app.selectbox[0].set_value("EFERT").run()
+    click(app, "Fetch annual report")
+    assert not app.exception
+    run = app.session_state.run
+    assert (run.company.name, run.company.ticker, run.company.financial_year) == ("Engro Fertilizers Limited", "EFERT", 2024)
+    assert run.company.statement_basis == "standalone"  # chosen from the report, which has only standalone statements
+    assert "249069" in run.source and app.session_state.step == "2 · Extract"
+    st.cache_data.clear()
+
+
+def test_psx_unavailable_points_to_upload(monkeypatch):
+    import streamlit as st
+    from src.sources import psx
+    st.cache_data.clear()
+    def down():
+        raise psx.PSXError("The PSX financial reports library is not reachable right now.")
+    monkeypatch.setattr(psx, "list_companies", down)
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=20).run()
+    assert not app.exception and any("Upload a PDF" in w.value for w in app.warning)
+    st.cache_data.clear()

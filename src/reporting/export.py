@@ -38,7 +38,7 @@ def markdown_report(run: Run) -> str:
     registry = reference_registry(run)
     lines = ["# FinSight | Financial Research", "", f"**Company:** {clean(c.name)} ({clean(c.ticker)})",
              f"**Financial year:** {c.financial_year} | **Industry:** {clean(c.industry)} | **Basis:** {c.statement_basis}",
-             f"**Document:** {clean(run.filename)}", f"**Run:** {run.id}", f"**Verification saved:** {run.verified_at}", "",
+             f"**Document:** {clean(run.filename)}" + (f" | **Source:** {clean(run.source)}" if run.source else ""), f"**Run:** {run.id}", f"**Verification saved:** {run.verified_at}", "",
              "**DEMO / SYNTHETIC DATA**" if run.is_demo else "**Human-verified data with AI-generated interpretation**", "",
              "**Status:** " + ("Final synthesis available; human review required." if run.synthesis else "Partial report: AI council or final synthesis is incomplete."),
              "", "## Verified Financial Data", "",

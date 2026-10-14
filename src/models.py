@@ -99,6 +99,7 @@ class Run(Record):
     company: Company
     is_demo: bool = False
     filename: str = ""
+    source: str = ""  # where the PDF came from, e.g. the PSX financial reports library document
     pages: list[Page] = Field(default_factory=list)
     fields: list[FinancialField] = Field(default_factory=list)
     reviews: list[Review] = Field(default_factory=list)

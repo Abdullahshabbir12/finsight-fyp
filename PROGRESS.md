@@ -85,3 +85,9 @@ Added prior-year revenue, net profit, operating cash flow, total assets, equity 
 - All 120 ratios (20 per report) matched an independent recalculation.
 - Divergence warning fired for Nishat Chunian and Engro (profit up, operating cash flow negative); Attock's cash-flow growth is N/A because its prior-year cash flow was negative.
 - 75 API calls, all successful. **206 tests passed.**
+
+## October 14: fetch annual reports from PSX
+
+New **Get it from PSX** option on the Upload screen: choose a company (about 670, from PSX's financial reports library at financials.psx.com.pk) and a year (annual reports since 2013); FinSight downloads the report, fills in name, ticker and year, and picks the statement basis from the report itself. Manual upload remains, and now switches basis (with a message) when the chosen one is not in the report. Live market prices were not added: PSX's live and delayed feeds require a licence.
+
+Checked live: the Abbott Pakistan 2025 report downloaded from PSX (176 pages, document 273772) produced the same suggested statement pages (106, 107, 108, 110, 111, 121) as the manually downloaded copy. Tests use a fake PSX server and never reach the real site. **226 tests passed.**

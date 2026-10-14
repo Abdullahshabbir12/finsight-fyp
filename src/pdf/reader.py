@@ -80,6 +80,12 @@ def title_basis(title: str) -> str:
     return "consolidated" if "consolidated" in title else "unlabelled"
 
 
+def statement_bases(pages: list[Page]) -> set[str]:
+    """Which statement sets the report contains: {"consolidated"}, {"standalone"} or both."""
+    labels = {title_basis(statement_title(p.text)) for p in pages if len(AMOUNT.findall(p.text)) >= 15 and statement_title(p.text)}
+    return {"consolidated" if label == "consolidated" else "standalone" for label in labels}
+
+
 def candidate_pages(pages: list[Page], basis: str = "consolidated", limit: int = 12) -> list[int]:
     """Suggest the primary statement pages for the chosen basis, then the share-capital note.
 
