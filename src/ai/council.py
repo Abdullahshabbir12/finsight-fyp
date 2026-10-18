@@ -285,7 +285,7 @@ def analysis_payload(run: Run) -> dict:
     verified_values(run)
     run.metrics = calculate(run)
     registry = reference_registry(run)
-    return {"company": run.company.model_dump(), "reference_registry": registry,
+    return {"company": run.company.profile(), "reference_registry": registry,
             "verified_comparisons": verified_comparisons(registry),
             "unavailable_fields": [{"field_name": r.field_name, "reason": r.explanation()}
                                    for r in run.reviews if r.decision == "unavailable"],

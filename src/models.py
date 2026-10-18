@@ -17,6 +17,14 @@ class Company(Record):
     statement_basis: Literal["consolidated", "standalone"] = "consolidated"
     sector: Literal["general", "bank"] = "general"  # chooses the field catalogue and ratios
     benchmarks: str = Field(default="", max_length=4000)
+    # Market inputs typed by the user, never extracted or verified. Kept away from the AI (see profile()).
+    share_price: Decimal | None = Field(default=None, gt=0)
+    price_date: str = Field(default="", max_length=40)
+    dividend_per_share: Decimal | None = Field(default=None, ge=0)
+
+    def profile(self) -> dict:
+        """Company details for AI prompts, without the user's market inputs, so valuation never enters the analysis."""
+        return self.model_dump(exclude={"share_price", "price_date", "dividend_per_share"})
 
 
 class Page(Record):
@@ -64,7 +72,7 @@ class Metric(Record):
     name: str
     label: str
     value: Decimal | None
-    format: Literal["percent", "multiple"]
+    format: Literal["percent", "multiple", "amount"]
     formula: str
     inputs: list[str]
     reason: str = ""

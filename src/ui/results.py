@@ -1,6 +1,7 @@
 """Verified values, reproducible metrics and clearly labeled interpretation."""
 import json
 import sqlite3
+from decimal import Decimal
 from time import perf_counter
 import pandas as pd
 import streamlit as st
@@ -8,12 +9,13 @@ from reportlab.platypus import LayoutError
 from src.ai.client import AIClient, AIError
 from src.ai.council import ROLES, reference_registry, render_text, run_council
 from src.ai.synthesis import run_synthesis
-from src.calculations.ratios import calculate, display_metric
+from src.calculations.ratios import calculate, display_metric, market_metrics
 from src.catalog import LABELS, internal_unit
 from src.models import Claim, Run
+from src.reporting.excel import display_peer, peer_rows, peer_workbook, run_workbook
 from src.reporting.export import markdown_report, pdf_report
 from src.ui.layout import STEPS, next_button, page_header
-from src.ui.workflow import source_viewer
+from src.ui.workflow import attach_pdf, show_source, source_viewer
 from src.database.store import list_runs, load_run
 from src.utils.evaluation import OUTCOMES, aggregate, evaluation, field_outcomes
 from src.validation.accounting import validate_run
@@ -96,6 +98,83 @@ def evaluation_screen(run: Run, header: bool = True) -> None:
     y.download_button("Download per-field totals CSV", pd.DataFrame(per_field).to_csv(index=False), file_name="finsight-field-totals.csv", mime="text/csv")
 
 
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def flags_panel(run: Run) -> None:
+    """Everything FinSight's checks raised, first thing on the Results screen."""
+    flags = [w for w in validate_run(run) if " extraction: " not in w]
+    with st.container(border=True):
+        if not flags:
+            st.markdown("**✅ No flags from FinSight's checks**")
+            st.caption("The checks are limited reconciliations and teaching heuristics, not an audit.")
+            return
+        st.markdown(f"**🚩 {len(flags)} flag{'s' if len(flags) != 1 else ''} to review**")
+        for flag in flags[:4]:
+            st.markdown("- " + flag)
+        if len(flags) > 4:
+            with st.expander(f"{len(flags) - 4} more"):
+                for flag in flags[4:]:
+                    st.markdown("- " + flag)
+        st.caption("Prompts for review, not conclusions.")
+
+
+def market_panel(run: Run) -> None:
+    c = run.company
+    with st.expander("💹 Valuation multiples · enter today's share price", expanded=c.share_price is not None):
+        st.caption("Type the price from PSX or your trading terminal; FinSight does not fetch prices (PSX market data "
+                   "needs a licence). Multiples appear here, in the reports and in Excel. The AI analysis never sees them.")
+        a, b, d = st.columns(3)
+        price = a.number_input("Share price (PKR)", min_value=0.0, step=0.01, format="%.2f", key="price_" + run.id,
+                               value=float(c.share_price) if c.share_price else None)
+        dps = b.number_input("Dividend per share (PKR, optional)", min_value=0.0, step=0.01, format="%.2f", key="dps_" + run.id,
+                             value=float(c.dividend_per_share) if c.dividend_per_share is not None else None)
+        c.price_date = d.text_input("Price date", value=c.price_date, max_chars=40, key="price_date_" + run.id)
+        c.share_price = Decimal(str(price)) if price else None
+        c.dividend_per_share = Decimal(str(dps)) if dps is not None else None
+        for col, metric in zip(st.columns(4), market_metrics(run)):
+            col.metric(metric.label, display_metric(metric), help=metric.formula + (" · " + metric.reason if metric.reason else ""))
+
+
+def peer_panel(run: Run) -> None:
+    st.caption("Compare this analysis with other saved analyses of the same company type, side by side.")
+    if run.is_demo:
+        st.info("The synthetic demo is fictional, so it is not compared with real companies.")
+        return
+    try:
+        saved = [r for r in list_runs() if not r[3] and r[0] != run.id]
+    except (OSError, sqlite3.Error):
+        st.warning("Saved runs are unavailable. Check the database path and file permissions.")
+        return
+    if not saved:
+        st.info("Save other analyses with 💾 Save run to compare them here.")
+        return
+    names = {r[0]: f"{r[1]} · saved {r[2][:10]}" for r in saved}
+    chosen = st.multiselect("Compare with", list(names), format_func=names.get, key="peers_" + run.id)
+    cache = st.session_state.setdefault("_peer_runs", {})
+    runs, skipped = [run], []
+    for run_id in chosen:
+        if run_id not in cache:
+            cache[run_id] = load_run(run_id)
+        other = cache[run_id]
+        try:
+            verified_values(other)
+        except ValueError:
+            skipped.append(f"{other.company.name} (verification not finished)")
+            continue
+        if other.company.sector != run.company.sector:
+            skipped.append(f"{other.company.name} (different company type)")
+            continue
+        runs.append(other)
+    if skipped:
+        st.caption("Not compared: " + "; ".join(skipped))
+    rows = peer_rows(runs)
+    st.dataframe(pd.DataFrame(display_peer(rows)), hide_index=True, width="stretch")
+    st.caption("Each column uses that company's own verified values and financial year. Years and statement bases may "
+               "differ, so compare with care. Not investment advice.")
+    st.download_button("Download comparison (Excel)", peer_workbook(runs), file_name="finsight-peer-comparison.xlsx", mime=XLSX)
+
+
 def results_screen(run: Run) -> None:
     page_header("Results", [
         "Ratios are calculated by Python from your verified values only; the AI never does arithmetic.",
@@ -128,6 +207,8 @@ def results_screen(run: Run) -> None:
     if growth:
         for col, metric in zip(st.columns(3), growth):
             col.metric(metric.label, display_metric(metric))
+    flags_panel(run)
+    market_panel(run)
     st.caption("Verified figures and Python-calculated ratios. Everything under the AI button is interpretation.")
     button_label = "Generate demo council & synthesis" if run.is_demo else "Run AI council & synthesis"
     if st.button(button_label, type="primary", disabled=run.synthesis is not None):
@@ -144,7 +225,7 @@ def results_screen(run: Run) -> None:
     if "workflow_start" in st.session_state:
         run.timings["workflow_seconds"] = perf_counter() - st.session_state.workflow_start
     registry = reference_registry(run)
-    tab_names = ["Overview", "Financial Data", "Ratios", *ROLES, "Final Synthesis", "Sources / Evidence", "Evaluation"]
+    tab_names = ["Overview", "Financial Data", "Ratios", "Peer comparison", *ROLES, "Final Synthesis", "Sources / Evidence", "Evaluation"]
     tabs = dict(zip(tab_names, st.tabs(tab_names)))
     with tabs["Overview"]:
         st.markdown("### Research workspace")
@@ -174,19 +255,34 @@ def results_screen(run: Run) -> None:
                 "Extracted normalized": str(f.normalized_value) if f.normalized_value is not None else "N/A",
                 "Human verified": str(r.verified_value) if r.verified_value is not None else "N/A", "Internal unit": internal_unit(f.field_name),
                 "Decision": r.decision, "Year": r.reporting_year, "Source page": r.source_page, "Review note": r.note})
-        st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+        attach_pdf(run, "attach_data_" + run.id)
+        st.caption("👆 Select a row to see that figure highlighted on its PDF page.")
+        event = st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch", on_select="rerun",
+                             selection_mode="single-row", key="data_table_" + run.id)
+        picked = event.selection.rows if event else []
+        if picked:
+            show_source(run, run.fields[picked[0]].field_name, "data_source_" + run.id)
     with tabs["Ratios"]:
         st.caption("Deterministic calculated metrics. The LLM does not calculate these ratios.")
-        st.dataframe(pd.DataFrame([{"Metric": m.label, "Result": display_metric(m), "Formula": m.formula,
-                                  "Explanation": m.reason} for m in run.metrics]), hide_index=True, width="stretch")
-        for m in run.metrics:
-            with st.expander(f"{m.label} · {display_metric(m)}"):
-                st.code(m.formula, language=None)
-                for key in m.inputs:
-                    item = registry.get("field:" + key)
-                    st.write(item["display"] if item else f"{LABELS[key]}: unavailable")
-                if m.reason:
-                    st.caption(m.reason)
+        attach_pdf(run, "attach_ratios_" + run.id)
+        st.caption("👆 Select a ratio to see its formula and every input highlighted on its PDF page.")
+        event = st.dataframe(pd.DataFrame([{"Metric": m.label, "Result": display_metric(m), "Formula": m.formula,
+                                            "Explanation": m.reason} for m in run.metrics]), hide_index=True, width="stretch",
+                             on_select="rerun", selection_mode="single-row", key="ratio_table_" + run.id)
+        picked = event.selection.rows if event else []
+        if picked:
+            m = run.metrics[picked[0]]
+            st.markdown(f"**{m.label} = {display_metric(m)}**")
+            st.code(m.formula, language=None)
+            if m.reason:
+                st.caption(m.reason)
+            for key in m.inputs:
+                item = registry.get("field:" + key)
+                st.write(item["display"] if item else f"{LABELS[key]}: unavailable")
+                if item:
+                    show_source(run, key, f"ratio_source_{run.id}_{m.name}")
+    with tabs["Peer comparison"]:
+        peer_panel(run)
     for role in ROLES:
         with tabs[role]:
             show_analyst(run, role, registry)
@@ -217,7 +313,7 @@ def results_screen(run: Run) -> None:
         st.markdown("**Download the research report**")
         st.caption("Verified data, calculations, AI interpretation, sources and limitations. Labelled partial if the AI analysis is incomplete.")
         report = markdown_report(run)
-        a, b, c = st.columns(3)
+        a, b, x, c = st.columns(4)
         with b:
             try:
                 content = pdf_report(run)
@@ -225,5 +321,7 @@ def results_screen(run: Run) -> None:
             except (ValueError, OSError, RuntimeError, LayoutError):
                 st.warning("PDF export is unavailable. Use Markdown export for this run.")
         a.download_button("Download Markdown", report, file_name=f"finsight-{run.id}.md", mime="text/markdown", width="stretch")
+        x.download_button("Download Excel", run_workbook(run), file_name=f"finsight-{run.id}.xlsx", mime=XLSX, width="stretch",
+                          help="Verified data with evidence, ratios as live Excel formulas, valuation from an editable price cell.")
         c.download_button("Download full audit JSON", run.model_dump_json(indent=2), file_name=f"finsight-{run.id}-audit.json", mime="application/json", width="stretch")
     next_button("Next: measure the AI →", STEPS[4], "next_from_results")

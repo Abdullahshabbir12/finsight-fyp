@@ -11,10 +11,11 @@ from src.database.store import list_runs, load_run
 from src.demo import demo_run
 from src.extraction.service import UNITS, extract_fields
 from src.models import Company, FinancialField, Run
-from src.pdf.reader import BANK_WARNING, candidate_pages, looks_like_bank, read_pdf, render_page, statement_bases
+from src.pdf.reader import (BANK_WARNING, candidate_pages, highlight_page, looks_like_bank, page_count, read_pdf,
+                            render_page, statement_bases)
 from src.ui.layout import STEPS, flash, next_button, page_header, request_step, show_flash
 from src.validation.review import (REASONS, UNAVAILABLE_REASONS, ReviewError, accept_ready, commit_review,
-                                   mark_remaining_unavailable, review_rows, save_draft)
+                                   evidence_target, mark_remaining_unavailable, review_rows, save_draft)
 
 # Only the columns needed to decide; evidence details live in the panel under the table.
 VISIBLE = ["Field", "Status", "AI value", "Decision", "Verified Value", "Entry Unit", "Reason",
@@ -153,6 +154,54 @@ def page_image(page: int, key: str) -> None:
             st.image(render_page(content, page), caption=f"Original annual report · PDF page {page}")
         except (ValueError, RuntimeError):
             st.warning("This page could not be rendered. Open the original PDF manually.")
+
+
+def attach_pdf(run: Run, key: str) -> bool:
+    """Saved runs keep page text, not the PDF; re-attaching the original enables page images and highlights."""
+    if st.session_state.get("pdf_bytes"):
+        return True
+    upload = st.file_uploader("Attach the original PDF to see figures highlighted on their pages", type=["pdf"], key=key)
+    if upload is None:
+        return False
+    content = upload.getvalue()
+    try:
+        pages = page_count(content)
+    except (ValueError, RuntimeError):
+        st.warning("This file could not be opened as a PDF.")
+        return False
+    if pages != len(run.pages):
+        st.warning(f"This PDF has {pages} pages but the analysis was made from a {len(run.pages)}-page document. Attach the same report.")
+        return False
+    st.session_state.pdf_bytes = content
+    return True
+
+
+def show_source(run: Run, field_name: str, key: str) -> None:
+    """The figure boxed in red on its printed line, with the full page underneath."""
+    page, numbers, quote = evidence_target(run, field_name)
+    if not page:
+        st.caption(f"{LABELS[field_name]}: no source page recorded.")
+        return
+    content = st.session_state.get("pdf_bytes")
+    if not content:
+        st.caption(f"{LABELS[field_name]}: PDF page {page}. Attach the original PDF to see it highlighted.")
+        return
+    cache = st.session_state.setdefault("_highlights", {})
+    marker = (len(content), page, tuple(numbers), quote)
+    if marker not in cache:
+        try:
+            cache[marker] = highlight_page(content, page, numbers, quote)
+        except (ValueError, RuntimeError, IndexError):
+            st.warning(f"PDF page {page} could not be rendered. Open the original PDF manually.")
+            return
+    full, close, found = cache[marker]
+    if found:
+        st.image(close, caption=f"{LABELS[field_name]} · PDF page {page} · the figure is boxed in red on its printed line")
+    else:
+        st.info(f"{LABELS[field_name]}: the figure is not printed as one number on PDF page {page} "
+                "(for example a total the reviewer added up). The page is shown; check the evidence quote.")
+    with st.expander(f"Full PDF page {page}"):
+        st.image(full)
 
 
 def source_viewer(run: Run, key: str) -> None:
@@ -301,7 +350,7 @@ def verification_screen(run: Run) -> None:
             st.warning(issue)
         for note in item.notes:
             st.info(note)
-        if item.source_page:
-            page_image(item.source_page, f"field_page_{run.id}_{field}")
+        if item.source_page and st.session_state.get("pdf_bytes"):
+            show_source(run, field, f"field_page_{run.id}_{field}")
     with st.expander("Browse all pages"):
         source_viewer(run, "verification_source_" + run.id)

@@ -78,7 +78,7 @@ src/extraction/        Structured AI extraction and unit normalization
 src/validation/        Human review gate and accounting checks
 src/calculations/      Deterministic ratio definitions and functions
 src/ai/                API client, four analyst perspectives, synthesis
-src/reporting/         Markdown and PDF exports
+src/reporting/         Markdown, PDF and Excel exports; peer comparison
 src/database/          SQLite snapshots
 src/utils/             Evaluation metrics
 src/ui/                Workflow and results screens
@@ -173,7 +173,12 @@ The step bar at the top (**1 · Upload → 2 · Extract → 3 · Verify → 4 ·
    - Type values in the unit shown (e.g. `184,390,517` with PKR thousand). Expenses are positive.
    - **Save progress** keeps unfinished work. **Finish verification** lists every remaining problem at once; ratios and AI analysis only use finished verifications.
    - **Check a field against the PDF**, under the table, shows the quote, extraction notes and the original page image.
-4. **Results:** deterministic ratios and growth, then **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure, and rejected AI answers are retried automatically with the reason. Download the **PDF**, **Markdown** or **full audit JSON** report.
+4. **Results:** deterministic ratios and growth, then **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure, and rejected AI answers are retried automatically with the reason. Download the **PDF**, **Markdown**, **Excel** or **full audit JSON** report. Also on this screen:
+   - **🚩 Flags to review:** every accounting-check warning, first thing on the page.
+   - **💹 Valuation multiples:** type today's share price (and optionally the dividend per share) to get P/E, P/B, market capitalisation and dividend yield. FinSight does not fetch prices, because PSX market data needs a licence. The price is user-supplied, labelled as such, and never sent to the AI.
+   - **Click a figure to see it on the page:** select a row in **Financial Data** (or a ratio in **Ratios**) and FinSight shows that number boxed in red on its printed line in the original PDF. A reopened saved run asks you to attach the same PDF first, because saved runs keep page text, not the PDF.
+   - **Peer comparison:** pick other saved analyses of the same company type to see key figures and every ratio side by side, with an Excel download.
+   - **Excel export:** verified values with page and quote, every ratio as a live Excel formula over those cells next to FinSight's Python result, an editable price cell that recalculates the multiples, and the AI statements.
 5. **Evaluate:** extraction outcomes per field, precision and recall, CSV downloads, and the combined table of all saved live runs.
 
 Click **💾 Save run** (top of the page) to keep a run; reopen it from **Open a saved analysis** on the Upload screen. The SQLite file is `data/finsight.sqlite3` by default and holds extracted page text, proposals, reviews, metrics and analysis, never API keys or the PDF itself.

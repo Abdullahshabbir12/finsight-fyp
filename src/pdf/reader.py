@@ -210,6 +210,61 @@ def chunk_pages(pages: list[Page], selected: list[int], max_chars: int = 14000) 
     return chunks
 
 
+def page_count(content: bytes) -> int:
+    with pymupdf.open(stream=content, filetype="pdf") as doc:
+        return doc.page_count
+
+
 def render_page(content: bytes, page_number: int) -> bytes:
     with pymupdf.open(stream=content, filetype="pdf") as doc:
         return doc[page_number - 1].get_pixmap(matrix=pymupdf.Matrix(1.3, 1.3)).tobytes("png")
+
+
+def _token(text: str) -> str:
+    """A printed number as a comparable token: '(12,880,545 )' and '12,880,545' are the same figure."""
+    return re.sub(r"[()\s%]", "", text).lstrip("-").rstrip(".,;:")
+
+
+def highlight_page(content: bytes, page_number: int, numbers: list[str], quote: str = "") -> tuple[bytes, bytes | None, bool]:
+    """Render a page with a figure highlighted on its printed line.
+
+    `numbers` are printed forms to look for, best first (e.g. the extracted raw value). The first one found on the
+    page is used; when it appears more than once, the occurrence sharing the most words with the quote's label wins.
+    Returns the full page, a close-up of the line (None when nothing was found) and whether the figure was found.
+    """
+    label = {w for w in re.findall(r"[a-z][a-z'-]+", quote.lower()) if len(w) > 2}
+    with pymupdf.open(stream=content, filetype="pdf") as doc:
+        page = doc[page_number - 1]
+        words = page.get_text("words")
+        hits = []
+        for number in numbers:
+            target = _token(number)
+            if len(target) >= 2 and any(ch.isdigit() for ch in target):
+                hits = [w for w in words if _token(w[4]) == target]
+            if hits:
+                break
+
+        def same_line(word, hit) -> bool:
+            middle = (hit[1] + hit[3]) / 2
+            return word[1] - 2 <= middle <= word[3] + 2
+
+        def score(hit) -> int:
+            return sum(1 for w in words if same_line(w, hit) and w[4].lower().strip(":,.") in label)
+
+        if not hits:
+            return page.get_pixmap(matrix=pymupdf.Matrix(1.3, 1.3)).tobytes("png"), None, False
+        hit = max(hits, key=score)  # max() keeps the first on ties: the statement's current-year column comes first
+        value = pymupdf.Rect(hit[:4])
+        labels = [pymupdf.Rect(w[:4]) for w in words if same_line(w, hit) and w[4].lower().strip(":,.") in label]
+        band = pymupdf.Rect(page.rect.x0, value.y0 - 3, page.rect.x1, value.y1 + 3)
+        marker = page.add_highlight_annot(band)  # a highlight blends under the text, keeping it crisp
+        marker.set_colors(stroke=(1, 0.86, 0.3))
+        marker.set_opacity(0.65)
+        marker.update()
+        for rect in labels:
+            page.draw_rect(rect + (-1, -1, 1, 1), color=(0.9, 0.55, 0), width=0.8, overlay=True)
+        page.draw_rect(value + (-2, -2, 2, 2), color=(0.85, 0.1, 0.1), width=1.6, overlay=True)
+        full = page.get_pixmap(matrix=pymupdf.Matrix(1.3, 1.3)).tobytes("png")
+        clip = pymupdf.Rect(page.rect.x0, max(page.rect.y0, value.y0 - 40), page.rect.x1, min(page.rect.y1, value.y1 + 40))
+        close = page.get_pixmap(matrix=pymupdf.Matrix(2.5, 2.5), clip=clip).tobytes("png")
+        return full, close, True

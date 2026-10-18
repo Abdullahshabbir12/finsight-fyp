@@ -8,7 +8,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
 from src.ai.council import reference_registry, render_text
-from src.calculations.ratios import display_metric
+from src.calculations.ratios import display_metric, market_metrics
 from src.catalog import LABELS, internal_unit
 from src.models import Claim, Run
 from src.validation.accounting import validate_run
@@ -56,6 +56,13 @@ def markdown_report(run: Run) -> str:
               "| Metric | Result | Formula / N/A reason |", "|---|---|---|"]
     for m in run.metrics:
         lines.append(f"| {m.label} | {display_metric(m)} | {clean(m.formula)}{'; ' + clean(m.reason) if m.reason else ''} |")
+    market = [m for m in market_metrics(run) if m.value is not None]
+    if market:
+        lines += ["", "### Valuation multiples (user-supplied price)", "",
+                  f"Share price PKR {c.share_price:,.2f}" + (f" ({clean(c.price_date)})" if c.price_date else "")
+                  + ", typed by the user and not verified by FinSight. Not used in the AI analysis.", "",
+                  "| Metric | Result | Formula |", "|---|---|---|"]
+        lines += [f"| {m.label} | {display_metric(m)} | {clean(m.formula)} |" for m in market]
     lines += ["", "## Validation / Reconciliation", ""]
     warnings = validate_run(run)
     lines += ["- " + clean(w) for w in warnings] or ["No warnings from the limited accounting checks. This is not an audit."]

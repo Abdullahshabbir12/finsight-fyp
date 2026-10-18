@@ -289,7 +289,7 @@ def extract_fields(run: Run, selected: list[int], client: AIClient, progress=Non
                 progress(i + 1, len(chunks))
             try:
                 response = client.request(ExtractionResponse, SYSTEM,
-                    {"company": run.company.model_dump(), "field_catalogue": catalog(run.company.sector),
+                    {"company": run.company.profile(), "field_catalogue": catalog(run.company.sector),
                      "field_guidance": {k: FIELD_GUIDANCE[k] for k in catalog(run.company.sector) if k in FIELD_GUIDANCE},
                      "allowed_units": list(UNITS), "candidate_schema": Candidate.model_json_schema(),
                      "evidence": chunk}, "extraction")

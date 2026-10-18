@@ -1,4 +1,5 @@
 """The only gate from extracted proposals to calculation inputs."""
+import re
 from datetime import datetime, timezone
 from decimal import Decimal
 from src.catalog import LABELS, catalog, expected_year, internal_unit
@@ -191,3 +192,28 @@ def verified_values(run: Run) -> dict[str, Decimal]:
                 raise ValueError("Verified values must be finite.")
             values[r.field_name] = r.verified_value
     return values
+
+
+def evidence_target(run: Run, field_name: str) -> tuple[int | None, list[str], str]:
+    """Where a figure is printed: its PDF page, the printed forms to look for (best first) and the quote.
+
+    The verified value is tried in the statement's unit and common scales, so an edited value is found too; the AI's
+    raw value comes next, then other numbers in the quote (e.g. the lines a reviewer added up for CASA).
+    """
+    field = next(f for f in run.fields if f.field_name == field_name)
+    review = next((r for r in run.reviews if r.field_name == field_name), None)
+    page = (review.source_page if review and review.source_page else None) or field.source_page
+    quote = (review.source_text if review else "") or field.source_text
+    numbers = []
+    if review and review.verified_value is not None:
+        value = abs(review.verified_value)
+        scales = [UNITS[field.unit]] if field.unit in UNITS else []
+        for scale in scales + [Decimal(1000), Decimal(10) ** 6, Decimal(1), Decimal(10) ** 9]:
+            printed = value / scale
+            if printed >= 1 or scale == 1:
+                numbers.append(f"{printed:,.0f}" if printed == printed.to_integral_value() else f"{printed:,.2f}")
+    if field.raw_value and (review is None or review.decision == "accept"):
+        numbers.insert(0, field.raw_value)
+    # Thousands-separated amounts only: short numbers in a quote are usually note references.
+    numbers += re.findall(r"\d{1,3}(?:,\d{3})+", quote)
+    return page, list(dict.fromkeys(n for n in numbers if len(n.strip("()")) >= 2)), quote

@@ -155,3 +155,13 @@ After the fixes, all 680 saved AI claims across the 16 reports (10 banks, 6 comp
 Reports: `output/reports/finsight-bank-*.pdf` and `.md`. Runs saved in the app database.
 
 **Caveat:** verification decisions were made by Claude from independent answer keys, and every review note says so. A human must confirm each run in the Human verification screen before thesis use.
+
+## October 18: features for brokers and analysts
+
+- **Flags panel** at the top of Results: every accounting-check warning in one place.
+- **Valuation multiples** from a share price the user types: P/E, P/B, market capitalisation, dividend yield. Kept out of the verified pipeline and out of every AI prompt (`Company.profile()`), so the AI never comments on valuation. Shown in the reports as user-supplied.
+- **Click a figure, see it on the page:** selecting a field or ratio shows the number boxed in red on its printed line, with the label marked, plus the full page. The printed form is derived from the verified value, so edited values are found too; when a figure appears twice on a page, the line sharing the quote's label wins. Saved runs can re-attach their PDF.
+- **Peer comparison** of saved runs of one company type, with Excel download.
+- **Excel export** with live formulas: on all 16 real saved runs, 360 of 360 Excel formulas reproduce FinSight's Python results.
+
+**245 tests passed.**

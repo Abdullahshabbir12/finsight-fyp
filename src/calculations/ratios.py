@@ -187,7 +187,64 @@ def calculate(run: Run) -> list[Metric]:
             + [calculate_average(name, values) for name in AVERAGE])
 
 
+MARKET_NOTE = "Uses a share price typed by the user, not verified by FinSight."
+
+
+def market_metrics(run: Run) -> list[Metric]:
+    """Valuation multiples from a user-supplied price. Not part of run.metrics, so the AI never analyses valuation."""
+    values = verified_values(run)
+    c = run.company
+    price, dps = c.share_price, c.dividend_per_share
+    eps, equity, shares = values.get("eps"), values.get("equity"), values.get("number_of_shares")
+    price_label = "[Share price (user-supplied)]"
+
+    def metric(name, label, fmt, formula, inputs, value=None, reason=""):
+        if price is None:
+            value, reason = None, "Enter a share price to calculate this multiple."
+        return Metric(name=name, label=label, value=value, format=fmt, formula=formula, inputs=inputs,
+                      reason=reason or MARKET_NOTE)
+
+    out = []
+    with localcontext() as ctx:
+        ctx.prec = 28
+        if eps is None:
+            pe = metric("price_to_earnings", "Price / Earnings (P/E)", "multiple", f"{price_label} / [{LABELS['eps']}]", ["eps"],
+                        reason="Missing verified input: " + LABELS["eps"])
+        elif eps <= 0:
+            pe = metric("price_to_earnings", "Price / Earnings (P/E)", "multiple", f"{price_label} / [{LABELS['eps']}]", ["eps"],
+                        reason="EPS is zero or negative; P/E is not meaningful.")
+        else:
+            pe = metric("price_to_earnings", "Price / Earnings (P/E)", "multiple", f"{price_label} / [{LABELS['eps']}]", ["eps"],
+                        price / eps if price else None)
+        out.append(pe)
+        book_formula = f"{price_label} / ([{LABELS['equity']}] / [{LABELS['number_of_shares']}])"
+        if equity is None or not shares:
+            out.append(metric("price_to_book", "Price / Book (P/B)", "multiple", book_formula, ["equity", "number_of_shares"],
+                              reason="Missing verified input: equity or number of shares"))
+        elif equity <= 0:
+            out.append(metric("price_to_book", "Price / Book (P/B)", "multiple", book_formula, ["equity", "number_of_shares"],
+                              reason="Equity is zero or negative; P/B is not meaningful."))
+        else:
+            out.append(metric("price_to_book", "Price / Book (P/B)", "multiple", book_formula, ["equity", "number_of_shares"],
+                              price / (equity / shares) if price else None,
+                              MARKET_NOTE + " Book value uses total equity, including any non-controlling interest."))
+        cap_formula = f"{price_label} x [{LABELS['number_of_shares']}]"
+        out.append(metric("market_capitalisation", "Market Capitalisation", "amount", cap_formula, ["number_of_shares"],
+                          price * shares if price and shares else None,
+                          "" if shares else "Missing verified input: " + LABELS["number_of_shares"]))
+        yield_formula = f"[Dividend per share (user-supplied)] / {price_label}"
+        out.append(metric("dividend_yield", "Dividend Yield", "percent", yield_formula, [],
+                          dps / price if price and dps is not None else None,
+                          "" if dps is not None else "Enter the dividend per share to calculate the yield."))
+    return out
+
+
 def display_metric(metric: Metric) -> str:
     if metric.value is None:
         return "N/A"
+    if metric.format == "amount":
+        for scale, word in ((Decimal(10) ** 9, "bn"), (Decimal(10) ** 6, "m")):
+            if abs(metric.value) >= scale:
+                return f"PKR {metric.value / scale:,.2f} {word}"
+        return f"PKR {metric.value:,.0f}"
     return f"{metric.value * 100:,.2f}%" if metric.format == "percent" else f"{metric.value:,.2f}x"
