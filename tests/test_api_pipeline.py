@@ -148,3 +148,18 @@ def test_daily_quota_is_reported_without_waiting(client, monkeypatch):
     with pytest.raises(AIError, match="resets in about 15 hours"):
         client.request(ExtractionResponse, "system", {}, "test")
     assert len(calls) == 1
+
+
+def test_overloaded_provider_is_retried_then_explained(client, monkeypatch):
+    calls = []
+    def post(*args, **kwargs):
+        calls.append(1)
+        if len(calls) < 3:
+            return httpx.Response(503, json={})
+        return httpx.Response(200, json={"choices": [{"message": {"content": '{"fields": []}'}, "finish_reason": "stop"}]})
+    monkeypatch.setattr(httpx.Client, "post", post)
+    assert client.request(ExtractionResponse, "system", {}, "test").fields == []
+    assert len(calls) == 3 and client.usage[-1]["server_retries"] == 2 and client.usage[-1]["success"]
+    mock_response(monkeypatch, 503, {})
+    with pytest.raises(AIError, match="busy or temporarily unavailable"):
+        client.request(ExtractionResponse, "system", {}, "test")

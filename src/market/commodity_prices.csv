@@ -1,0 +1,2829 @@
+month,series,unit,price
+2010-01,"Crude oil, Brent",$/bbl,76.4
+2010-01,"Coal, Australian",$/mt,97
+2010-01,"Coal, South African",$/mt,86.9
+2010-01,"Liquefied natural gas, Japan",$/mmbtu,10.02
+2010-01,Palm oil,$/mt,831
+2010-01,Soybean oil,$/mt,921
+2010-01,"Wheat, US HRW",$/mt,201.2
+2010-01,"Sugar, world",$/kg,0.58
+2010-01,"Cotton, A Index",$/kg,1.71
+2010-01,DAP,$/mt,383
+2010-01,Urea,$/mt,266.5
+2010-01,Aluminum,$/mt,2235
+2010-01,"Iron ore, cfr spot",$/dmtu,125.7
+2010-01,Copper,$/mt,7386
+2010-02,"Crude oil, Brent",$/bbl,74.3
+2010-02,"Coal, Australian",$/mt,94.2
+2010-02,"Coal, South African",$/mt,83.4
+2010-02,"Liquefied natural gas, Japan",$/mmbtu,10.52
+2010-02,Palm oil,$/mt,830
+2010-02,Soybean oil,$/mt,909
+2010-02,"Wheat, US HRW",$/mt,194
+2010-02,"Sugar, world",$/kg,0.56
+2010-02,"Cotton, A Index",$/kg,1.76
+2010-02,DAP,$/mt,413.6
+2010-02,Urea,$/mt,297.5
+2010-02,Aluminum,$/mt,2049
+2010-02,"Iron ore, cfr spot",$/dmtu,127.5
+2010-02,Copper,$/mt,6848
+2010-03,"Crude oil, Brent",$/bbl,79.3
+2010-03,"Coal, Australian",$/mt,94.4
+2010-03,"Coal, South African",$/mt,83
+2010-03,"Liquefied natural gas, Japan",$/mmbtu,10.42
+2010-03,Palm oil,$/mt,863
+2010-03,Soybean oil,$/mt,911
+2010-03,"Wheat, US HRW",$/mt,191.1
+2010-03,"Sugar, world",$/kg,0.41
+2010-03,"Cotton, A Index",$/kg,1.89
+2010-03,DAP,$/mt,424.5
+2010-03,Urea,$/mt,278.7
+2010-03,Aluminum,$/mt,2206
+2010-03,"Iron ore, cfr spot",$/dmtu,139.7
+2010-03,Copper,$/mt,7463
+2010-04,"Crude oil, Brent",$/bbl,85
+2010-04,"Coal, Australian",$/mt,100.2
+2010-04,"Coal, South African",$/mt,88.7
+2010-04,"Liquefied natural gas, Japan",$/mmbtu,10.98
+2010-04,Palm oil,$/mt,863
+2010-04,Soybean oil,$/mt,903
+2010-04,"Wheat, US HRW",$/mt,192.9
+2010-04,"Sugar, world",$/kg,0.36
+2010-04,"Cotton, A Index",$/kg,1.94
+2010-04,DAP,$/mt,417.5
+2010-04,Urea,$/mt,253.8
+2010-04,Aluminum,$/mt,2317
+2010-04,"Iron ore, cfr spot",$/dmtu,172.5
+2010-04,Copper,$/mt,7745
+2010-05,"Crude oil, Brent",$/bbl,76.3
+2010-05,"Coal, Australian",$/mt,100.1
+2010-05,"Coal, South African",$/mt,90.9
+2010-05,"Liquefied natural gas, Japan",$/mmbtu,11.39
+2010-05,Palm oil,$/mt,855
+2010-05,Soybean oil,$/mt,859
+2010-05,"Wheat, US HRW",$/mt,181.6
+2010-05,"Sugar, world",$/kg,0.34
+2010-05,"Cotton, A Index",$/kg,1.99
+2010-05,DAP,$/mt,410
+2010-05,Urea,$/mt,234
+2010-05,Aluminum,$/mt,2041
+2010-05,"Iron ore, cfr spot",$/dmtu,161.4
+2010-05,Copper,$/mt,6838
+2010-06,"Crude oil, Brent",$/bbl,74.8
+2010-06,"Coal, Australian",$/mt,98.2
+2010-06,"Coal, South African",$/mt,92.8
+2010-06,"Liquefied natural gas, Japan",$/mmbtu,10.48
+2010-06,Palm oil,$/mt,826
+2010-06,Soybean oil,$/mt,860
+2010-06,"Wheat, US HRW",$/mt,157.7
+2010-06,"Sugar, world",$/kg,0.35
+2010-06,"Cotton, A Index",$/kg,2.05
+2010-06,DAP,$/mt,392.5
+2010-06,Urea,$/mt,226.3
+2010-06,Aluminum,$/mt,1931
+2010-06,"Iron ore, cfr spot",$/dmtu,143.6
+2010-06,Copper,$/mt,6499
+2010-07,"Crude oil, Brent",$/bbl,74.7
+2010-07,"Coal, Australian",$/mt,96
+2010-07,"Coal, South African",$/mt,90.6
+2010-07,"Liquefied natural gas, Japan",$/mmbtu,11.32
+2010-07,Palm oil,$/mt,844
+2010-07,Soybean oil,$/mt,911
+2010-07,"Wheat, US HRW",$/mt,195.8
+2010-07,"Sugar, world",$/kg,0.38
+2010-07,"Cotton, A Index",$/kg,1.86
+2010-07,DAP,$/mt,418.1
+2010-07,Urea,$/mt,259.4
+2010-07,Aluminum,$/mt,1988
+2010-07,"Iron ore, cfr spot",$/dmtu,126.4
+2010-07,Copper,$/mt,6735
+2010-08,"Crude oil, Brent",$/bbl,76.7
+2010-08,"Coal, Australian",$/mt,89.8
+2010-08,"Coal, South African",$/mt,87.9
+2010-08,"Liquefied natural gas, Japan",$/mmbtu,11.3
+2010-08,Palm oil,$/mt,944
+2010-08,Soybean oil,$/mt,998
+2010-08,"Wheat, US HRW",$/mt,246.2
+2010-08,"Sugar, world",$/kg,0.41
+2010-08,"Cotton, A Index",$/kg,1.99
+2010-08,DAP,$/mt,459.9
+2010-08,Urea,$/mt,263.5
+2010-08,Aluminum,$/mt,2118
+2010-08,"Iron ore, cfr spot",$/dmtu,145.3
+2010-08,Copper,$/mt,7284
+2010-09,"Crude oil, Brent",$/bbl,77.8
+2010-09,"Coal, Australian",$/mt,94.9
+2010-09,"Coal, South African",$/mt,85.8
+2010-09,"Liquefied natural gas, Japan",$/mmbtu,11.03
+2010-09,Palm oil,$/mt,949
+2010-09,Soybean oil,$/mt,1035
+2010-09,"Wheat, US HRW",$/mt,271.7
+2010-09,"Sugar, world",$/kg,0.5
+2010-09,"Cotton, A Index",$/kg,2.31
+2010-09,DAP,$/mt,506
+2010-09,Urea,$/mt,308.8
+2010-09,Aluminum,$/mt,2162
+2010-09,"Iron ore, cfr spot",$/dmtu,140.6
+2010-09,Copper,$/mt,7709
+2010-10,"Crude oil, Brent",$/bbl,82.9
+2010-10,"Coal, Australian",$/mt,97.5
+2010-10,"Coal, South African",$/mt,91
+2010-10,"Liquefied natural gas, Japan",$/mmbtu,11.13
+2010-10,Palm oil,$/mt,1026
+2010-10,Soybean oil,$/mt,1147
+2010-10,"Wheat, US HRW",$/mt,270.2
+2010-10,"Sugar, world",$/kg,0.54
+2010-10,"Cotton, A Index",$/kg,2.79
+2010-10,DAP,$/mt,557.3
+2010-10,Urea,$/mt,332.5
+2010-10,Aluminum,$/mt,2347
+2010-10,"Iron ore, cfr spot",$/dmtu,148.5
+2010-10,Copper,$/mt,8292
+2010-11,"Crude oil, Brent",$/bbl,85.7
+2010-11,"Coal, Australian",$/mt,107.2
+2010-11,"Coal, South African",$/mt,103.2
+2010-11,"Liquefied natural gas, Japan",$/mmbtu,10.84
+2010-11,Palm oil,$/mt,1131
+2010-11,Soybean oil,$/mt,1232
+2010-11,"Wheat, US HRW",$/mt,274.1
+2010-11,"Sugar, world",$/kg,0.58
+2010-11,"Cotton, A Index",$/kg,3.41
+2010-11,DAP,$/mt,554.1
+2010-11,Urea,$/mt,365.4
+2010-11,Aluminum,$/mt,2333
+2010-11,"Iron ore, cfr spot",$/dmtu,156.1
+2010-11,Copper,$/mt,8470
+2010-12,"Crude oil, Brent",$/bbl,91.8
+2010-12,"Coal, Australian",$/mt,118.3
+2010-12,"Coal, South African",$/mt,115.2
+2010-12,"Liquefied natural gas, Japan",$/mmbtu,10.75
+2010-12,Palm oil,$/mt,1235
+2010-12,Soybean oil,$/mt,1325
+2010-12,"Wheat, US HRW",$/mt,306.5
+2010-12,"Sugar, world",$/kg,0.62
+2010-12,"Cotton, A Index",$/kg,3.7
+2010-12,DAP,$/mt,540.6
+2010-12,Urea,$/mt,380.6
+2010-12,Aluminum,$/mt,2351
+2010-12,"Iron ore, cfr spot",$/dmtu,163.1
+2010-12,Copper,$/mt,9147
+2011-01,"Crude oil, Brent",$/bbl,96.3
+2011-01,"Coal, Australian",$/mt,132.5
+2011-01,"Coal, South African",$/mt,122.6
+2011-01,"Liquefied natural gas, Japan",$/mmbtu,11.45
+2011-01,Palm oil,$/mt,1304
+2011-01,Soybean oil,$/mt,1366
+2011-01,"Wheat, US HRW",$/mt,326.6
+2011-01,"Sugar, world",$/kg,0.65
+2011-01,"Cotton, A Index",$/kg,3.94
+2011-01,DAP,$/mt,547.4
+2011-01,Urea,$/mt,378.5
+2011-01,Aluminum,$/mt,2440
+2011-01,"Iron ore, cfr spot",$/dmtu,179.2
+2011-01,Copper,$/mt,9556
+2011-02,"Crude oil, Brent",$/bbl,104
+2011-02,"Coal, Australian",$/mt,128.4
+2011-02,"Coal, South African",$/mt,117.7
+2011-02,"Liquefied natural gas, Japan",$/mmbtu,12.02
+2011-02,Palm oil,$/mt,1327
+2011-02,Soybean oil,$/mt,1360
+2011-02,"Wheat, US HRW",$/mt,348.1
+2011-02,"Sugar, world",$/kg,0.65
+2011-02,"Cotton, A Index",$/kg,4.7
+2011-02,DAP,$/mt,413.6
+2011-02,Urea,$/mt,297.5
+2011-02,Aluminum,$/mt,2508
+2011-02,"Iron ore, cfr spot",$/dmtu,187.2
+2011-02,Copper,$/mt,9868
+2011-03,"Crude oil, Brent",$/bbl,114.4
+2011-03,"Coal, Australian",$/mt,126.1
+2011-03,"Coal, South African",$/mt,121
+2011-03,"Liquefied natural gas, Japan",$/mmbtu,12.5
+2011-03,Palm oil,$/mt,1242
+2011-03,Soybean oil,$/mt,1307
+2011-03,"Wheat, US HRW",$/mt,316.7
+2011-03,"Sugar, world",$/kg,0.58
+2011-03,"Cotton, A Index",$/kg,5.06
+2011-03,DAP,$/mt,424.5
+2011-03,Urea,$/mt,278.7
+2011-03,Aluminum,$/mt,2556
+2011-03,"Iron ore, cfr spot",$/dmtu,169.4
+2011-03,Copper,$/mt,9503
+2011-04,"Crude oil, Brent",$/bbl,123.1
+2011-04,"Coal, Australian",$/mt,122.5
+2011-04,"Coal, South African",$/mt,124
+2011-04,"Liquefied natural gas, Japan",$/mmbtu,12.99
+2011-04,Palm oil,$/mt,1220
+2011-04,Soybean oil,$/mt,1310
+2011-04,"Wheat, US HRW",$/mt,336.1
+2011-04,"Sugar, world",$/kg,0.54
+2011-04,"Cotton, A Index",$/kg,4.78
+2011-04,DAP,$/mt,417.5
+2011-04,Urea,$/mt,253.8
+2011-04,Aluminum,$/mt,2678
+2011-04,"Iron ore, cfr spot",$/dmtu,179.3
+2011-04,Copper,$/mt,9493
+2011-05,"Crude oil, Brent",$/bbl,114.5
+2011-05,"Coal, Australian",$/mt,119.1
+2011-05,"Coal, South African",$/mt,120.5
+2011-05,"Liquefied natural gas, Japan",$/mmbtu,13.61
+2011-05,Palm oil,$/mt,1230
+2011-05,Soybean oil,$/mt,1296
+2011-05,"Wheat, US HRW",$/mt,355.3
+2011-05,"Sugar, world",$/kg,0.48
+2011-05,"Cotton, A Index",$/kg,3.65
+2011-05,DAP,$/mt,410
+2011-05,Urea,$/mt,234
+2011-05,Aluminum,$/mt,2596
+2011-05,"Iron ore, cfr spot",$/dmtu,177.1
+2011-05,Copper,$/mt,8960
+2011-06,"Crude oil, Brent",$/bbl,113.8
+2011-06,"Coal, Australian",$/mt,120.1
+2011-06,"Coal, South African",$/mt,119
+2011-06,"Liquefied natural gas, Japan",$/mmbtu,14.52
+2011-06,Palm oil,$/mt,1192
+2011-06,Soybean oil,$/mt,1319
+2011-06,"Wheat, US HRW",$/mt,326.4
+2011-06,"Sugar, world",$/kg,0.56
+2011-06,"Cotton, A Index",$/kg,3.18
+2011-06,DAP,$/mt,575.9
+2011-06,Urea,$/mt,478.8
+2011-06,Aluminum,$/mt,2558
+2011-06,"Iron ore, cfr spot",$/dmtu,170.9
+2011-06,Copper,$/mt,9067
+2011-07,"Crude oil, Brent",$/bbl,116.5
+2011-07,"Coal, Australian",$/mt,120.8
+2011-07,"Coal, South African",$/mt,116.3
+2011-07,"Liquefied natural gas, Japan",$/mmbtu,16.22
+2011-07,Palm oil,$/mt,1183
+2011-07,Soybean oil,$/mt,1337
+2011-07,"Wheat, US HRW",$/mt,303.9
+2011-07,"Sugar, world",$/kg,0.62
+2011-07,"Cotton, A Index",$/kg,2.69
+2011-07,DAP,$/mt,597.6
+2011-07,Urea,$/mt,483.8
+2011-07,Aluminum,$/mt,2525
+2011-07,"Iron ore, cfr spot",$/dmtu,173
+2011-07,Copper,$/mt,9650
+2011-08,"Crude oil, Brent",$/bbl,110.1
+2011-08,"Coal, Australian",$/mt,120.1
+2011-08,"Coal, South African",$/mt,118.3
+2011-08,"Liquefied natural gas, Japan",$/mmbtu,16.55
+2011-08,Palm oil,$/mt,1205
+2011-08,Soybean oil,$/mt,1328
+2011-08,"Wheat, US HRW",$/mt,327.1
+2011-08,"Sugar, world",$/kg,0.61
+2011-08,"Cotton, A Index",$/kg,2.52
+2011-08,DAP,$/mt,597.4
+2011-08,Urea,$/mt,475.5
+2011-08,Aluminum,$/mt,2379
+2011-08,"Iron ore, cfr spot",$/dmtu,177.5
+2011-08,Copper,$/mt,9001
+2011-09,"Crude oil, Brent",$/bbl,110.9
+2011-09,"Coal, Australian",$/mt,123.1
+2011-09,"Coal, South African",$/mt,115.6
+2011-09,"Liquefied natural gas, Japan",$/mmbtu,16.27
+2011-09,Palm oil,$/mt,1137
+2011-09,Soybean oil,$/mt,1308
+2011-09,"Wheat, US HRW",$/mt,315.9
+2011-09,"Sugar, world",$/kg,0.59
+2011-09,"Cotton, A Index",$/kg,2.58
+2011-09,DAP,$/mt,587.9
+2011-09,Urea,$/mt,508.8
+2011-09,Aluminum,$/mt,2293
+2011-09,"Iron ore, cfr spot",$/dmtu,177.2
+2011-09,Copper,$/mt,8300
+2011-10,"Crude oil, Brent",$/bbl,109.5
+2011-10,"Coal, Australian",$/mt,119.4
+2011-10,"Coal, South African",$/mt,110.9
+2011-10,"Liquefied natural gas, Japan",$/mmbtu,16.48
+2011-10,Palm oil,$/mt,1045
+2011-10,Soybean oil,$/mt,1223
+2011-10,"Wheat, US HRW",$/mt,289
+2011-10,"Sugar, world",$/kg,0.56
+2011-10,"Cotton, A Index",$/kg,2.44
+2011-10,DAP,$/mt,571.4
+2011-10,Urea,$/mt,493.5
+2011-10,Aluminum,$/mt,2181
+2011-10,"Iron ore, cfr spot",$/dmtu,150.4
+2011-10,Copper,$/mt,7394
+2011-11,"Crude oil, Brent",$/bbl,110.5
+2011-11,"Coal, Australian",$/mt,113.8
+2011-11,"Coal, South African",$/mt,105.5
+2011-11,"Liquefied natural gas, Japan",$/mmbtu,16.78
+2011-11,Palm oil,$/mt,1113
+2011-11,Soybean oil,$/mt,1214
+2011-11,"Wheat, US HRW",$/mt,281
+2011-11,"Sugar, world",$/kg,0.53
+2011-11,"Cotton, A Index",$/kg,2.31
+2011-11,DAP,$/mt,563.5
+2011-11,Urea,$/mt,481.3
+2011-11,Aluminum,$/mt,2080
+2011-11,"Iron ore, cfr spot",$/dmtu,135.5
+2011-11,Copper,$/mt,7581
+2011-12,"Crude oil, Brent",$/bbl,107.9
+2011-12,"Coal, Australian",$/mt,111.6
+2011-12,"Coal, South African",$/mt,104.2
+2011-12,"Liquefied natural gas, Japan",$/mmbtu,16.48
+2011-12,Palm oil,$/mt,1122
+2011-12,Soybean oil,$/mt,1203
+2011-12,"Wheat, US HRW",$/mt,269
+2011-12,"Sugar, world",$/kg,0.51
+2011-12,"Cotton, A Index",$/kg,2.1
+2011-12,DAP,$/mt,488.8
+2011-12,Urea,$/mt,423.1
+2011-12,Aluminum,$/mt,2022
+2011-12,"Iron ore, cfr spot",$/dmtu,136.4
+2011-12,Copper,$/mt,7565
+2012-01,"Crude oil, Brent",$/bbl,111.2
+2012-01,"Coal, Australian",$/mt,116.5
+2012-01,"Coal, South African",$/mt,106.3
+2012-01,"Liquefied natural gas, Japan",$/mmbtu,16.71
+2012-01,Palm oil,$/mt,1124
+2012-01,Soybean oil,$/mt,1216
+2012-01,"Wheat, US HRW",$/mt,274.9
+2012-01,"Sugar, world",$/kg,0.52
+2012-01,"Cotton, A Index",$/kg,2.23
+2012-01,DAP,$/mt,451.4
+2012-01,Urea,$/mt,368
+2012-01,Aluminum,$/mt,2144
+2012-01,"Iron ore, cfr spot",$/dmtu,140.3
+2012-01,Copper,$/mt,8040
+2012-02,"Crude oil, Brent",$/bbl,119.7
+2012-02,"Coal, Australian",$/mt,117
+2012-02,"Coal, South African",$/mt,105.3
+2012-02,"Liquefied natural gas, Japan",$/mmbtu,16.03
+2012-02,Palm oil,$/mt,1146
+2012-02,Soybean oil,$/mt,1249
+2012-02,"Wheat, US HRW",$/mt,277.8
+2012-02,"Sugar, world",$/kg,0.53
+2012-02,"Cotton, A Index",$/kg,2.22
+2012-02,DAP,$/mt,435.5
+2012-02,Urea,$/mt,375
+2012-02,Aluminum,$/mt,2208
+2012-02,"Iron ore, cfr spot",$/dmtu,140.4
+2012-02,Copper,$/mt,8441
+2012-03,"Crude oil, Brent",$/bbl,124.9
+2012-03,"Coal, Australian",$/mt,107.5
+2012-03,"Coal, South African",$/mt,103.4
+2012-03,"Liquefied natural gas, Japan",$/mmbtu,16.34
+2012-03,Palm oil,$/mt,1195
+2012-03,Soybean oil,$/mt,1285
+2012-03,"Wheat, US HRW",$/mt,283.9
+2012-03,"Sugar, world",$/kg,0.53
+2012-03,"Cotton, A Index",$/kg,2.19
+2012-03,DAP,$/mt,442.9
+2012-03,Urea,$/mt,393.1
+2012-03,Aluminum,$/mt,2184
+2012-03,"Iron ore, cfr spot",$/dmtu,144.7
+2012-03,Copper,$/mt,8471
+2012-04,"Crude oil, Brent",$/bbl,120.5
+2012-04,"Coal, Australian",$/mt,103.6
+2012-04,"Coal, South African",$/mt,101.3
+2012-04,"Liquefied natural gas, Japan",$/mmbtu,16.85
+2012-04,Palm oil,$/mt,1234
+2012-04,Soybean oil,$/mt,1309
+2012-04,"Wheat, US HRW",$/mt,266.3
+2012-04,"Sugar, world",$/kg,0.5
+2012-04,"Cotton, A Index",$/kg,2.2
+2012-04,DAP,$/mt,478
+2012-04,Urea,$/mt,494.4
+2012-04,Aluminum,$/mt,2050
+2012-04,"Iron ore, cfr spot",$/dmtu,147.6
+2012-04,Copper,$/mt,8289
+2012-05,"Crude oil, Brent",$/bbl,110.5
+2012-05,"Coal, Australian",$/mt,95.8
+2012-05,"Coal, South African",$/mt,93.8
+2012-05,"Liquefied natural gas, Japan",$/mmbtu,17.12
+2012-05,Palm oil,$/mt,1125
+2012-05,Soybean oil,$/mt,1221
+2012-05,"Wheat, US HRW",$/mt,264.4
+2012-05,"Sugar, world",$/kg,0.46
+2012-05,"Cotton, A Index",$/kg,1.95
+2012-05,DAP,$/mt,490.5
+2012-05,Urea,$/mt,513.1
+2012-05,Aluminum,$/mt,2008
+2012-05,"Iron ore, cfr spot",$/dmtu,136.6
+2012-05,Copper,$/mt,7956
+2012-06,"Crude oil, Brent",$/bbl,95.6
+2012-06,"Coal, Australian",$/mt,87.2
+2012-06,"Coal, South African",$/mt,85.3
+2012-06,"Liquefied natural gas, Japan",$/mmbtu,17.2
+2012-06,Palm oil,$/mt,1028
+2012-06,Soybean oil,$/mt,1182
+2012-06,"Wheat, US HRW",$/mt,276.2
+2012-06,"Sugar, world",$/kg,0.45
+2012-06,"Cotton, A Index",$/kg,1.81
+2012-06,DAP,$/mt,501.6
+2012-06,Urea,$/mt,456.9
+2012-06,Aluminum,$/mt,1890
+2012-06,"Iron ore, cfr spot",$/dmtu,134.7
+2012-06,Copper,$/mt,7423
+2012-07,"Crude oil, Brent",$/bbl,103.1
+2012-07,"Coal, Australian",$/mt,88.2
+2012-07,"Coal, South African",$/mt,87.3
+2012-07,"Liquefied natural gas, Japan",$/mmbtu,18.11
+2012-07,Palm oil,$/mt,1053
+2012-07,Soybean oil,$/mt,1239
+2012-07,"Wheat, US HRW",$/mt,345.7
+2012-07,"Sugar, world",$/kg,0.5
+2012-07,"Cotton, A Index",$/kg,1.85
+2012-07,DAP,$/mt,436.9
+2012-07,Urea,$/mt,307.5
+2012-07,Aluminum,$/mt,1876
+2012-07,"Iron ore, cfr spot",$/dmtu,127.9
+2012-07,Copper,$/mt,7584
+2012-08,"Crude oil, Brent",$/bbl,113.3
+2012-08,"Coal, Australian",$/mt,91
+2012-08,"Coal, South African",$/mt,89.1
+2012-08,"Liquefied natural gas, Japan",$/mmbtu,17.74
+2012-08,Palm oil,$/mt,1022
+2012-08,Soybean oil,$/mt,1250
+2012-08,"Wheat, US HRW",$/mt,349.4
+2012-08,"Sugar, world",$/kg,0.46
+2012-08,"Cotton, A Index",$/kg,1.86
+2012-08,DAP,$/mt,504.5
+2012-08,Urea,$/mt,382.5
+2012-08,Aluminum,$/mt,1845
+2012-08,"Iron ore, cfr spot",$/dmtu,107.5
+2012-08,Copper,$/mt,7516
+2012-09,"Crude oil, Brent",$/bbl,113.4
+2012-09,"Coal, Australian",$/mt,89
+2012-09,"Coal, South African",$/mt,85.8
+2012-09,"Liquefied natural gas, Japan",$/mmbtu,16.83
+2012-09,Palm oil,$/mt,1001
+2012-09,Soybean oil,$/mt,1281
+2012-09,"Wheat, US HRW",$/mt,353.4
+2012-09,"Sugar, world",$/kg,0.44
+2012-09,"Cotton, A Index",$/kg,1.86
+2012-09,DAP,$/mt,527.4
+2012-09,Urea,$/mt,384.4
+2012-09,Aluminum,$/mt,2064
+2012-09,"Iron ore, cfr spot",$/dmtu,99.5
+2012-09,Copper,$/mt,8088
+2012-10,"Crude oil, Brent",$/bbl,112
+2012-10,"Coal, Australian",$/mt,81.9
+2012-10,"Coal, South African",$/mt,82.8
+2012-10,"Liquefied natural gas, Japan",$/mmbtu,15.3
+2012-10,Palm oil,$/mt,886
+2012-10,Soybean oil,$/mt,1178
+2012-10,"Wheat, US HRW",$/mt,358.2
+2012-10,"Sugar, world",$/kg,0.45
+2012-10,"Cotton, A Index",$/kg,1.81
+2012-10,DAP,$/mt,533.5
+2012-10,Urea,$/mt,349
+2012-10,Aluminum,$/mt,1974
+2012-10,"Iron ore, cfr spot",$/dmtu,114
+2012-10,Copper,$/mt,8062
+2012-11,"Crude oil, Brent",$/bbl,109.7
+2012-11,"Coal, Australian",$/mt,85.9
+2012-11,"Coal, South African",$/mt,85.7
+2012-11,"Liquefied natural gas, Japan",$/mmbtu,15
+2012-11,Palm oil,$/mt,863
+2012-11,Soybean oil,$/mt,1138
+2012-11,"Wheat, US HRW",$/mt,360.8
+2012-11,"Sugar, world",$/kg,0.43
+2012-11,"Cotton, A Index",$/kg,1.78
+2012-11,DAP,$/mt,487.9
+2012-11,Urea,$/mt,383.5
+2012-11,Aluminum,$/mt,1949
+2012-11,"Iron ore, cfr spot",$/dmtu,120.4
+2012-11,Copper,$/mt,7711
+2012-12,"Crude oil, Brent",$/bbl,109.7
+2012-12,"Coal, Australian",$/mt,92.9
+2012-12,"Coal, South African",$/mt,88.8
+2012-12,"Liquefied natural gas, Japan",$/mmbtu,15.41
+2012-12,Palm oil,$/mt,844
+2012-12,Soybean oil,$/mt,1159
+2012-12,"Wheat, US HRW",$/mt,348
+2012-12,"Sugar, world",$/kg,0.43
+2012-12,"Cotton, A Index",$/kg,1.84
+2012-12,DAP,$/mt,472.8
+2012-12,Urea,$/mt,375.8
+2012-12,Aluminum,$/mt,2087
+2012-12,"Iron ore, cfr spot",$/dmtu,128.5
+2012-12,Copper,$/mt,7966
+2013-01,"Crude oil, Brent",$/bbl,113
+2013-01,"Coal, Australian",$/mt,92.8
+2013-01,"Coal, South African",$/mt,86.1
+2013-01,"Liquefied natural gas, Japan",$/mmbtu,15.89
+2013-01,Palm oil,$/mt,885
+2013-01,Soybean oil,$/mt,1192
+2013-01,"Wheat, US HRW",$/mt,335.5
+2013-01,"Sugar, world",$/kg,0.42
+2013-01,"Cotton, A Index",$/kg,1.89
+2013-01,DAP,$/mt,462.3
+2013-01,Urea,$/mt,380
+2013-01,Aluminum,$/mt,2038
+2013-01,"Iron ore, cfr spot",$/dmtu,150.5
+2013-01,Copper,$/mt,8047
+2013-02,"Crude oil, Brent",$/bbl,116.5
+2013-02,"Coal, Australian",$/mt,94.9
+2013-02,"Coal, South African",$/mt,85.1
+2013-02,"Liquefied natural gas, Japan",$/mmbtu,16.47
+2013-02,Palm oil,$/mt,920
+2013-02,Soybean oil,$/mt,1173
+2013-02,"Wheat, US HRW",$/mt,318.9
+2013-02,"Sugar, world",$/kg,0.4
+2013-02,"Cotton, A Index",$/kg,1.98
+2013-02,DAP,$/mt,464.5
+2013-02,Urea,$/mt,415.6
+2013-02,Aluminum,$/mt,2054
+2013-02,"Iron ore, cfr spot",$/dmtu,154.6
+2013-02,Copper,$/mt,8061
+2013-03,"Crude oil, Brent",$/bbl,109.2
+2013-03,"Coal, Australian",$/mt,91
+2013-03,"Coal, South African",$/mt,82.8
+2013-03,"Liquefied natural gas, Japan",$/mmbtu,16.27
+2013-03,Palm oil,$/mt,892
+2013-03,Soybean oil,$/mt,1117
+2013-03,"Wheat, US HRW",$/mt,309.7
+2013-03,"Sugar, world",$/kg,0.41
+2013-03,"Cotton, A Index",$/kg,2.08
+2013-03,DAP,$/mt,467.6
+2013-03,Urea,$/mt,395.6
+2013-03,Aluminum,$/mt,1910
+2013-03,"Iron ore, cfr spot",$/dmtu,139.9
+2013-03,Copper,$/mt,7646
+2013-04,"Crude oil, Brent",$/bbl,102.9
+2013-04,"Coal, Australian",$/mt,87.8
+2013-04,"Coal, South African",$/mt,82
+2013-04,"Liquefied natural gas, Japan",$/mmbtu,16.2
+2013-04,Palm oil,$/mt,874
+2013-04,Soybean oil,$/mt,1095
+2013-04,"Wheat, US HRW",$/mt,308.3
+2013-04,"Sugar, world",$/kg,0.39
+2013-04,"Cotton, A Index",$/kg,2.03
+2013-04,DAP,$/mt,461.1
+2013-04,Urea,$/mt,365.6
+2013-04,Aluminum,$/mt,1862
+2013-04,"Iron ore, cfr spot",$/dmtu,137.4
+2013-04,Copper,$/mt,7234
+2013-05,"Crude oil, Brent",$/bbl,103
+2013-05,"Coal, Australian",$/mt,87.7
+2013-05,"Coal, South African",$/mt,81.8
+2013-05,"Liquefied natural gas, Japan",$/mmbtu,16.22
+2013-05,Palm oil,$/mt,879
+2013-05,Soybean oil,$/mt,1073
+2013-05,"Wheat, US HRW",$/mt,319.7
+2013-05,"Sugar, world",$/kg,0.39
+2013-05,"Cotton, A Index",$/kg,2.04
+2013-05,DAP,$/mt,421.3
+2013-05,Urea,$/mt,358.1
+2013-05,Aluminum,$/mt,1832
+2013-05,"Iron ore, cfr spot",$/dmtu,124
+2013-05,Copper,$/mt,7249
+2013-06,"Crude oil, Brent",$/bbl,103.1
+2013-06,"Coal, Australian",$/mt,82.8
+2013-06,"Coal, South African",$/mt,77.3
+2013-06,"Liquefied natural gas, Japan",$/mmbtu,16.61
+2013-06,Palm oil,$/mt,877
+2013-06,Soybean oil,$/mt,1038
+2013-06,"Wheat, US HRW",$/mt,313.4
+2013-06,"Sugar, world",$/kg,0.38
+2013-06,"Cotton, A Index",$/kg,2.05
+2013-06,DAP,$/mt,424.1
+2013-06,Urea,$/mt,329.4
+2013-06,Aluminum,$/mt,1815
+2013-06,"Iron ore, cfr spot",$/dmtu,114.8
+2013-06,Copper,$/mt,7000
+2013-07,"Crude oil, Brent",$/bbl,107.7
+2013-07,"Coal, Australian",$/mt,77.3
+2013-07,"Coal, South African",$/mt,72.6
+2013-07,"Liquefied natural gas, Japan",$/mmbtu,16.17
+2013-07,Palm oil,$/mt,827
+2013-07,Soybean oil,$/mt,990
+2013-07,"Wheat, US HRW",$/mt,304.6
+2013-07,"Sugar, world",$/kg,0.37
+2013-07,"Cotton, A Index",$/kg,2.04
+2013-07,DAP,$/mt,409.6
+2013-07,Urea,$/mt,312.5
+2013-07,Aluminum,$/mt,1770
+2013-07,"Iron ore, cfr spot",$/dmtu,127.2
+2013-07,Copper,$/mt,6907
+2013-08,"Crude oil, Brent",$/bbl,111
+2013-08,"Coal, Australian",$/mt,77
+2013-08,"Coal, South African",$/mt,72.9
+2013-08,"Liquefied natural gas, Japan",$/mmbtu,15.6
+2013-08,Palm oil,$/mt,819
+2013-08,Soybean oil,$/mt,995
+2013-08,"Wheat, US HRW",$/mt,305.3
+2013-08,"Sugar, world",$/kg,0.38
+2013-08,"Cotton, A Index",$/kg,2.04
+2013-08,DAP,$/mt,400.4
+2013-08,Urea,$/mt,310.6
+2013-08,Aluminum,$/mt,1818
+2013-08,"Iron ore, cfr spot",$/dmtu,137.1
+2013-08,Copper,$/mt,7193
+2013-09,"Crude oil, Brent",$/bbl,111.6
+2013-09,"Coal, Australian",$/mt,77.6
+2013-09,"Coal, South African",$/mt,73.1
+2013-09,"Liquefied natural gas, Japan",$/mmbtu,14.96
+2013-09,Palm oil,$/mt,826
+2013-09,Soybean oil,$/mt,1020
+2013-09,"Wheat, US HRW",$/mt,307.5
+2013-09,"Sugar, world",$/kg,0.38
+2013-09,"Cotton, A Index",$/kg,1.99
+2013-09,DAP,$/mt,374.8
+2013-09,Urea,$/mt,301
+2013-09,Aluminum,$/mt,1761
+2013-09,"Iron ore, cfr spot",$/dmtu,134.2
+2013-09,Copper,$/mt,7159
+2013-10,"Crude oil, Brent",$/bbl,109.5
+2013-10,"Coal, Australian",$/mt,79.4
+2013-10,"Coal, South African",$/mt,80.6
+2013-10,"Liquefied natural gas, Japan",$/mmbtu,15.3
+2013-10,Palm oil,$/mt,860
+2013-10,Soybean oil,$/mt,991
+2013-10,"Wheat, US HRW",$/mt,325.7
+2013-10,"Sugar, world",$/kg,0.41
+2013-10,"Cotton, A Index",$/kg,1.97
+2013-10,DAP,$/mt,370
+2013-10,Urea,$/mt,296.9
+2013-10,Aluminum,$/mt,1815
+2013-10,"Iron ore, cfr spot",$/dmtu,132.6
+2013-10,Copper,$/mt,7203
+2013-11,"Crude oil, Brent",$/bbl,108.1
+2013-11,"Coal, Australian",$/mt,82.3
+2013-11,"Coal, South African",$/mt,83.8
+2013-11,"Liquefied natural gas, Japan",$/mmbtu,15.4
+2013-11,Palm oil,$/mt,904
+2013-11,Soybean oil,$/mt,990
+2013-11,"Wheat, US HRW",$/mt,306.8
+2013-11,"Sugar, world",$/kg,0.39
+2013-11,"Cotton, A Index",$/kg,1.87
+2013-11,DAP,$/mt,334.4
+2013-11,Urea,$/mt,305
+2013-11,Aluminum,$/mt,1748
+2013-11,"Iron ore, cfr spot",$/dmtu,136.3
+2013-11,Copper,$/mt,7071
+2013-12,"Crude oil, Brent",$/bbl,110.7
+2013-12,"Coal, Australian",$/mt,84.3
+2013-12,"Coal, South African",$/mt,84.6
+2013-12,"Liquefied natural gas, Japan",$/mmbtu,16.38
+2013-12,Palm oil,$/mt,886
+2013-12,Soybean oil,$/mt,991
+2013-12,"Wheat, US HRW",$/mt,291.6
+2013-12,"Sugar, world",$/kg,0.36
+2013-12,"Cotton, A Index",$/kg,1.93
+2013-12,DAP,$/mt,341.6
+2013-12,Urea,$/mt,305
+2013-12,Aluminum,$/mt,1740
+2013-12,"Iron ore, cfr spot",$/dmtu,135.8
+2013-12,Copper,$/mt,7215
+2014-01,"Crude oil, Brent",$/bbl,107.4
+2014-01,"Coal, Australian",$/mt,81.6
+2014-01,"Coal, South African",$/mt,82.9
+2014-01,"Liquefied natural gas, Japan",$/mmbtu,16.67
+2014-01,Palm oil,$/mt,863
+2014-01,Soybean oil,$/mt,942
+2014-01,"Wheat, US HRW",$/mt,275.6
+2014-01,"Sugar, world",$/kg,0.34
+2014-01,"Cotton, A Index",$/kg,2.01
+2014-01,DAP,$/mt,403.4
+2014-01,Urea,$/mt,330
+2014-01,Aluminum,$/mt,1727
+2014-01,"Iron ore, cfr spot",$/dmtu,128.1
+2014-01,Copper,$/mt,7291
+2014-02,"Crude oil, Brent",$/bbl,108.8
+2014-02,"Coal, Australian",$/mt,76.3
+2014-02,"Coal, South African",$/mt,77.6
+2014-02,"Liquefied natural gas, Japan",$/mmbtu,16.76
+2014-02,Palm oil,$/mt,904
+2014-02,Soybean oil,$/mt,971
+2014-02,"Wheat, US HRW",$/mt,292.1
+2014-02,"Sugar, world",$/kg,0.37
+2014-02,"Cotton, A Index",$/kg,2.07
+2014-02,DAP,$/mt,450.1
+2014-02,Urea,$/mt,353.1
+2014-02,Aluminum,$/mt,1695
+2014-02,"Iron ore, cfr spot",$/dmtu,121.4
+2014-02,Copper,$/mt,7149
+2014-03,"Crude oil, Brent",$/bbl,107.4
+2014-03,"Coal, Australian",$/mt,73.3
+2014-03,"Coal, South African",$/mt,74.6
+2014-03,"Liquefied natural gas, Japan",$/mmbtu,16.55
+2014-03,Palm oil,$/mt,954
+2014-03,Soybean oil,$/mt,997
+2014-03,"Wheat, US HRW",$/mt,323.7
+2014-03,"Sugar, world",$/kg,0.39
+2014-03,"Cotton, A Index",$/kg,2.14
+2014-03,DAP,$/mt,486.5
+2014-03,Urea,$/mt,327.5
+2014-03,Aluminum,$/mt,1705
+2014-03,"Iron ore, cfr spot",$/dmtu,111.8
+2014-03,Copper,$/mt,6650
+2014-04,"Crude oil, Brent",$/bbl,107.8
+2014-04,"Coal, Australian",$/mt,72.8
+2014-04,"Coal, South African",$/mt,75.1
+2014-04,"Liquefied natural gas, Japan",$/mmbtu,16.79
+2014-04,Palm oil,$/mt,927
+2014-04,Soybean oil,$/mt,1002
+2014-04,"Wheat, US HRW",$/mt,324.8
+2014-04,"Sugar, world",$/kg,0.39
+2014-04,"Cotton, A Index",$/kg,2.08
+2014-04,DAP,$/mt,409
+2014-04,Urea,$/mt,260
+2014-04,Aluminum,$/mt,1811
+2014-04,"Iron ore, cfr spot",$/dmtu,114.6
+2014-04,Copper,$/mt,6674
+2014-05,"Crude oil, Brent",$/bbl,109.7
+2014-05,"Coal, Australian",$/mt,73.7
+2014-05,"Coal, South African",$/mt,75.8
+2014-05,"Liquefied natural gas, Japan",$/mmbtu,16.32
+2014-05,Palm oil,$/mt,898
+2014-05,Soybean oil,$/mt,962
+2014-05,"Wheat, US HRW",$/mt,334.7
+2014-05,"Sugar, world",$/kg,0.4
+2014-05,"Cotton, A Index",$/kg,2.04
+2014-05,DAP,$/mt,413.6
+2014-05,Urea,$/mt,265
+2014-05,Aluminum,$/mt,1751
+2014-05,"Iron ore, cfr spot",$/dmtu,100.6
+2014-05,Copper,$/mt,6891
+2014-06,"Crude oil, Brent",$/bbl,111.9
+2014-06,"Coal, Australian",$/mt,71.5
+2014-06,"Coal, South African",$/mt,74.1
+2014-06,"Liquefied natural gas, Japan",$/mmbtu,16.13
+2014-06,Palm oil,$/mt,862
+2014-06,Soybean oil,$/mt,926
+2014-06,"Wheat, US HRW",$/mt,306.4
+2014-06,"Sugar, world",$/kg,0.4
+2014-06,"Cotton, A Index",$/kg,2
+2014-06,DAP,$/mt,421.4
+2014-06,Urea,$/mt,288.8
+2014-06,Aluminum,$/mt,1839
+2014-06,"Iron ore, cfr spot",$/dmtu,92.7
+2014-06,Copper,$/mt,6821
+2014-07,"Crude oil, Brent",$/bbl,107
+2014-07,"Coal, Australian",$/mt,68.8
+2014-07,"Coal, South African",$/mt,71.4
+2014-07,"Liquefied natural gas, Japan",$/mmbtu,15.21
+2014-07,Palm oil,$/mt,854
+2014-07,Soybean oil,$/mt,897
+2014-07,"Wheat, US HRW",$/mt,280.4
+2014-07,"Sugar, world",$/kg,0.4
+2014-07,"Cotton, A Index",$/kg,1.85
+2014-07,DAP,$/mt,440.6
+2014-07,Urea,$/mt,305
+2014-07,Aluminum,$/mt,1948
+2014-07,"Iron ore, cfr spot",$/dmtu,96.1
+2014-07,Copper,$/mt,7113
+2014-08,"Crude oil, Brent",$/bbl,101.9
+2014-08,"Coal, Australian",$/mt,68.9
+2014-08,"Coal, South African",$/mt,71.2
+2014-08,"Liquefied natural gas, Japan",$/mmbtu,15.74
+2014-08,Palm oil,$/mt,779
+2014-08,Soybean oil,$/mt,862
+2014-08,"Wheat, US HRW",$/mt,263.5
+2014-08,"Sugar, world",$/kg,0.38
+2014-08,"Cotton, A Index",$/kg,1.63
+2014-08,DAP,$/mt,446.5
+2014-08,Urea,$/mt,311.3
+2014-08,Aluminum,$/mt,2030
+2014-08,"Iron ore, cfr spot",$/dmtu,92.6
+2014-08,Copper,$/mt,7002
+2014-09,"Crude oil, Brent",$/bbl,97.3
+2014-09,"Coal, Australian",$/mt,65.9
+2014-09,"Coal, South African",$/mt,67.9
+2014-09,"Liquefied natural gas, Japan",$/mmbtu,15.16
+2014-09,Palm oil,$/mt,761
+2014-09,Soybean oil,$/mt,840
+2014-09,"Wheat, US HRW",$/mt,243.6
+2014-09,"Sugar, world",$/kg,0.35
+2014-09,"Cotton, A Index",$/kg,1.62
+2014-09,DAP,$/mt,438.1
+2014-09,Urea,$/mt,317.5
+2014-09,Aluminum,$/mt,1990
+2014-09,"Iron ore, cfr spot",$/dmtu,82.4
+2014-09,Copper,$/mt,6872
+2014-10,"Crude oil, Brent",$/bbl,87.3
+2014-10,"Coal, Australian",$/mt,63.7
+2014-10,"Coal, South African",$/mt,65.7
+2014-10,"Liquefied natural gas, Japan",$/mmbtu,15.89
+2014-10,Palm oil,$/mt,764
+2014-10,Soybean oil,$/mt,833
+2014-10,"Wheat, US HRW",$/mt,245.4
+2014-10,"Sugar, world",$/kg,0.37
+2014-10,"Cotton, A Index",$/kg,1.55
+2014-10,DAP,$/mt,418.8
+2014-10,Urea,$/mt,317.5
+2014-10,Aluminum,$/mt,1946
+2014-10,"Iron ore, cfr spot",$/dmtu,81.1
+2014-10,Copper,$/mt,6737
+2014-11,"Crude oil, Brent",$/bbl,78.4
+2014-11,"Coal, Australian",$/mt,62.6
+2014-11,"Coal, South African",$/mt,65.7
+2014-11,"Liquefied natural gas, Japan",$/mmbtu,15.59
+2014-11,Palm oil,$/mt,765
+2014-11,Soybean oil,$/mt,826
+2014-11,"Wheat, US HRW",$/mt,258.7
+2014-11,"Sugar, world",$/kg,0.36
+2014-11,"Cotton, A Index",$/kg,1.49
+2014-11,DAP,$/mt,408.8
+2014-11,Urea,$/mt,317.5
+2014-11,Aluminum,$/mt,2056
+2014-11,"Iron ore, cfr spot",$/dmtu,73.7
+2014-11,Copper,$/mt,6713
+2014-12,"Crude oil, Brent",$/bbl,62.3
+2014-12,"Coal, Australian",$/mt,62.4
+2014-12,"Coal, South African",$/mt,66.1
+2014-12,"Liquefied natural gas, Japan",$/mmbtu,15.62
+2014-12,Palm oil,$/mt,720
+2014-12,Soybean oil,$/mt,815
+2014-12,"Wheat, US HRW",$/mt,269.7
+2014-12,"Sugar, world",$/kg,0.34
+2014-12,"Cotton, A Index",$/kg,1.51
+2014-12,DAP,$/mt,418.4
+2014-12,Urea,$/mt,308.1
+2014-12,Aluminum,$/mt,1909
+2014-12,"Iron ore, cfr spot",$/dmtu,68.4
+2014-12,Copper,$/mt,6446
+2015-01,"Crude oil, Brent",$/bbl,48.1
+2015-01,"Coal, Australian",$/mt,61.4
+2015-01,"Coal, South African",$/mt,59.3
+2015-01,"Liquefied natural gas, Japan",$/mmbtu,16.19
+2015-01,Palm oil,$/mt,720
+2015-01,Soybean oil,$/mt,797
+2015-01,"Wheat, US HRW",$/mt,248.4
+2015-01,"Sugar, world",$/kg,0.34
+2015-01,"Cotton, A Index",$/kg,1.48
+2015-01,DAP,$/mt,440.3
+2015-01,Urea,$/mt,305
+2015-01,Aluminum,$/mt,1815
+2015-01,"Iron ore, cfr spot",$/dmtu,68.2
+2015-01,Copper,$/mt,5831
+2015-02,"Crude oil, Brent",$/bbl,57.9
+2015-02,"Coal, Australian",$/mt,69.1
+2015-02,"Coal, South African",$/mt,63.5
+2015-02,"Liquefied natural gas, Japan",$/mmbtu,14.2
+2015-02,Palm oil,$/mt,723
+2015-02,Soybean oil,$/mt,763
+2015-02,"Wheat, US HRW",$/mt,237
+2015-02,"Sugar, world",$/kg,0.32
+2015-02,"Cotton, A Index",$/kg,1.54
+2015-02,DAP,$/mt,444.1
+2015-02,Urea,$/mt,305
+2015-02,Aluminum,$/mt,1818
+2015-02,"Iron ore, cfr spot",$/dmtu,62.8
+2015-02,Copper,$/mt,5729
+2015-03,"Crude oil, Brent",$/bbl,55.8
+2015-03,"Coal, Australian",$/mt,64.8
+2015-03,"Coal, South African",$/mt,59.9
+2015-03,"Liquefied natural gas, Japan",$/mmbtu,13.04
+2015-03,Palm oil,$/mt,699
+2015-03,Soybean oil,$/mt,750
+2015-03,"Wheat, US HRW",$/mt,230.8
+2015-03,"Sugar, world",$/kg,0.29
+2015-03,"Cotton, A Index",$/kg,1.53
+2015-03,DAP,$/mt,428.8
+2015-03,Urea,$/mt,295.5
+2015-03,Aluminum,$/mt,1774
+2015-03,"Iron ore, cfr spot",$/dmtu,58.1
+2015-03,Copper,$/mt,5940
+2015-04,"Crude oil, Brent",$/bbl,59.4
+2015-04,"Coal, Australian",$/mt,56.2
+2015-04,"Coal, South African",$/mt,59
+2015-04,"Liquefied natural gas, Japan",$/mmbtu,10.94
+2015-04,Palm oil,$/mt,683
+2015-04,Soybean oil,$/mt,748
+2015-04,"Wheat, US HRW",$/mt,223.4
+2015-04,"Sugar, world",$/kg,0.29
+2015-04,"Cotton, A Index",$/kg,1.58
+2015-04,DAP,$/mt,409
+2015-04,Urea,$/mt,260
+2015-04,Aluminum,$/mt,1819
+2015-04,"Iron ore, cfr spot",$/dmtu,52.3
+2015-04,Copper,$/mt,6042
+2015-05,"Crude oil, Brent",$/bbl,64.6
+2015-05,"Coal, Australian",$/mt,61.2
+2015-05,"Coal, South African",$/mt,61.6
+2015-05,"Liquefied natural gas, Japan",$/mmbtu,9.34
+2015-05,Palm oil,$/mt,697
+2015-05,Soybean oil,$/mt,785
+2015-05,"Wheat, US HRW",$/mt,215.3
+2015-05,"Sugar, world",$/kg,0.29
+2015-05,"Cotton, A Index",$/kg,1.61
+2015-05,DAP,$/mt,413.6
+2015-05,Urea,$/mt,265
+2015-05,Aluminum,$/mt,1804
+2015-05,"Iron ore, cfr spot",$/dmtu,60.3
+2015-05,Copper,$/mt,6295
+2015-06,"Crude oil, Brent",$/bbl,62.3
+2015-06,"Coal, Australian",$/mt,59
+2015-06,"Coal, South African",$/mt,60.7
+2015-06,"Liquefied natural gas, Japan",$/mmbtu,9.19
+2015-06,Palm oil,$/mt,706
+2015-06,Soybean oil,$/mt,788
+2015-06,"Wheat, US HRW",$/mt,209.8
+2015-06,"Sugar, world",$/kg,0.27
+2015-06,"Cotton, A Index",$/kg,1.6
+2015-06,DAP,$/mt,421.4
+2015-06,Urea,$/mt,288.8
+2015-06,Aluminum,$/mt,1688
+2015-06,"Iron ore, cfr spot",$/dmtu,62.6
+2015-06,Copper,$/mt,5833
+2015-07,"Crude oil, Brent",$/bbl,55.9
+2015-07,"Coal, Australian",$/mt,59.9
+2015-07,"Coal, South African",$/mt,57.9
+2015-07,"Liquefied natural gas, Japan",$/mmbtu,9.5
+2015-07,Palm oil,$/mt,680
+2015-07,Soybean oil,$/mt,752
+2015-07,"Wheat, US HRW",$/mt,197.3
+2015-07,"Sugar, world",$/kg,0.28
+2015-07,"Cotton, A Index",$/kg,1.6
+2015-07,DAP,$/mt,431.5
+2015-07,Urea,$/mt,283.8
+2015-07,Aluminum,$/mt,1640
+2015-07,"Iron ore, cfr spot",$/dmtu,52.4
+2015-07,Copper,$/mt,5457
+2015-08,"Crude oil, Brent",$/bbl,47
+2015-08,"Coal, Australian",$/mt,59.1
+2015-08,"Coal, South African",$/mt,55
+2015-08,"Liquefied natural gas, Japan",$/mmbtu,9.82
+2015-08,Palm oil,$/mt,601
+2015-08,Soybean oil,$/mt,728
+2015-08,"Wheat, US HRW",$/mt,179.7
+2015-08,"Sugar, world",$/kg,0.25
+2015-08,"Cotton, A Index",$/kg,1.58
+2015-08,DAP,$/mt,434.6
+2015-08,Urea,$/mt,274.6
+2015-08,Aluminum,$/mt,1548
+2015-08,"Iron ore, cfr spot",$/dmtu,56.2
+2015-08,Copper,$/mt,5127
+2015-09,"Crude oil, Brent",$/bbl,47.2
+2015-09,"Coal, Australian",$/mt,57.7
+2015-09,"Coal, South African",$/mt,51.4
+2015-09,"Liquefied natural gas, Japan",$/mmbtu,10.31
+2015-09,Palm oil,$/mt,600
+2015-09,Soybean oil,$/mt,720
+2015-09,"Wheat, US HRW",$/mt,172.7
+2015-09,"Sugar, world",$/kg,0.26
+2015-09,"Cotton, A Index",$/kg,1.52
+2015-09,DAP,$/mt,428
+2015-09,Urea,$/mt,279.4
+2015-09,Aluminum,$/mt,1590
+2015-09,"Iron ore, cfr spot",$/dmtu,57
+2015-09,Copper,$/mt,5217
+2015-10,"Crude oil, Brent",$/bbl,48.1
+2015-10,"Coal, Australian",$/mt,54.3
+2015-10,"Coal, South African",$/mt,50.1
+2015-10,"Liquefied natural gas, Japan",$/mmbtu,10.11
+2015-10,Palm oil,$/mt,637
+2015-10,Soybean oil,$/mt,743
+2015-10,"Wheat, US HRW",$/mt,172.7
+2015-10,"Sugar, world",$/kg,0.31
+2015-10,"Cotton, A Index",$/kg,1.52
+2015-10,DAP,$/mt,423.8
+2015-10,Urea,$/mt,250.6
+2015-10,Aluminum,$/mt,1516
+2015-10,"Iron ore, cfr spot",$/dmtu,53.1
+2015-10,Copper,$/mt,5216
+2015-11,"Crude oil, Brent",$/bbl,44.4
+2015-11,"Coal, Australian",$/mt,52.5
+2015-11,"Coal, South African",$/mt,53.3
+2015-11,"Liquefied natural gas, Japan",$/mmbtu,9.52
+2015-11,Palm oil,$/mt,608
+2015-11,Soybean oil,$/mt,727
+2015-11,"Wheat, US HRW",$/mt,177.1
+2015-11,"Sugar, world",$/kg,0.32
+2015-11,"Cotton, A Index",$/kg,1.53
+2015-11,DAP,$/mt,383.9
+2015-11,Urea,$/mt,263.6
+2015-11,Aluminum,$/mt,1468
+2015-11,"Iron ore, cfr spot",$/dmtu,46.9
+2015-11,Copper,$/mt,4800
+2015-12,"Crude oil, Brent",$/bbl,37.7
+2015-12,"Coal, Australian",$/mt,52.2
+2015-12,"Coal, South African",$/mt,48.8
+2015-12,"Liquefied natural gas, Japan",$/mmbtu,9.08
+2015-12,Palm oil,$/mt,607
+2015-12,Soybean oil,$/mt,766
+2015-12,"Wheat, US HRW",$/mt,189.2
+2015-12,"Sugar, world",$/kg,0.32
+2015-12,"Cotton, A Index",$/kg,1.55
+2015-12,DAP,$/mt,340.6
+2015-12,Urea,$/mt,264
+2015-12,Aluminum,$/mt,1497
+2015-12,"Iron ore, cfr spot",$/dmtu,40.5
+2015-12,Copper,$/mt,4639
+2016-01,"Crude oil, Brent",$/bbl,30.8
+2016-01,"Coal, Australian",$/mt,49
+2016-01,"Coal, South African",$/mt,49.1
+2016-01,"Liquefied natural gas, Japan",$/mmbtu,8.4
+2016-01,Palm oil,$/mt,612
+2016-01,Soybean oil,$/mt,736
+2016-01,"Wheat, US HRW",$/mt,193.3
+2016-01,"Sugar, world",$/kg,0.31
+2016-01,"Cotton, A Index",$/kg,1.52
+2016-01,DAP,$/mt,327.1
+2016-01,Urea,$/mt,233.9
+2016-01,Aluminum,$/mt,1481
+2016-01,"Iron ore, cfr spot",$/dmtu,41.9
+2016-01,Copper,$/mt,4472
+2016-02,"Crude oil, Brent",$/bbl,33.2
+2016-02,"Coal, Australian",$/mt,50.3
+2016-02,"Coal, South African",$/mt,50.3
+2016-02,"Liquefied natural gas, Japan",$/mmbtu,8.56
+2016-02,Palm oil,$/mt,679
+2016-02,Soybean oil,$/mt,767
+2016-02,"Wheat, US HRW",$/mt,187
+2016-02,"Sugar, world",$/kg,0.29
+2016-02,"Cotton, A Index",$/kg,1.47
+2016-02,DAP,$/mt,326
+2016-02,Urea,$/mt,191.9
+2016-02,Aluminum,$/mt,1531
+2016-02,"Iron ore, cfr spot",$/dmtu,46.8
+2016-02,Copper,$/mt,4599
+2016-03,"Crude oil, Brent",$/bbl,39.1
+2016-03,"Coal, Australian",$/mt,52.2
+2016-03,"Coal, South African",$/mt,52.6
+2016-03,"Liquefied natural gas, Japan",$/mmbtu,7.74
+2016-03,Palm oil,$/mt,716
+2016-03,Soybean oil,$/mt,766
+2016-03,"Wheat, US HRW",$/mt,191.1
+2016-03,"Sugar, world",$/kg,0.34
+2016-03,"Cotton, A Index",$/kg,1.44
+2016-03,DAP,$/mt,338.1
+2016-03,Urea,$/mt,201.8
+2016-03,Aluminum,$/mt,1531
+2016-03,"Iron ore, cfr spot",$/dmtu,56.2
+2016-03,Copper,$/mt,4954
+2016-04,"Crude oil, Brent",$/bbl,42.3
+2016-04,"Coal, Australian",$/mt,50.7
+2016-04,"Coal, South African",$/mt,52.4
+2016-04,"Liquefied natural gas, Japan",$/mmbtu,6.82
+2016-04,Palm oil,$/mt,775
+2016-04,Soybean oil,$/mt,794
+2016-04,"Wheat, US HRW",$/mt,187.4
+2016-04,"Sugar, world",$/kg,0.34
+2016-04,"Cotton, A Index",$/kg,1.53
+2016-04,DAP,$/mt,330.5
+2016-04,Urea,$/mt,196.3
+2016-04,Aluminum,$/mt,1571
+2016-04,"Iron ore, cfr spot",$/dmtu,60.9
+2016-04,Copper,$/mt,4873
+2016-05,"Crude oil, Brent",$/bbl,47.1
+2016-05,"Coal, Australian",$/mt,51.3
+2016-05,"Coal, South African",$/mt,54.2
+2016-05,"Liquefied natural gas, Japan",$/mmbtu,6.27
+2016-05,Palm oil,$/mt,753
+2016-05,Soybean oil,$/mt,796
+2016-05,"Wheat, US HRW",$/mt,172
+2016-05,"Sugar, world",$/kg,0.38
+2016-05,"Cotton, A Index",$/kg,1.55
+2016-05,DAP,$/mt,313.5
+2016-05,Urea,$/mt,198.4
+2016-05,Aluminum,$/mt,1551
+2016-05,"Iron ore, cfr spot",$/dmtu,55.1
+2016-05,Copper,$/mt,4695
+2016-06,"Crude oil, Brent",$/bbl,48.5
+2016-06,"Coal, Australian",$/mt,52.9
+2016-06,"Coal, South African",$/mt,58.6
+2016-06,"Liquefied natural gas, Japan",$/mmbtu,6.4
+2016-06,Palm oil,$/mt,718
+2016-06,Soybean oil,$/mt,800
+2016-06,"Wheat, US HRW",$/mt,173.1
+2016-06,"Sugar, world",$/kg,0.43
+2016-06,"Cotton, A Index",$/kg,1.63
+2016-06,DAP,$/mt,306.6
+2016-06,Urea,$/mt,142.6
+2016-06,Aluminum,$/mt,1594
+2016-06,"Iron ore, cfr spot",$/dmtu,52
+2016-06,Copper,$/mt,4642
+2016-07,"Crude oil, Brent",$/bbl,45.1
+2016-07,"Coal, Australian",$/mt,61.2
+2016-07,"Coal, South African",$/mt,62.4
+2016-07,"Liquefied natural gas, Japan",$/mmbtu,6.76
+2016-07,Palm oil,$/mt,678
+2016-07,Soybean oil,$/mt,797
+2016-07,"Wheat, US HRW",$/mt,151.8
+2016-07,"Sugar, world",$/kg,0.43
+2016-07,"Cotton, A Index",$/kg,1.79
+2016-07,DAP,$/mt,305.2
+2016-07,Urea,$/mt,181
+2016-07,Aluminum,$/mt,1629
+2016-07,"Iron ore, cfr spot",$/dmtu,57.3
+2016-07,Copper,$/mt,4865
+2016-08,"Crude oil, Brent",$/bbl,46.1
+2016-08,"Coal, Australian",$/mt,67.4
+2016-08,"Coal, South African",$/mt,66.3
+2016-08,"Liquefied natural gas, Japan",$/mmbtu,7.14
+2016-08,Palm oil,$/mt,771
+2016-08,Soybean oil,$/mt,824
+2016-08,"Wheat, US HRW",$/mt,149.2
+2016-08,"Sugar, world",$/kg,0.44
+2016-08,"Cotton, A Index",$/kg,1.77
+2016-08,DAP,$/mt,318.1
+2016-08,Urea,$/mt,186.3
+2016-08,Aluminum,$/mt,1639
+2016-08,"Iron ore, cfr spot",$/dmtu,60.9
+2016-08,Copper,$/mt,4752
+2016-09,"Crude oil, Brent",$/bbl,46.2
+2016-09,"Coal, Australian",$/mt,72.7
+2016-09,"Coal, South African",$/mt,68.3
+2016-09,"Liquefied natural gas, Japan",$/mmbtu,7.54
+2016-09,Palm oil,$/mt,798
+2016-09,Soybean oil,$/mt,837
+2016-09,"Wheat, US HRW",$/mt,150.6
+2016-09,"Sugar, world",$/kg,0.47
+2016-09,"Cotton, A Index",$/kg,1.72
+2016-09,DAP,$/mt,320
+2016-09,Urea,$/mt,187.3
+2016-09,Aluminum,$/mt,1592
+2016-09,"Iron ore, cfr spot",$/dmtu,57.8
+2016-09,Copper,$/mt,4722
+2016-10,"Crude oil, Brent",$/bbl,49.7
+2016-10,"Coal, Australian",$/mt,94.2
+2016-10,"Coal, South African",$/mt,83.8
+2016-10,"Liquefied natural gas, Japan",$/mmbtu,7.65
+2016-10,Palm oil,$/mt,750
+2016-10,Soybean oil,$/mt,861
+2016-10,"Wheat, US HRW",$/mt,151.8
+2016-10,"Sugar, world",$/kg,0.49
+2016-10,"Cotton, A Index",$/kg,1.73
+2016-10,DAP,$/mt,310
+2016-10,Urea,$/mt,187.5
+2016-10,Aluminum,$/mt,1666
+2016-10,"Iron ore, cfr spot",$/dmtu,59.1
+2016-10,Copper,$/mt,4731
+2016-11,"Crude oil, Brent",$/bbl,46.4
+2016-11,"Coal, Australian",$/mt,103.4
+2016-11,"Coal, South African",$/mt,89.2
+2016-11,"Liquefied natural gas, Japan",$/mmbtu,7.59
+2016-11,Palm oil,$/mt,767
+2016-11,Soybean oil,$/mt,885
+2016-11,"Wheat, US HRW",$/mt,150.6
+2016-11,"Sugar, world",$/kg,0.45
+2016-11,"Cotton, A Index",$/kg,1.74
+2016-11,DAP,$/mt,298
+2016-11,Urea,$/mt,205
+2016-11,Aluminum,$/mt,1737
+2016-11,"Iron ore, cfr spot",$/dmtu,73.1
+2016-11,Copper,$/mt,5451
+2016-12,"Crude oil, Brent",$/bbl,54.1
+2016-12,"Coal, Australian",$/mt,88.2
+2016-12,"Coal, South African",$/mt,80.2
+2016-12,"Liquefied natural gas, Japan",$/mmbtu,7.59
+2016-12,Palm oil,$/mt,811
+2016-12,Soybean oil,$/mt,917
+2016-12,"Wheat, US HRW",$/mt,141.8
+2016-12,"Sugar, world",$/kg,0.41
+2016-12,"Cotton, A Index",$/kg,1.75
+2016-12,DAP,$/mt,296.6
+2016-12,Urea,$/mt,217.8
+2016-12,Aluminum,$/mt,1728
+2016-12,"Iron ore, cfr spot",$/dmtu,80
+2016-12,Copper,$/mt,5660
+2017-01,"Crude oil, Brent",$/bbl,54.9
+2017-01,"Coal, Australian",$/mt,83.7
+2017-01,"Coal, South African",$/mt,86.5
+2017-01,"Liquefied natural gas, Japan",$/mmbtu,8.04
+2017-01,Palm oil,$/mt,825
+2017-01,Soybean oil,$/mt,877
+2017-01,"Wheat, US HRW",$/mt,153.2
+2017-01,"Sugar, world",$/kg,0.45
+2017-01,"Cotton, A Index",$/kg,1.82
+2017-01,DAP,$/mt,308
+2017-01,Urea,$/mt,233.8
+2017-01,Aluminum,$/mt,1791
+2017-01,"Iron ore, cfr spot",$/dmtu,80.4
+2017-01,Copper,$/mt,5755
+2017-02,"Crude oil, Brent",$/bbl,55.5
+2017-02,"Coal, Australian",$/mt,80
+2017-02,"Coal, South African",$/mt,83.6
+2017-02,"Liquefied natural gas, Japan",$/mmbtu,8.41
+2017-02,Palm oil,$/mt,809
+2017-02,Soybean oil,$/mt,840
+2017-02,"Wheat, US HRW",$/mt,155.1
+2017-02,"Sugar, world",$/kg,0.45
+2017-02,"Cotton, A Index",$/kg,1.88
+2017-02,DAP,$/mt,326
+2017-02,Urea,$/mt,191.9
+2017-02,Aluminum,$/mt,1861
+2017-02,"Iron ore, cfr spot",$/dmtu,89.4
+2017-02,Copper,$/mt,5941
+2017-03,"Crude oil, Brent",$/bbl,52
+2017-03,"Coal, Australian",$/mt,80.9
+2017-03,"Coal, South African",$/mt,79.1
+2017-03,"Liquefied natural gas, Japan",$/mmbtu,8.25
+2017-03,Palm oil,$/mt,779
+2017-03,Soybean oil,$/mt,815
+2017-03,"Wheat, US HRW",$/mt,154.3
+2017-03,"Sugar, world",$/kg,0.4
+2017-03,"Cotton, A Index",$/kg,1.91
+2017-03,DAP,$/mt,325.6
+2017-03,Urea,$/mt,223.5
+2017-03,Aluminum,$/mt,1901
+2017-03,"Iron ore, cfr spot",$/dmtu,87.7
+2017-03,Copper,$/mt,5825
+2017-04,"Crude oil, Brent",$/bbl,53
+2017-04,"Coal, Australian",$/mt,83.7
+2017-04,"Coal, South African",$/mt,78.9
+2017-04,"Liquefied natural gas, Japan",$/mmbtu,8.76
+2017-04,Palm oil,$/mt,752
+2017-04,Soybean oil,$/mt,794
+2017-04,"Wheat, US HRW",$/mt,166.1
+2017-04,"Sugar, world",$/kg,0.36
+2017-04,"Cotton, A Index",$/kg,1.92
+2017-04,DAP,$/mt,313.1
+2017-04,Urea,$/mt,207.9
+2017-04,Aluminum,$/mt,1921
+2017-04,"Iron ore, cfr spot",$/dmtu,70.2
+2017-04,Copper,$/mt,5684
+2017-05,"Crude oil, Brent",$/bbl,50.9
+2017-05,"Coal, Australian",$/mt,74.4
+2017-05,"Coal, South African",$/mt,74.4
+2017-05,"Liquefied natural gas, Japan",$/mmbtu,9.1
+2017-05,Palm oil,$/mt,763
+2017-05,Soybean oil,$/mt,825
+2017-05,"Wheat, US HRW",$/mt,180.4
+2017-05,"Sugar, world",$/kg,0.35
+2017-05,"Cotton, A Index",$/kg,1.95
+2017-05,DAP,$/mt,309.3
+2017-05,Urea,$/mt,178.8
+2017-05,Aluminum,$/mt,1913
+2017-05,"Iron ore, cfr spot",$/dmtu,62.4
+2017-05,Copper,$/mt,5600
+2017-06,"Crude oil, Brent",$/bbl,46.9
+2017-06,"Coal, Australian",$/mt,81.1
+2017-06,"Coal, South African",$/mt,79.2
+2017-06,"Liquefied natural gas, Japan",$/mmbtu,8.88
+2017-06,Palm oil,$/mt,735
+2017-06,Soybean oil,$/mt,833
+2017-06,"Wheat, US HRW",$/mt,189.6
+2017-06,"Sugar, world",$/kg,0.31
+2017-06,"Cotton, A Index",$/kg,1.87
+2017-06,DAP,$/mt,310.3
+2017-06,Urea,$/mt,191
+2017-06,Aluminum,$/mt,1885
+2017-06,"Iron ore, cfr spot",$/dmtu,57.5
+2017-06,Copper,$/mt,5720
+2017-07,"Crude oil, Brent",$/bbl,48.7
+2017-07,"Coal, Australian",$/mt,87.5
+2017-07,"Coal, South African",$/mt,81.7
+2017-07,"Liquefied natural gas, Japan",$/mmbtu,8.86
+2017-07,Palm oil,$/mt,720
+2017-07,Soybean oil,$/mt,836
+2017-07,"Wheat, US HRW",$/mt,202.5
+2017-07,"Sugar, world",$/kg,0.32
+2017-07,"Cotton, A Index",$/kg,1.85
+2017-07,DAP,$/mt,313.8
+2017-07,Urea,$/mt,181
+2017-07,Aluminum,$/mt,1903
+2017-07,"Iron ore, cfr spot",$/dmtu,67.7
+2017-07,Copper,$/mt,5985
+2017-08,"Crude oil, Brent",$/bbl,51.4
+2017-08,"Coal, Australian",$/mt,98.6
+2017-08,"Coal, South African",$/mt,87.8
+2017-08,"Liquefied natural gas, Japan",$/mmbtu,8.92
+2017-08,Palm oil,$/mt,718
+2017-08,Soybean oil,$/mt,862
+2017-08,"Wheat, US HRW",$/mt,171.2
+2017-08,"Sugar, world",$/kg,0.32
+2017-08,"Cotton, A Index",$/kg,1.75
+2017-08,DAP,$/mt,320.8
+2017-08,Urea,$/mt,192.6
+2017-08,Aluminum,$/mt,2030
+2017-08,"Iron ore, cfr spot",$/dmtu,76.1
+2017-08,Copper,$/mt,6486
+2017-09,"Crude oil, Brent",$/bbl,55.2
+2017-09,"Coal, Australian",$/mt,97.8
+2017-09,"Coal, South African",$/mt,92.3
+2017-09,"Liquefied natural gas, Japan",$/mmbtu,8.64
+2017-09,Palm oil,$/mt,754
+2017-09,Soybean oil,$/mt,889
+2017-09,"Wheat, US HRW",$/mt,178.6
+2017-09,"Sugar, world",$/kg,0.32
+2017-09,"Cotton, A Index",$/kg,1.78
+2017-09,DAP,$/mt,325.9
+2017-09,Urea,$/mt,219
+2017-09,Aluminum,$/mt,2096
+2017-09,"Iron ore, cfr spot",$/dmtu,71.5
+2017-09,Copper,$/mt,6577
+2017-10,"Crude oil, Brent",$/bbl,57.6
+2017-10,"Coal, Australian",$/mt,97.1
+2017-10,"Coal, South African",$/mt,91.4
+2017-10,"Liquefied natural gas, Japan",$/mmbtu,8.31
+2017-10,Palm oil,$/mt,747
+2017-10,Soybean oil,$/mt,881
+2017-10,"Wheat, US HRW",$/mt,175.6
+2017-10,"Sugar, world",$/kg,0.32
+2017-10,"Cotton, A Index",$/kg,1.73
+2017-10,DAP,$/mt,322.4
+2017-10,Urea,$/mt,252.5
+2017-10,Aluminum,$/mt,2131
+2017-10,"Iron ore, cfr spot",$/dmtu,61.7
+2017-10,Copper,$/mt,6808
+2017-11,"Crude oil, Brent",$/bbl,62.6
+2017-11,"Coal, Australian",$/mt,96.6
+2017-11,"Coal, South African",$/mt,91.4
+2017-11,"Liquefied natural gas, Japan",$/mmbtu,8.45
+2017-11,Palm oil,$/mt,729
+2017-11,Soybean oil,$/mt,887
+2017-11,"Wheat, US HRW",$/mt,179.7
+2017-11,"Sugar, world",$/kg,0.33
+2017-11,"Cotton, A Index",$/kg,1.77
+2017-11,DAP,$/mt,344
+2017-11,Urea,$/mt,280
+2017-11,Aluminum,$/mt,2097
+2017-11,"Iron ore, cfr spot",$/dmtu,64.2
+2017-11,Copper,$/mt,6827
+2017-12,"Crude oil, Brent",$/bbl,64.2
+2017-12,"Coal, Australian",$/mt,100.8
+2017-12,"Coal, South African",$/mt,95.5
+2017-12,"Liquefied natural gas, Japan",$/mmbtu,8.65
+2017-12,Palm oil,$/mt,679
+2017-12,Soybean oil,$/mt,867
+2017-12,"Wheat, US HRW",$/mt,184.1
+2017-12,"Sugar, world",$/kg,0.32
+2017-12,"Cotton, A Index",$/kg,1.88
+2017-12,DAP,$/mt,357.3
+2017-12,Urea,$/mt,214.6
+2017-12,Aluminum,$/mt,2080
+2017-12,"Iron ore, cfr spot",$/dmtu,72.3
+2017-12,Copper,$/mt,6834
+2018-01,"Crude oil, Brent",$/bbl,69
+2018-01,"Coal, Australian",$/mt,106.5
+2018-01,"Coal, South African",$/mt,97.5
+2018-01,"Liquefied natural gas, Japan",$/mmbtu,9.34
+2018-01,Palm oil,$/mt,703
+2018-01,Soybean oil,$/mt,871
+2018-01,"Wheat, US HRW",$/mt,192.2
+2018-01,"Sugar, world",$/kg,0.31
+2018-01,"Cotton, A Index",$/kg,2.01
+2018-01,DAP,$/mt,360.4
+2018-01,Urea,$/mt,219.6
+2018-01,Aluminum,$/mt,2210
+2018-01,"Iron ore, cfr spot",$/dmtu,76.3
+2018-01,Copper,$/mt,7066
+2018-02,"Crude oil, Brent",$/bbl,65.4
+2018-02,"Coal, Australian",$/mt,106
+2018-02,"Coal, South African",$/mt,92.7
+2018-02,"Liquefied natural gas, Japan",$/mmbtu,9.83
+2018-02,Palm oil,$/mt,709
+2018-02,Soybean oil,$/mt,844
+2018-02,"Wheat, US HRW",$/mt,192.2
+2018-02,"Sugar, world",$/kg,0.3
+2018-02,"Cotton, A Index",$/kg,1.95
+2018-02,DAP,$/mt,370
+2018-02,Urea,$/mt,232.5
+2018-02,Aluminum,$/mt,2182
+2018-02,"Iron ore, cfr spot",$/dmtu,77.5
+2018-02,Copper,$/mt,7007
+2018-03,"Crude oil, Brent",$/bbl,66.5
+2018-03,"Coal, Australian",$/mt,96.7
+2018-03,"Coal, South African",$/mt,89.5
+2018-03,"Liquefied natural gas, Japan",$/mmbtu,10.11
+2018-03,Palm oil,$/mt,706
+2018-03,Soybean oil,$/mt,837
+2018-03,"Wheat, US HRW",$/mt,192.2
+2018-03,"Sugar, world",$/kg,0.28
+2018-03,"Cotton, A Index",$/kg,2.03
+2018-03,DAP,$/mt,378
+2018-03,Urea,$/mt,232.5
+2018-03,Aluminum,$/mt,2069
+2018-03,"Iron ore, cfr spot",$/dmtu,70.4
+2018-03,Copper,$/mt,6799
+2018-04,"Crude oil, Brent",$/bbl,71.6
+2018-04,"Coal, Australian",$/mt,93.7
+2018-04,"Coal, South African",$/mt,92.3
+2018-04,"Liquefied natural gas, Japan",$/mmbtu,10.09
+2018-04,Palm oil,$/mt,701
+2018-04,Soybean oil,$/mt,832
+2018-04,"Wheat, US HRW",$/mt,213.8
+2018-04,"Sugar, world",$/kg,0.27
+2018-04,"Cotton, A Index",$/kg,2.03
+2018-04,DAP,$/mt,384.8
+2018-04,Urea,$/mt,230.6
+2018-04,Aluminum,$/mt,2255
+2018-04,"Iron ore, cfr spot",$/dmtu,65.8
+2018-04,Copper,$/mt,6852
+2018-05,"Crude oil, Brent",$/bbl,76.7
+2018-05,"Coal, Australian",$/mt,105.3
+2018-05,"Coal, South African",$/mt,101.9
+2018-05,"Liquefied natural gas, Japan",$/mmbtu,10.25
+2018-05,Palm oil,$/mt,687
+2018-05,Soybean oil,$/mt,793
+2018-05,"Wheat, US HRW",$/mt,213.8
+2018-05,"Sugar, world",$/kg,0.27
+2018-05,"Cotton, A Index",$/kg,2.08
+2018-05,DAP,$/mt,384.4
+2018-05,Urea,$/mt,221.9
+2018-05,Aluminum,$/mt,2300
+2018-05,"Iron ore, cfr spot",$/dmtu,66.1
+2018-05,Copper,$/mt,6825
+2018-06,"Crude oil, Brent",$/bbl,75.2
+2018-06,"Coal, Australian",$/mt,114.3
+2018-06,"Coal, South African",$/mt,103.9
+2018-06,"Liquefied natural gas, Japan",$/mmbtu,10.44
+2018-06,Palm oil,$/mt,657
+2018-06,Soybean oil,$/mt,789
+2018-06,"Wheat, US HRW",$/mt,219.4
+2018-06,"Sugar, world",$/kg,0.28
+2018-06,"Cotton, A Index",$/kg,2.15
+2018-06,DAP,$/mt,391.6
+2018-06,Urea,$/mt,224
+2018-06,Aluminum,$/mt,2238
+2018-06,"Iron ore, cfr spot",$/dmtu,65
+2018-06,Copper,$/mt,6966
+2018-07,"Crude oil, Brent",$/bbl,74.4
+2018-07,"Coal, Australian",$/mt,119.6
+2018-07,"Coal, South African",$/mt,106
+2018-07,"Liquefied natural gas, Japan",$/mmbtu,10.44
+2018-07,Palm oil,$/mt,616
+2018-07,Soybean oil,$/mt,780
+2018-07,"Wheat, US HRW",$/mt,218.3
+2018-07,"Sugar, world",$/kg,0.26
+2018-07,"Cotton, A Index",$/kg,2.12
+2018-07,DAP,$/mt,400.8
+2018-07,Urea,$/mt,252.5
+2018-07,Aluminum,$/mt,2082
+2018-07,"Iron ore, cfr spot",$/dmtu,64.6
+2018-07,Copper,$/mt,6251
+2018-08,"Crude oil, Brent",$/bbl,73.1
+2018-08,"Coal, Australian",$/mt,117.3
+2018-08,"Coal, South African",$/mt,98.5
+2018-08,"Liquefied natural gas, Japan",$/mmbtu,10.88
+2018-08,Palm oil,$/mt,615
+2018-08,Soybean oil,$/mt,762
+2018-08,"Wheat, US HRW",$/mt,236.6
+2018-08,"Sugar, world",$/kg,0.24
+2018-08,"Cotton, A Index",$/kg,2.08
+2018-08,DAP,$/mt,409
+2018-08,Urea,$/mt,260
+2018-08,Aluminum,$/mt,2052
+2018-08,"Iron ore, cfr spot",$/dmtu,67.2
+2018-08,Copper,$/mt,6051
+2018-09,"Crude oil, Brent",$/bbl,78.9
+2018-09,"Coal, Australian",$/mt,114.2
+2018-09,"Coal, South African",$/mt,102.1
+2018-09,"Liquefied natural gas, Japan",$/mmbtu,11.3
+2018-09,Palm oil,$/mt,605
+2018-09,Soybean oil,$/mt,754
+2018-09,"Wheat, US HRW",$/mt,212.4
+2018-09,"Sugar, world",$/kg,0.25
+2018-09,"Cotton, A Index",$/kg,1.99
+2018-09,DAP,$/mt,421.6
+2018-09,Urea,$/mt,267.5
+2018-09,Aluminum,$/mt,2026
+2018-09,"Iron ore, cfr spot",$/dmtu,68.4
+2018-09,Copper,$/mt,6051
+2018-10,"Crude oil, Brent",$/bbl,80.5
+2018-10,"Coal, Australian",$/mt,108.7
+2018-10,"Coal, South African",$/mt,100.3
+2018-10,"Liquefied natural gas, Japan",$/mmbtu,11.66
+2018-10,Palm oil,$/mt,590
+2018-10,Soybean oil,$/mt,752
+2018-10,"Wheat, US HRW",$/mt,213.5
+2018-10,"Sugar, world",$/kg,0.29
+2018-10,"Cotton, A Index",$/kg,1.91
+2018-10,DAP,$/mt,420.8
+2018-10,Urea,$/mt,270
+2018-10,Aluminum,$/mt,2030
+2018-10,"Iron ore, cfr spot",$/dmtu,73.4
+2018-10,Copper,$/mt,6220
+2018-11,"Crude oil, Brent",$/bbl,65.2
+2018-11,"Coal, Australian",$/mt,100.7
+2018-11,"Coal, South African",$/mt,91.6
+2018-11,"Liquefied natural gas, Japan",$/mmbtu,11.7
+2018-11,Palm oil,$/mt,539
+2018-11,Soybean oil,$/mt,729
+2018-11,"Wheat, US HRW",$/mt,203.6
+2018-11,"Sugar, world",$/kg,0.28
+2018-11,"Cotton, A Index",$/kg,1.91
+2018-11,DAP,$/mt,410.2
+2018-11,Urea,$/mt,305.6
+2018-11,Aluminum,$/mt,1939
+2018-11,"Iron ore, cfr spot",$/dmtu,73.3
+2018-11,Copper,$/mt,6196
+2018-12,"Crude oil, Brent",$/bbl,56.5
+2018-12,"Coal, Australian",$/mt,101.4
+2018-12,"Coal, South African",$/mt,95.4
+2018-12,"Liquefied natural gas, Japan",$/mmbtu,12
+2018-12,Palm oil,$/mt,535
+2018-12,Soybean oil,$/mt,728
+2018-12,"Wheat, US HRW",$/mt,211.3
+2018-12,"Sugar, world",$/kg,0.28
+2018-12,"Cotton, A Index",$/kg,1.9
+2018-12,DAP,$/mt,389.7
+2018-12,Urea,$/mt,276.7
+2018-12,Aluminum,$/mt,1920
+2018-12,"Iron ore, cfr spot",$/dmtu,69.2
+2018-12,Copper,$/mt,6075
+2019-01,"Crude oil, Brent",$/bbl,59.3
+2019-01,"Coal, Australian",$/mt,98.6
+2019-01,"Coal, South African",$/mt,91.3
+2019-01,"Liquefied natural gas, Japan",$/mmbtu,12.01
+2019-01,Palm oil,$/mt,585
+2019-01,Soybean oil,$/mt,748
+2019-01,"Wheat, US HRW",$/mt,209.8
+2019-01,"Sugar, world",$/kg,0.28
+2019-01,"Cotton, A Index",$/kg,1.82
+2019-01,DAP,$/mt,382.1
+2019-01,Urea,$/mt,260
+2019-01,Aluminum,$/mt,1854
+2019-01,"Iron ore, cfr spot",$/dmtu,76.2
+2019-01,Copper,$/mt,5939
+2019-02,"Crude oil, Brent",$/bbl,64.1
+2019-02,"Coal, Australian",$/mt,95.4
+2019-02,"Coal, South African",$/mt,84.2
+2019-02,"Liquefied natural gas, Japan",$/mmbtu,11.81
+2019-02,Palm oil,$/mt,603
+2019-02,Soybean oil,$/mt,773
+2019-02,"Wheat, US HRW",$/mt,219
+2019-02,"Sugar, world",$/kg,0.29
+2019-02,"Cotton, A Index",$/kg,1.79
+2019-02,DAP,$/mt,357.4
+2019-02,Urea,$/mt,250.6
+2019-02,Aluminum,$/mt,1863
+2019-02,"Iron ore, cfr spot",$/dmtu,88.2
+2019-02,Copper,$/mt,6300
+2019-03,"Crude oil, Brent",$/bbl,66.4
+2019-03,"Coal, Australian",$/mt,93.1
+2019-03,"Coal, South African",$/mt,78.8
+2019-03,"Liquefied natural gas, Japan",$/mmbtu,11.29
+2019-03,Palm oil,$/mt,573
+2019-03,Soybean oil,$/mt,750
+2019-03,"Wheat, US HRW",$/mt,205.8
+2019-03,"Sugar, world",$/kg,0.28
+2019-03,"Cotton, A Index",$/kg,1.85
+2019-03,DAP,$/mt,335
+2019-03,Urea,$/mt,247.5
+2019-03,Aluminum,$/mt,1871
+2019-03,"Iron ore, cfr spot",$/dmtu,86.5
+2019-03,Copper,$/mt,6439
+2019-04,"Crude oil, Brent",$/bbl,71.2
+2019-04,"Coal, Australian",$/mt,86.8
+2019-04,"Coal, South African",$/mt,72.5
+2019-04,"Liquefied natural gas, Japan",$/mmbtu,10.27
+2019-04,Palm oil,$/mt,588
+2019-04,Soybean oil,$/mt,734
+2019-04,"Wheat, US HRW",$/mt,199.5
+2019-04,"Sugar, world",$/kg,0.28
+2019-04,"Cotton, A Index",$/kg,1.92
+2019-04,DAP,$/mt,323.8
+2019-04,Urea,$/mt,247.5
+2019-04,Aluminum,$/mt,1845
+2019-04,"Iron ore, cfr spot",$/dmtu,93.7
+2019-04,Copper,$/mt,6438
+2019-05,"Crude oil, Brent",$/bbl,70.5
+2019-05,"Coal, Australian",$/mt,82.3
+2019-05,"Coal, South African",$/mt,68.9
+2019-05,"Liquefied natural gas, Japan",$/mmbtu,10.15
+2019-05,Palm oil,$/mt,564
+2019-05,Soybean oil,$/mt,743
+2019-05,"Wheat, US HRW",$/mt,199.5
+2019-05,"Sugar, world",$/kg,0.27
+2019-05,"Cotton, A Index",$/kg,1.77
+2019-05,DAP,$/mt,313.4
+2019-05,Urea,$/mt,247.5
+2019-05,Aluminum,$/mt,1781
+2019-05,"Iron ore, cfr spot",$/dmtu,100.2
+2019-05,Copper,$/mt,6018
+2019-06,"Crude oil, Brent",$/bbl,63.3
+2019-06,"Coal, Australian",$/mt,72.5
+2019-06,"Coal, South African",$/mt,62.9
+2019-06,"Liquefied natural gas, Japan",$/mmbtu,10.04
+2019-06,Palm oil,$/mt,552
+2019-06,Soybean oil,$/mt,743
+2019-06,"Wheat, US HRW",$/mt,206.1
+2019-06,"Sugar, world",$/kg,0.28
+2019-06,"Cotton, A Index",$/kg,1.71
+2019-06,DAP,$/mt,314.9
+2019-06,Urea,$/mt,247.5
+2019-06,Aluminum,$/mt,1756
+2019-06,"Iron ore, cfr spot",$/dmtu,108.9
+2019-06,Copper,$/mt,5882
+2019-07,"Crude oil, Brent",$/bbl,64
+2019-07,"Coal, Australian",$/mt,72.1
+2019-07,"Coal, South African",$/mt,65.8
+2019-07,"Liquefied natural gas, Japan",$/mmbtu,10.13
+2019-07,Palm oil,$/mt,544
+2019-07,Soybean oil,$/mt,748
+2019-07,"Wheat, US HRW",$/mt,196.2
+2019-07,"Sugar, world",$/kg,0.28
+2019-07,"Cotton, A Index",$/kg,1.67
+2019-07,DAP,$/mt,307.5
+2019-07,Urea,$/mt,263.5
+2019-07,Aluminum,$/mt,1797
+2019-07,"Iron ore, cfr spot",$/dmtu,120.2
+2019-07,Copper,$/mt,5941
+2019-08,"Crude oil, Brent",$/bbl,59.3
+2019-08,"Coal, Australian",$/mt,65.6
+2019-08,"Coal, South African",$/mt,60.4
+2019-08,"Liquefied natural gas, Japan",$/mmbtu,10.86
+2019-08,Palm oil,$/mt,586
+2019-08,Soybean oil,$/mt,793
+2019-08,"Wheat, US HRW",$/mt,181.1
+2019-08,"Sugar, world",$/kg,0.27
+2019-08,"Cotton, A Index",$/kg,1.56
+2019-08,DAP,$/mt,292.9
+2019-08,Urea,$/mt,262.5
+2019-08,Aluminum,$/mt,1741
+2019-08,"Iron ore, cfr spot",$/dmtu,93.1
+2019-08,Copper,$/mt,5709
+2019-09,"Crude oil, Brent",$/bbl,62.3
+2019-09,"Coal, Australian",$/mt,66
+2019-09,"Coal, South African",$/mt,61.4
+2019-09,"Liquefied natural gas, Japan",$/mmbtu,10.14
+2019-09,Palm oil,$/mt,580
+2019-09,Soybean oil,$/mt,779
+2019-09,"Wheat, US HRW",$/mt,189.6
+2019-09,"Sugar, world",$/kg,0.26
+2019-09,"Cotton, A Index",$/kg,1.57
+2019-09,DAP,$/mt,285.8
+2019-09,Urea,$/mt,237.8
+2019-09,Aluminum,$/mt,1754
+2019-09,"Iron ore, cfr spot",$/dmtu,93.1
+2019-09,Copper,$/mt,5759
+2019-10,"Crude oil, Brent",$/bbl,59.4
+2019-10,"Coal, Australian",$/mt,69.2
+2019-10,"Coal, South African",$/mt,67.4
+2019-10,"Liquefied natural gas, Japan",$/mmbtu,9.98
+2019-10,Palm oil,$/mt,591
+2019-10,Soybean oil,$/mt,771
+2019-10,"Wheat, US HRW",$/mt,199.5
+2019-10,"Sugar, world",$/kg,0.28
+2019-10,"Cotton, A Index",$/kg,1.63
+2019-10,DAP,$/mt,277.4
+2019-10,Urea,$/mt,237
+2019-10,Aluminum,$/mt,1726
+2019-10,"Iron ore, cfr spot",$/dmtu,88.5
+2019-10,Copper,$/mt,5757
+2019-11,"Crude oil, Brent",$/bbl,62.7
+2019-11,"Coal, Australian",$/mt,67
+2019-11,"Coal, South African",$/mt,73.6
+2019-11,"Liquefied natural gas, Japan",$/mmbtu,10.04
+2019-11,Palm oil,$/mt,685
+2019-11,Soybean oil,$/mt,770
+2019-11,"Wheat, US HRW",$/mt,203.2
+2019-11,"Sugar, world",$/kg,0.28
+2019-11,"Cotton, A Index",$/kg,1.65
+2019-11,DAP,$/mt,248
+2019-11,Urea,$/mt,224.5
+2019-11,Aluminum,$/mt,1775
+2019-11,"Iron ore, cfr spot",$/dmtu,85
+2019-11,Copper,$/mt,5860
+2019-12,"Crude oil, Brent",$/bbl,65.9
+2019-12,"Coal, Australian",$/mt,66.2
+2019-12,"Coal, South African",$/mt,76
+2019-12,"Liquefied natural gas, Japan",$/mmbtu,10.06
+2019-12,Palm oil,$/mt,764
+2019-12,Soybean oil,$/mt,834
+2019-12,"Wheat, US HRW",$/mt,210.9
+2019-12,"Sugar, world",$/kg,0.3
+2019-12,"Cotton, A Index",$/kg,1.67
+2019-12,DAP,$/mt,238.2
+2019-12,Urea,$/mt,217.5
+2019-12,Aluminum,$/mt,1771
+2019-12,"Iron ore, cfr spot",$/dmtu,92.7
+2019-12,Copper,$/mt,6077
+2020-01,"Crude oil, Brent",$/bbl,63.6
+2020-01,"Coal, Australian",$/mt,69.7
+2020-01,"Coal, South African",$/mt,82.1
+2020-01,"Liquefied natural gas, Japan",$/mmbtu,9.89
+2020-01,Palm oil,$/mt,810
+2020-01,Soybean oil,$/mt,876
+2020-01,"Wheat, US HRW",$/mt,224.5
+2020-01,"Sugar, world",$/kg,0.31
+2020-01,"Cotton, A Index",$/kg,1.74
+2020-01,DAP,$/mt,264.9
+2020-01,Urea,$/mt,215.4
+2020-01,Aluminum,$/mt,1773
+2020-01,"Iron ore, cfr spot",$/dmtu,95.8
+2020-01,Copper,$/mt,6031
+2020-02,"Crude oil, Brent",$/bbl,55
+2020-02,"Coal, Australian",$/mt,67.6
+2020-02,"Coal, South African",$/mt,80
+2020-02,"Liquefied natural gas, Japan",$/mmbtu,9.89
+2020-02,Palm oil,$/mt,729
+2020-02,Soybean oil,$/mt,800
+2020-02,"Wheat, US HRW",$/mt,215.3
+2020-02,"Sugar, world",$/kg,0.33
+2020-02,"Cotton, A Index",$/kg,1.69
+2020-02,DAP,$/mt,279.4
+2020-02,Urea,$/mt,214.4
+2020-02,Aluminum,$/mt,1688
+2020-02,"Iron ore, cfr spot",$/dmtu,87.7
+2020-02,Copper,$/mt,5688
+2020-03,"Crude oil, Brent",$/bbl,33
+2020-03,"Coal, Australian",$/mt,66.7
+2020-03,"Coal, South African",$/mt,67.9
+2020-03,"Liquefied natural gas, Japan",$/mmbtu,10.21
+2020-03,Palm oil,$/mt,636
+2020-03,Soybean oil,$/mt,748
+2020-03,"Wheat, US HRW",$/mt,209.1
+2020-03,"Sugar, world",$/kg,0.26
+2020-03,"Cotton, A Index",$/kg,1.49
+2020-03,DAP,$/mt,276.2
+2020-03,Urea,$/mt,231.1
+2020-03,Aluminum,$/mt,1611
+2020-03,"Iron ore, cfr spot",$/dmtu,89
+2020-03,Copper,$/mt,5183
+2020-04,"Crude oil, Brent",$/bbl,23.3
+2020-04,"Coal, Australian",$/mt,58.6
+2020-04,"Coal, South African",$/mt,56.6
+2020-04,"Liquefied natural gas, Japan",$/mmbtu,10.01
+2020-04,Palm oil,$/mt,609
+2020-04,Soybean oil,$/mt,680
+2020-04,"Wheat, US HRW",$/mt,219
+2020-04,"Sugar, world",$/kg,0.23
+2020-04,"Cotton, A Index",$/kg,1.4
+2020-04,DAP,$/mt,282
+2020-04,Urea,$/mt,235
+2020-04,Aluminum,$/mt,1460
+2020-04,"Iron ore, cfr spot",$/dmtu,84.7
+2020-04,Copper,$/mt,5058
+2020-05,"Crude oil, Brent",$/bbl,31
+2020-05,"Coal, Australian",$/mt,52.5
+2020-05,"Coal, South African",$/mt,57.4
+2020-05,"Liquefied natural gas, Japan",$/mmbtu,10.08
+2020-05,Palm oil,$/mt,577
+2020-05,Soybean oil,$/mt,685
+2020-05,"Wheat, US HRW",$/mt,205.8
+2020-05,"Sugar, world",$/kg,0.24
+2020-05,"Cotton, A Index",$/kg,1.45
+2020-05,DAP,$/mt,263
+2020-05,Urea,$/mt,201.9
+2020-05,Aluminum,$/mt,1466
+2020-05,"Iron ore, cfr spot",$/dmtu,93.7
+2020-05,Copper,$/mt,5240
+2020-06,"Crude oil, Brent",$/bbl,39.9
+2020-06,"Coal, Australian",$/mt,52.2
+2020-06,"Coal, South African",$/mt,56.8
+2020-06,"Liquefied natural gas, Japan",$/mmbtu,8.97
+2020-06,Palm oil,$/mt,656
+2020-06,Soybean oil,$/mt,756
+2020-06,"Wheat, US HRW",$/mt,198.4
+2020-06,"Sugar, world",$/kg,0.27
+2020-06,"Cotton, A Index",$/kg,1.49
+2020-06,DAP,$/mt,273
+2020-06,Urea,$/mt,202
+2020-06,Aluminum,$/mt,1569
+2020-06,"Iron ore, cfr spot",$/dmtu,103.3
+2020-06,Copper,$/mt,5755
+2020-07,"Crude oil, Brent",$/bbl,42.8
+2020-07,"Coal, Australian",$/mt,51.6
+2020-07,"Coal, South African",$/mt,56.6
+2020-07,"Liquefied natural gas, Japan",$/mmbtu,7.79
+2020-07,Palm oil,$/mt,694
+2020-07,Soybean oil,$/mt,821
+2020-07,"Wheat, US HRW",$/mt,222.1
+2020-07,"Sugar, world",$/kg,0.27
+2020-07,"Cotton, A Index",$/kg,1.51
+2020-07,DAP,$/mt,305.1
+2020-07,Urea,$/mt,214.4
+2020-07,Aluminum,$/mt,1644
+2020-07,"Iron ore, cfr spot",$/dmtu,108.5
+2020-07,Copper,$/mt,6372
+2020-08,"Crude oil, Brent",$/bbl,44.3
+2020-08,"Coal, Australian",$/mt,50.1
+2020-08,"Coal, South African",$/mt,57.4
+2020-08,"Liquefied natural gas, Japan",$/mmbtu,6.34
+2020-08,Palm oil,$/mt,760
+2020-08,Soybean oil,$/mt,867
+2020-08,"Wheat, US HRW",$/mt,223
+2020-08,"Sugar, world",$/kg,0.29
+2020-08,"Cotton, A Index",$/kg,1.54
+2020-08,DAP,$/mt,341.9
+2020-08,Urea,$/mt,249.5
+2020-08,Aluminum,$/mt,1737
+2020-08,"Iron ore, cfr spot",$/dmtu,121.1
+2020-08,Copper,$/mt,6499
+2020-09,"Crude oil, Brent",$/bbl,41.1
+2020-09,"Coal, Australian",$/mt,54.6
+2020-09,"Coal, South African",$/mt,57.5
+2020-09,"Liquefied natural gas, Japan",$/mmbtu,5.88
+2020-09,Palm oil,$/mt,796
+2020-09,Soybean oil,$/mt,906
+2020-09,"Wheat, US HRW",$/mt,247.7
+2020-09,"Sugar, world",$/kg,0.28
+2020-09,"Cotton, A Index",$/kg,1.56
+2020-09,DAP,$/mt,358.4
+2020-09,Urea,$/mt,250.5
+2020-09,Aluminum,$/mt,1744
+2020-09,"Iron ore, cfr spot",$/dmtu,123.8
+2020-09,Copper,$/mt,6705
+2020-10,"Crude oil, Brent",$/bbl,40.5
+2020-10,"Coal, Australian",$/mt,58.4
+2020-10,"Coal, South African",$/mt,61
+2020-10,"Liquefied natural gas, Japan",$/mmbtu,6.18
+2020-10,Palm oil,$/mt,819
+2020-10,Soybean oil,$/mt,915
+2020-10,"Wheat, US HRW",$/mt,272.4
+2020-10,"Sugar, world",$/kg,0.3
+2020-10,"Cotton, A Index",$/kg,1.65
+2020-10,DAP,$/mt,357.1
+2020-10,Urea,$/mt,245
+2020-10,Aluminum,$/mt,1806
+2020-10,"Iron ore, cfr spot",$/dmtu,119.8
+2020-10,Copper,$/mt,6714
+2020-11,"Crude oil, Brent",$/bbl,43.2
+2020-11,"Coal, Australian",$/mt,64.4
+2020-11,"Coal, South African",$/mt,69.4
+2020-11,"Liquefied natural gas, Japan",$/mmbtu,6.86
+2020-11,Palm oil,$/mt,918
+2020-11,Soybean oil,$/mt,974
+2020-11,"Wheat, US HRW",$/mt,273
+2020-11,"Sugar, world",$/kg,0.31
+2020-11,"Cotton, A Index",$/kg,1.71
+2020-11,DAP,$/mt,359.6
+2020-11,Urea,$/mt,245
+2020-11,Aluminum,$/mt,1935
+2020-11,"Iron ore, cfr spot",$/dmtu,124.4
+2020-11,Copper,$/mt,7069
+2020-12,"Crude oil, Brent",$/bbl,49.9
+2020-12,"Coal, Australian",$/mt,83
+2020-12,"Coal, South African",$/mt,85.2
+2020-12,"Liquefied natural gas, Japan",$/mmbtu,7.66
+2020-12,Palm oil,$/mt,1016
+2020-12,Soybean oil,$/mt,1026
+2020-12,"Wheat, US HRW",$/mt,268.6
+2020-12,"Sugar, world",$/kg,0.31
+2020-12,"Cotton, A Index",$/kg,1.79
+2020-12,DAP,$/mt,388.5
+2020-12,Urea,$/mt,245
+2020-12,Aluminum,$/mt,2015
+2020-12,"Iron ore, cfr spot",$/dmtu,155.4
+2020-12,Copper,$/mt,7772
+2021-01,"Crude oil, Brent",$/bbl,54.6
+2021-01,"Coal, Australian",$/mt,86.8
+2021-01,"Coal, South African",$/mt,86.9
+2021-01,"Liquefied natural gas, Japan",$/mmbtu,9
+2021-01,Palm oil,$/mt,990
+2021-01,Soybean oil,$/mt,1099
+2021-01,"Wheat, US HRW",$/mt,289.3
+2021-01,"Sugar, world",$/kg,0.34
+2021-01,"Cotton, A Index",$/kg,1.92
+2021-01,DAP,$/mt,421.3
+2021-01,Urea,$/mt,265
+2021-01,Aluminum,$/mt,2004
+2021-01,"Iron ore, cfr spot",$/dmtu,169.6
+2021-01,Copper,$/mt,7972
+2021-02,"Crude oil, Brent",$/bbl,62
+2021-02,"Coal, Australian",$/mt,86.7
+2021-02,"Coal, South African",$/mt,82.8
+2021-02,"Liquefied natural gas, Japan",$/mmbtu,9.88
+2021-02,Palm oil,$/mt,1020
+2021-02,Soybean oil,$/mt,1124
+2021-02,"Wheat, US HRW",$/mt,289.4
+2021-02,"Sugar, world",$/kg,0.36
+2021-02,"Cotton, A Index",$/kg,2.05
+2021-02,DAP,$/mt,528.9
+2021-02,Urea,$/mt,335
+2021-02,Aluminum,$/mt,2079
+2021-02,"Iron ore, cfr spot",$/dmtu,163.8
+2021-02,Copper,$/mt,8471
+2021-03,"Crude oil, Brent",$/bbl,65.2
+2021-03,"Coal, Australian",$/mt,94.9
+2021-03,"Coal, South African",$/mt,90.7
+2021-03,"Liquefied natural gas, Japan",$/mmbtu,7.9
+2021-03,Palm oil,$/mt,1030
+2021-03,Soybean oil,$/mt,1285
+2021-03,"Wheat, US HRW",$/mt,273.1
+2021-03,"Sugar, world",$/kg,0.34
+2021-03,"Cotton, A Index",$/kg,2.02
+2021-03,DAP,$/mt,534.1
+2021-03,Urea,$/mt,352.9
+2021-03,Aluminum,$/mt,2190
+2021-03,"Iron ore, cfr spot",$/dmtu,168.2
+2021-03,Copper,$/mt,8988
+2021-04,"Crude oil, Brent",$/bbl,64.8
+2021-04,"Coal, Australian",$/mt,92.2
+2021-04,"Coal, South African",$/mt,89.1
+2021-04,"Liquefied natural gas, Japan",$/mmbtu,8.28
+2021-04,Palm oil,$/mt,1078
+2021-04,Soybean oil,$/mt,1386
+2021-04,"Wheat, US HRW",$/mt,281
+2021-04,"Sugar, world",$/kg,0.36
+2021-04,"Cotton, A Index",$/kg,2
+2021-04,DAP,$/mt,543.4
+2021-04,Urea,$/mt,328.1
+2021-04,Aluminum,$/mt,2319
+2021-04,"Iron ore, cfr spot",$/dmtu,179.8
+2021-04,Copper,$/mt,9325
+2021-05,"Crude oil, Brent",$/bbl,68
+2021-05,"Coal, Australian",$/mt,107
+2021-05,"Coal, South African",$/mt,99.3
+2021-05,"Liquefied natural gas, Japan",$/mmbtu,8.92
+2021-05,Palm oil,$/mt,1136
+2021-05,Soybean oil,$/mt,1575
+2021-05,"Wheat, US HRW",$/mt,297.3
+2021-05,"Sugar, world",$/kg,0.38
+2021-05,"Cotton, A Index",$/kg,2
+2021-05,DAP,$/mt,574.6
+2021-05,Urea,$/mt,331.6
+2021-05,Aluminum,$/mt,2434
+2021-05,"Iron ore, cfr spot",$/dmtu,207.7
+2021-05,Copper,$/mt,10162
+2021-06,"Crude oil, Brent",$/bbl,73.1
+2021-06,"Coal, Australian",$/mt,130
+2021-06,"Coal, South African",$/mt,112.9
+2021-06,"Liquefied natural gas, Japan",$/mmbtu,9.62
+2021-06,Palm oil,$/mt,1004
+2021-06,Soybean oil,$/mt,1518
+2021-06,"Wheat, US HRW",$/mt,285.6
+2021-06,"Sugar, world",$/kg,0.38
+2021-06,"Cotton, A Index",$/kg,2.08
+2021-06,DAP,$/mt,604.8
+2021-06,Urea,$/mt,393.3
+2021-06,Aluminum,$/mt,2447
+2021-06,"Iron ore, cfr spot",$/dmtu,214.4
+2021-06,Copper,$/mt,9632
+2021-07,"Crude oil, Brent",$/bbl,74.4
+2021-07,"Coal, Australian",$/mt,152
+2021-07,"Coal, South African",$/mt,122.3
+2021-07,"Liquefied natural gas, Japan",$/mmbtu,10.36
+2021-07,Palm oil,$/mt,1063
+2021-07,Soybean oil,$/mt,1468
+2021-07,"Wheat, US HRW",$/mt,294.3
+2021-07,"Sugar, world",$/kg,0.39
+2021-07,"Cotton, A Index",$/kg,2.15
+2021-07,DAP,$/mt,613
+2021-07,Urea,$/mt,441.5
+2021-07,Aluminum,$/mt,2498
+2021-07,"Iron ore, cfr spot",$/dmtu,214.1
+2021-07,Copper,$/mt,9451
+2021-08,"Crude oil, Brent",$/bbl,70
+2021-08,"Coal, Australian",$/mt,169.6
+2021-08,"Coal, South African",$/mt,137.9
+2021-08,"Liquefied natural gas, Japan",$/mmbtu,10.8
+2021-08,Palm oil,$/mt,1142
+2021-08,Soybean oil,$/mt,1434
+2021-08,"Wheat, US HRW",$/mt,324.5
+2021-08,"Sugar, world",$/kg,0.43
+2021-08,"Cotton, A Index",$/kg,2.23
+2021-08,DAP,$/mt,603.1
+2021-08,Urea,$/mt,446.9
+2021-08,Aluminum,$/mt,2603
+2021-08,"Iron ore, cfr spot",$/dmtu,162.2
+2021-08,Copper,$/mt,9370
+2021-09,"Crude oil, Brent",$/bbl,74.6
+2021-09,"Coal, Australian",$/mt,185.7
+2021-09,"Coal, South African",$/mt,146.1
+2021-09,"Liquefied natural gas, Japan",$/mmbtu,11.44
+2021-09,Palm oil,$/mt,1181
+2021-09,Soybean oil,$/mt,1399
+2021-09,"Wheat, US HRW",$/mt,337.6
+2021-09,"Sugar, world",$/kg,0.43
+2021-09,"Cotton, A Index",$/kg,2.29
+2021-09,DAP,$/mt,643.8
+2021-09,Urea,$/mt,418.8
+2021-09,Aluminum,$/mt,2835
+2021-09,"Iron ore, cfr spot",$/dmtu,124.5
+2021-09,Copper,$/mt,9325
+2021-10,"Crude oil, Brent",$/bbl,83.7
+2021-10,"Coal, Australian",$/mt,224.5
+2021-10,"Coal, South African",$/mt,199.7
+2021-10,"Liquefied natural gas, Japan",$/mmbtu,12.38
+2021-10,Palm oil,$/mt,1310
+2021-10,Soybean oil,$/mt,1484
+2021-10,"Wheat, US HRW",$/mt,354.7
+2021-10,"Sugar, world",$/kg,0.42
+2021-10,"Cotton, A Index",$/kg,2.59
+2021-10,DAP,$/mt,672.9
+2021-10,Urea,$/mt,695
+2021-10,Aluminum,$/mt,2934
+2021-10,"Iron ore, cfr spot",$/dmtu,122.9
+2021-10,Copper,$/mt,9829
+2021-11,"Crude oil, Brent",$/bbl,80.8
+2021-11,"Coal, Australian",$/mt,157.5
+2021-11,"Coal, South African",$/mt,128
+2021-11,"Liquefied natural gas, Japan",$/mmbtu,15.25
+2021-11,Palm oil,$/mt,1341
+2021-11,Soybean oil,$/mt,1443
+2021-11,"Wheat, US HRW",$/mt,379.5
+2021-11,"Sugar, world",$/kg,0.43
+2021-11,"Cotton, A Index",$/kg,2.79
+2021-11,DAP,$/mt,726.7
+2021-11,Urea,$/mt,900.5
+2021-11,Aluminum,$/mt,2636
+2021-11,"Iron ore, cfr spot",$/dmtu,96.2
+2021-11,Copper,$/mt,9729
+2021-12,"Crude oil, Brent",$/bbl,74.3
+2021-12,"Coal, Australian",$/mt,169.7
+2021-12,"Coal, South African",$/mt,142.5
+2021-12,"Liquefied natural gas, Japan",$/mmbtu,15.32
+2021-12,Palm oil,$/mt,1270
+2021-12,Soybean oil,$/mt,1411
+2021-12,"Wheat, US HRW",$/mt,376.8
+2021-12,"Sugar, world",$/kg,0.42
+2021-12,"Cotton, A Index",$/kg,2.65
+2021-12,DAP,$/mt,745
+2021-12,Urea,$/mt,890
+2021-12,Aluminum,$/mt,2696
+2021-12,"Iron ore, cfr spot",$/dmtu,117
+2021-12,Copper,$/mt,9551
+2022-01,"Crude oil, Brent",$/bbl,85.5
+2022-01,"Coal, Australian",$/mt,197
+2022-01,"Coal, South African",$/mt,168.5
+2022-01,"Liquefied natural gas, Japan",$/mmbtu,14.69
+2022-01,Palm oil,$/mt,1345
+2022-01,Soybean oil,$/mt,1470
+2022-01,"Wheat, US HRW",$/mt,374.2
+2022-01,"Sugar, world",$/kg,0.4
+2022-01,"Cotton, A Index",$/kg,2.91
+2022-01,DAP,$/mt,699.4
+2022-01,Urea,$/mt,846.4
+2022-01,Aluminum,$/mt,3006
+2022-01,"Iron ore, cfr spot",$/dmtu,132.5
+2022-01,Copper,$/mt,9782
+2022-02,"Crude oil, Brent",$/bbl,95.8
+2022-02,"Coal, Australian",$/mt,219.8
+2022-02,"Coal, South African",$/mt,196.4
+2022-02,"Liquefied natural gas, Japan",$/mmbtu,17
+2022-02,Palm oil,$/mt,1522
+2022-02,Soybean oil,$/mt,1596
+2022-02,"Wheat, US HRW",$/mt,390.5
+2022-02,"Sugar, world",$/kg,0.39
+2022-02,"Cotton, A Index",$/kg,3.05
+2022-02,DAP,$/mt,747.1
+2022-02,Urea,$/mt,744.2
+2022-02,Aluminum,$/mt,3246
+2022-02,"Iron ore, cfr spot",$/dmtu,142.8
+2022-02,Copper,$/mt,9943
+2022-03,"Crude oil, Brent",$/bbl,115.6
+2022-03,"Coal, Australian",$/mt,314
+2022-03,"Coal, South African",$/mt,294.4
+2022-03,"Liquefied natural gas, Japan",$/mmbtu,15.11
+2022-03,Palm oil,$/mt,1777
+2022-03,Soybean oil,$/mt,1957
+2022-03,"Wheat, US HRW",$/mt,486.3
+2022-03,"Sugar, world",$/kg,0.42
+2022-03,"Cotton, A Index",$/kg,3.11
+2022-03,DAP,$/mt,938.1
+2022-03,Urea,$/mt,872.5
+2022-03,Aluminum,$/mt,3498
+2022-03,"Iron ore, cfr spot",$/dmtu,152.1
+2022-03,Copper,$/mt,10231
+2022-04,"Crude oil, Brent",$/bbl,105.8
+2022-04,"Coal, Australian",$/mt,310.9
+2022-04,"Coal, South African",$/mt,302
+2022-04,"Liquefied natural gas, Japan",$/mmbtu,16.29
+2022-04,Palm oil,$/mt,1683
+2022-04,Soybean oil,$/mt,1948
+2022-04,"Wheat, US HRW",$/mt,495.3
+2022-04,"Sugar, world",$/kg,0.43
+2022-04,"Cotton, A Index",$/kg,3.42
+2022-04,DAP,$/mt,954
+2022-04,Urea,$/mt,925
+2022-04,Aluminum,$/mt,3244
+2022-04,"Iron ore, cfr spot",$/dmtu,151.3
+2022-04,Copper,$/mt,10161
+2022-05,"Crude oil, Brent",$/bbl,112.4
+2022-05,"Coal, Australian",$/mt,371.9
+2022-05,"Coal, South African",$/mt,280
+2022-05,"Liquefied natural gas, Japan",$/mmbtu,16.68
+2022-05,Palm oil,$/mt,1717
+2022-05,Soybean oil,$/mt,1963
+2022-05,"Wheat, US HRW",$/mt,522.3
+2022-05,"Sugar, world",$/kg,0.43
+2022-05,"Cotton, A Index",$/kg,3.61
+2022-05,DAP,$/mt,842.5
+2022-05,Urea,$/mt,707.5
+2022-05,Aluminum,$/mt,2830
+2022-05,"Iron ore, cfr spot",$/dmtu,131.2
+2022-05,Copper,$/mt,9377
+2022-06,"Crude oil, Brent",$/bbl,120.1
+2022-06,"Coal, Australian",$/mt,374.1
+2022-06,"Coal, South African",$/mt,291.4
+2022-06,"Liquefied natural gas, Japan",$/mmbtu,15.53
+2022-06,Palm oil,$/mt,1501
+2022-06,Soybean oil,$/mt,1752
+2022-06,"Wheat, US HRW",$/mt,459.6
+2022-06,"Sugar, world",$/kg,0.42
+2022-06,"Cotton, A Index",$/kg,3.4
+2022-06,DAP,$/mt,783.8
+2022-06,Urea,$/mt,690
+2022-06,Aluminum,$/mt,2563
+2022-06,"Iron ore, cfr spot",$/dmtu,130.7
+2022-06,Copper,$/mt,9024
+2022-07,"Crude oil, Brent",$/bbl,108.9
+2022-07,"Coal, Australian",$/mt,402.2
+2022-07,"Coal, South African",$/mt,269.1
+2022-07,"Liquefied natural gas, Japan",$/mmbtu,18.88
+2022-07,Palm oil,$/mt,1057
+2022-07,Soybean oil,$/mt,1533
+2022-07,"Wheat, US HRW",$/mt,382.5
+2022-07,"Sugar, world",$/kg,0.4
+2022-07,"Cotton, A Index",$/kg,2.89
+2022-07,DAP,$/mt,784
+2022-07,Urea,$/mt,601
+2022-07,Aluminum,$/mt,2408
+2022-07,"Iron ore, cfr spot",$/dmtu,108.6
+2022-07,Copper,$/mt,7545
+2022-08,"Crude oil, Brent",$/bbl,98.6
+2022-08,"Coal, Australian",$/mt,407
+2022-08,"Coal, South African",$/mt,274.6
+2022-08,"Liquefied natural gas, Japan",$/mmbtu,21.21
+2022-08,Palm oil,$/mt,1026
+2022-08,Soybean oil,$/mt,1599
+2022-08,"Wheat, US HRW",$/mt,382.9
+2022-08,"Sugar, world",$/kg,0.39
+2022-08,"Cotton, A Index",$/kg,2.74
+2022-08,DAP,$/mt,749.4
+2022-08,Urea,$/mt,591.3
+2022-08,Aluminum,$/mt,2431
+2022-08,"Iron ore, cfr spot",$/dmtu,108.9
+2022-08,Copper,$/mt,7982
+2022-09,"Crude oil, Brent",$/bbl,90.2
+2022-09,"Coal, Australian",$/mt,430.8
+2022-09,"Coal, South African",$/mt,235
+2022-09,"Liquefied natural gas, Japan",$/mmbtu,23.73
+2022-09,Palm oil,$/mt,909
+2022-09,Soybean oil,$/mt,1548
+2022-09,"Wheat, US HRW",$/mt,419.1
+2022-09,"Sugar, world",$/kg,0.39
+2022-09,"Cotton, A Index",$/kg,2.59
+2022-09,DAP,$/mt,752
+2022-09,Urea,$/mt,678
+2022-09,Aluminum,$/mt,2225
+2022-09,"Iron ore, cfr spot",$/dmtu,99.8
+2022-09,Copper,$/mt,7746
+2022-10,"Crude oil, Brent",$/bbl,93.1
+2022-10,"Coal, Australian",$/mt,389.8
+2022-10,"Coal, South African",$/mt,191.2
+2022-10,"Liquefied natural gas, Japan",$/mmbtu,21.84
+2022-10,Palm oil,$/mt,889
+2022-10,Soybean oil,$/mt,1576
+2022-10,"Wheat, US HRW",$/mt,438
+2022-10,"Sugar, world",$/kg,0.39
+2022-10,"Cotton, A Index",$/kg,2.2
+2022-10,DAP,$/mt,725
+2022-10,Urea,$/mt,636.3
+2022-10,Aluminum,$/mt,2256
+2022-10,"Iron ore, cfr spot",$/dmtu,92.6
+2022-10,Copper,$/mt,7651
+2022-11,"Crude oil, Brent",$/bbl,91.1
+2022-11,"Coal, Australian",$/mt,342.2
+2022-11,"Coal, South African",$/mt,169.1
+2022-11,"Liquefied natural gas, Japan",$/mmbtu,19.59
+2022-11,Palm oil,$/mt,946
+2022-11,Soybean oil,$/mt,1652
+2022-11,"Wheat, US HRW",$/mt,422.7
+2022-11,"Sugar, world",$/kg,0.41
+2022-11,"Cotton, A Index",$/kg,2.23
+2022-11,DAP,$/mt,665.6
+2022-11,Urea,$/mt,588.8
+2022-11,Aluminum,$/mt,2351
+2022-11,"Iron ore, cfr spot",$/dmtu,93.3
+2022-11,Copper,$/mt,8050
+2022-12,"Crude oil, Brent",$/bbl,80.9
+2022-12,"Coal, Australian",$/mt,379.2
+2022-12,"Coal, South African",$/mt,215
+2022-12,"Liquefied natural gas, Japan",$/mmbtu,20.58
+2022-12,Palm oil,$/mt,940
+2022-12,Soybean oil,$/mt,1409
+2022-12,"Wheat, US HRW",$/mt,386.3
+2022-12,"Sugar, world",$/kg,0.42
+2022-12,"Cotton, A Index",$/kg,2.22
+2022-12,DAP,$/mt,625
+2022-12,Urea,$/mt,519.4
+2022-12,Aluminum,$/mt,2402
+2022-12,"Iron ore, cfr spot",$/dmtu,111.8
+2022-12,Copper,$/mt,8375
+2023-01,"Crude oil, Brent",$/bbl,83.1
+2023-01,"Coal, Australian",$/mt,318
+2023-01,"Coal, South African",$/mt,172
+2023-01,"Liquefied natural gas, Japan",$/mmbtu,20.19
+2023-01,Palm oil,$/mt,942
+2023-01,Soybean oil,$/mt,1352
+2023-01,"Wheat, US HRW",$/mt,380.4
+2023-01,"Sugar, world",$/kg,0.42
+2023-01,"Cotton, A Index",$/kg,2.21
+2023-01,DAP,$/mt,631
+2023-01,Urea,$/mt,443.8
+2023-01,Aluminum,$/mt,2502
+2023-01,"Iron ore, cfr spot",$/dmtu,122.2
+2023-01,Copper,$/mt,9038
+2023-02,"Crude oil, Brent",$/bbl,82.7
+2023-02,"Coal, Australian",$/mt,207.5
+2023-02,"Coal, South African",$/mt,144.7
+2023-02,"Liquefied natural gas, Japan",$/mmbtu,18.42
+2023-02,Palm oil,$/mt,950
+2023-02,Soybean oil,$/mt,1243
+2023-02,"Wheat, US HRW",$/mt,394.8
+2023-02,"Sugar, world",$/kg,0.45
+2023-02,"Cotton, A Index",$/kg,2.19
+2023-02,DAP,$/mt,612.5
+2023-02,Urea,$/mt,357.5
+2023-02,Aluminum,$/mt,2416
+2023-02,"Iron ore, cfr spot",$/dmtu,127.6
+2023-02,Copper,$/mt,8937
+2023-03,"Crude oil, Brent",$/bbl,78.5
+2023-03,"Coal, Australian",$/mt,187.2
+2023-03,"Coal, South African",$/mt,136.8
+2023-03,"Liquefied natural gas, Japan",$/mmbtu,16.03
+2023-03,Palm oil,$/mt,972
+2023-03,Soybean oil,$/mt,1113
+2023-03,"Wheat, US HRW",$/mt,369.9
+2023-03,"Sugar, world",$/kg,0.45
+2023-03,"Cotton, A Index",$/kg,2.1
+2023-03,DAP,$/mt,606
+2023-03,Urea,$/mt,313.5
+2023-03,Aluminum,$/mt,2296
+2023-03,"Iron ore, cfr spot",$/dmtu,128.4
+2023-03,Copper,$/mt,8856
+2023-04,"Crude oil, Brent",$/bbl,84.1
+2023-04,"Coal, Australian",$/mt,194.3
+2023-04,"Coal, South African",$/mt,133.7
+2023-04,"Liquefied natural gas, Japan",$/mmbtu,14.37
+2023-04,Palm oil,$/mt,1005
+2023-04,Soybean oil,$/mt,1030
+2023-04,"Wheat, US HRW",$/mt,378.2
+2023-04,"Sugar, world",$/kg,0.53
+2023-04,"Cotton, A Index",$/kg,2.1
+2023-04,DAP,$/mt,637
+2023-04,Urea,$/mt,313.4
+2023-04,Aluminum,$/mt,2343
+2023-04,"Iron ore, cfr spot",$/dmtu,117.4
+2023-04,Copper,$/mt,8809
+2023-05,"Crude oil, Brent",$/bbl,75.7
+2023-05,"Coal, Australian",$/mt,160.5
+2023-05,"Coal, South African",$/mt,103
+2023-05,"Liquefied natural gas, Japan",$/mmbtu,13.43
+2023-05,Palm oil,$/mt,934
+2023-05,Soybean oil,$/mt,988
+2023-05,"Wheat, US HRW",$/mt,367.7
+2023-05,"Sugar, world",$/kg,0.56
+2023-05,"Cotton, A Index",$/kg,2.07
+2023-05,DAP,$/mt,510
+2023-05,Urea,$/mt,329.3
+2023-05,Aluminum,$/mt,2269
+2023-05,"Iron ore, cfr spot",$/dmtu,105.2
+2023-05,Copper,$/mt,8217
+2023-06,"Crude oil, Brent",$/bbl,74.9
+2023-06,"Coal, Australian",$/mt,139.4
+2023-06,"Coal, South African",$/mt,98.6
+2023-06,"Liquefied natural gas, Japan",$/mmbtu,12.68
+2023-06,Palm oil,$/mt,817
+2023-06,Soybean oil,$/mt,1007
+2023-06,"Wheat, US HRW",$/mt,345.5
+2023-06,"Sugar, world",$/kg,0.54
+2023-06,"Cotton, A Index",$/kg,2.04
+2023-06,DAP,$/mt,454.6
+2023-06,Urea,$/mt,287.5
+2023-06,Aluminum,$/mt,2185
+2023-06,"Iron ore, cfr spot",$/dmtu,113.5
+2023-06,Copper,$/mt,8397
+2023-07,"Crude oil, Brent",$/bbl,80.1
+2023-07,"Coal, Australian",$/mt,140.6
+2023-07,"Coal, South African",$/mt,96.8
+2023-07,"Liquefied natural gas, Japan",$/mmbtu,12.99
+2023-07,Palm oil,$/mt,879
+2023-07,Soybean oil,$/mt,1136
+2023-07,"Wheat, US HRW",$/mt,345.5
+2023-07,"Sugar, world",$/kg,0.52
+2023-07,"Cotton, A Index",$/kg,2.05
+2023-07,DAP,$/mt,458.8
+2023-07,Urea,$/mt,334.6
+2023-07,Aluminum,$/mt,2160
+2023-07,"Iron ore, cfr spot",$/dmtu,114.4
+2023-07,Copper,$/mt,8477
+2023-08,"Crude oil, Brent",$/bbl,86.2
+2023-08,"Coal, Australian",$/mt,152.6
+2023-08,"Coal, South African",$/mt,97.6
+2023-08,"Liquefied natural gas, Japan",$/mmbtu,12.54
+2023-08,Palm oil,$/mt,861
+2023-08,Soybean oil,$/mt,1127
+2023-08,"Wheat, US HRW",$/mt,315.8
+2023-08,"Sugar, world",$/kg,0.53
+2023-08,"Cotton, A Index",$/kg,2.11
+2023-08,DAP,$/mt,528.8
+2023-08,Urea,$/mt,385.6
+2023-08,Aluminum,$/mt,2137
+2023-08,"Iron ore, cfr spot",$/dmtu,110.2
+2023-08,Copper,$/mt,8349
+2023-09,"Crude oil, Brent",$/bbl,94
+2023-09,"Coal, Australian",$/mt,162.5
+2023-09,"Coal, South African",$/mt,99.9
+2023-09,"Liquefied natural gas, Japan",$/mmbtu,12.21
+2023-09,Palm oil,$/mt,830
+2023-09,Soybean oil,$/mt,1112
+2023-09,"Wheat, US HRW",$/mt,314.7
+2023-09,"Sugar, world",$/kg,0.58
+2023-09,"Cotton, A Index",$/kg,2.16
+2023-09,DAP,$/mt,527.9
+2023-09,Urea,$/mt,380
+2023-09,Aluminum,$/mt,2185
+2023-09,"Iron ore, cfr spot",$/dmtu,121
+2023-09,Copper,$/mt,8277
+2023-10,"Crude oil, Brent",$/bbl,91.1
+2023-10,"Coal, Australian",$/mt,142.1
+2023-10,"Coal, South African",$/mt,128.4
+2023-10,"Liquefied natural gas, Japan",$/mmbtu,12.62
+2023-10,Palm oil,$/mt,804
+2023-10,Soybean oil,$/mt,1134
+2023-10,"Wheat, US HRW",$/mt,298.1
+2023-10,"Sugar, world",$/kg,0.57
+2023-10,"Cotton, A Index",$/kg,2.11
+2023-10,DAP,$/mt,534.8
+2023-10,Urea,$/mt,411.4
+2023-10,Aluminum,$/mt,2192
+2023-10,"Iron ore, cfr spot",$/dmtu,119
+2023-10,Copper,$/mt,7937
+2023-11,"Crude oil, Brent",$/bbl,83.2
+2023-11,"Coal, Australian",$/mt,126.8
+2023-11,"Coal, South African",$/mt,109
+2023-11,"Liquefied natural gas, Japan",$/mmbtu,12.72
+2023-11,Palm oil,$/mt,830
+2023-11,Soybean oil,$/mt,1118
+2023-11,"Wheat, US HRW",$/mt,283.6
+2023-11,"Sugar, world",$/kg,0.57
+2023-11,"Cotton, A Index",$/kg,1.99
+2023-11,DAP,$/mt,535.6
+2023-11,Urea,$/mt,385.5
+2023-11,Aluminum,$/mt,2202
+2023-11,"Iron ore, cfr spot",$/dmtu,131.1
+2023-11,Copper,$/mt,8190
+2023-12,"Crude oil, Brent",$/bbl,77.9
+2023-12,"Coal, Australian",$/mt,141.8
+2023-12,"Coal, South African",$/mt,108.8
+2023-12,"Liquefied natural gas, Japan",$/mmbtu,14.44
+2023-12,Palm oil,$/mt,814
+2023-12,Soybean oil,$/mt,1062
+2023-12,"Wheat, US HRW",$/mt,291.1
+2023-12,"Sugar, world",$/kg,0.48
+2023-12,"Cotton, A Index",$/kg,2
+2023-12,DAP,$/mt,563.8
+2023-12,Urea,$/mt,354
+2023-12,Aluminum,$/mt,2182
+2023-12,"Iron ore, cfr spot",$/dmtu,137.1
+2023-12,Copper,$/mt,8400
+2024-01,"Crude oil, Brent",$/bbl,80.2
+2024-01,"Coal, Australian",$/mt,124.9
+2024-01,"Coal, South African",$/mt,106.8
+2024-01,"Liquefied natural gas, Japan",$/mmbtu,14.34
+2024-01,Palm oil,$/mt,845
+2024-01,Soybean oil,$/mt,971
+2024-01,"Wheat, US HRW",$/mt,283.9
+2024-01,"Sugar, world",$/kg,0.48
+2024-01,"Cotton, A Index",$/kg,2.03
+2024-01,DAP,$/mt,596.3
+2024-01,Urea,$/mt,335.4
+2024-01,Aluminum,$/mt,2193
+2024-01,"Iron ore, cfr spot",$/dmtu,135.8
+2024-01,Copper,$/mt,8339
+2024-02,"Crude oil, Brent",$/bbl,83.8
+2024-02,"Coal, Australian",$/mt,124.2
+2024-02,"Coal, South African",$/mt,105.2
+2024-02,"Liquefied natural gas, Japan",$/mmbtu,13.64
+2024-02,Palm oil,$/mt,857
+2024-02,Soybean oil,$/mt,912
+2024-02,"Wheat, US HRW",$/mt,278.5
+2024-02,"Sugar, world",$/kg,0.5
+2024-02,"Cotton, A Index",$/kg,2.2
+2024-02,DAP,$/mt,583.8
+2024-02,Urea,$/mt,351.3
+2024-02,Aluminum,$/mt,2179
+2024-02,"Iron ore, cfr spot",$/dmtu,124.4
+2024-02,Copper,$/mt,8305
+2024-03,"Crude oil, Brent",$/bbl,85.4
+2024-03,"Coal, Australian",$/mt,131.5
+2024-03,"Coal, South African",$/mt,104.8
+2024-03,"Liquefied natural gas, Japan",$/mmbtu,13.19
+2024-03,Palm oil,$/mt,943
+2024-03,Soybean oil,$/mt,965
+2024-03,"Wheat, US HRW",$/mt,274.8
+2024-03,"Sugar, world",$/kg,0.48
+2024-03,"Cotton, A Index",$/kg,2.2
+2024-03,DAP,$/mt,617.5
+2024-03,Urea,$/mt,330
+2024-03,Aluminum,$/mt,2226
+2024-03,"Iron ore, cfr spot",$/dmtu,109.8
+2024-03,Copper,$/mt,8689
+2024-04,"Crude oil, Brent",$/bbl,90.1
+2024-04,"Coal, Australian",$/mt,135
+2024-04,"Coal, South African",$/mt,104.9
+2024-04,"Liquefied natural gas, Japan",$/mmbtu,11.88
+2024-04,Palm oil,$/mt,936
+2024-04,Soybean oil,$/mt,959
+2024-04,"Wheat, US HRW",$/mt,272.3
+2024-04,"Sugar, world",$/kg,0.45
+2024-04,"Cotton, A Index",$/kg,1.99
+2024-04,DAP,$/mt,545
+2024-04,Urea,$/mt,320
+2024-04,Aluminum,$/mt,2506
+2024-04,"Iron ore, cfr spot",$/dmtu,112.8
+2024-04,Copper,$/mt,9464
+2024-05,"Crude oil, Brent",$/bbl,82
+2024-05,"Coal, Australian",$/mt,142
+2024-05,"Coal, South African",$/mt,105.6
+2024-05,"Liquefied natural gas, Japan",$/mmbtu,12.16
+2024-05,Palm oil,$/mt,859
+2024-05,Soybean oil,$/mt,988
+2024-05,"Wheat, US HRW",$/mt,289.4
+2024-05,"Sugar, world",$/kg,0.42
+2024-05,"Cotton, A Index",$/kg,1.91
+2024-05,DAP,$/mt,522
+2024-05,Urea,$/mt,284.8
+2024-05,Aluminum,$/mt,2565
+2024-05,"Iron ore, cfr spot",$/dmtu,118.9
+2024-05,Copper,$/mt,10139
+2024-06,"Crude oil, Brent",$/bbl,82.6
+2024-06,"Coal, Australian",$/mt,135.1
+2024-06,"Coal, South African",$/mt,105.3
+2024-06,"Liquefied natural gas, Japan",$/mmbtu,12.13
+2024-06,Palm oil,$/mt,874
+2024-06,Soybean oil,$/mt,1011
+2024-06,"Wheat, US HRW",$/mt,265.6
+2024-06,"Sugar, world",$/kg,0.43
+2024-06,"Cotton, A Index",$/kg,1.83
+2024-06,DAP,$/mt,543
+2024-06,Urea,$/mt,336.3
+2024-06,Aluminum,$/mt,2498
+2024-06,"Iron ore, cfr spot",$/dmtu,107.5
+2024-06,Copper,$/mt,9648
+2024-07,"Crude oil, Brent",$/bbl,85.3
+2024-07,"Coal, Australian",$/mt,137.6
+2024-07,"Coal, South African",$/mt,105.3
+2024-07,"Liquefied natural gas, Japan",$/mmbtu,12.49
+2024-07,Palm oil,$/mt,896
+2024-07,Soybean oil,$/mt,1079
+2024-07,"Wheat, US HRW",$/mt,260.3
+2024-07,"Sugar, world",$/kg,0.43
+2024-07,"Cotton, A Index",$/kg,1.79
+2024-07,DAP,$/mt,539.4
+2024-07,Urea,$/mt,342.5
+2024-07,Aluminum,$/mt,2349
+2024-07,"Iron ore, cfr spot",$/dmtu,106.9
+2024-07,Copper,$/mt,9385
+2024-08,"Crude oil, Brent",$/bbl,80.9
+2024-08,"Coal, Australian",$/mt,145.8
+2024-08,"Coal, South African",$/mt,106.2
+2024-08,"Liquefied natural gas, Japan",$/mmbtu,13.32
+2024-08,Palm oil,$/mt,933
+2024-08,Soybean oil,$/mt,1031
+2024-08,"Wheat, US HRW",$/mt,250.9
+2024-08,"Sugar, world",$/kg,0.41
+2024-08,"Cotton, A Index",$/kg,1.76
+2024-08,DAP,$/mt,546
+2024-08,Urea,$/mt,342.5
+2024-08,Aluminum,$/mt,2344
+2024-08,"Iron ore, cfr spot",$/dmtu,99.9
+2024-08,Copper,$/mt,8972
+2024-09,"Crude oil, Brent",$/bbl,74.3
+2024-09,"Coal, Australian",$/mt,139.2
+2024-09,"Coal, South African",$/mt,106.1
+2024-09,"Liquefied natural gas, Japan",$/mmbtu,12.97
+2024-09,Palm oil,$/mt,983
+2024-09,Soybean oil,$/mt,1044
+2024-09,"Wheat, US HRW",$/mt,269.7
+2024-09,"Sugar, world",$/kg,0.45
+2024-09,"Cotton, A Index",$/kg,1.82
+2024-09,DAP,$/mt,554.8
+2024-09,Urea,$/mt,337.5
+2024-09,Aluminum,$/mt,2450
+2024-09,"Iron ore, cfr spot",$/dmtu,92.8
+2024-09,Copper,$/mt,9237
+2024-10,"Crude oil, Brent",$/bbl,75.7
+2024-10,"Coal, Australian",$/mt,146.6
+2024-10,"Coal, South African",$/mt,106.8
+2024-10,"Liquefied natural gas, Japan",$/mmbtu,12.54
+2024-10,Palm oil,$/mt,1077
+2024-10,Soybean oil,$/mt,1095
+2024-10,"Wheat, US HRW",$/mt,272.9
+2024-10,"Sugar, world",$/kg,0.46
+2024-10,"Cotton, A Index",$/kg,1.84
+2024-10,DAP,$/mt,573.4
+2024-10,Urea,$/mt,374.8
+2024-10,Aluminum,$/mt,2596
+2024-10,"Iron ore, cfr spot",$/dmtu,101.4
+2024-10,Copper,$/mt,9534
+2024-11,"Crude oil, Brent",$/bbl,74.4
+2024-11,"Coal, Australian",$/mt,142.1
+2024-11,"Coal, South African",$/mt,106.8
+2024-11,"Liquefied natural gas, Japan",$/mmbtu,12.82
+2024-11,Palm oil,$/mt,1169
+2024-11,Soybean oil,$/mt,1145
+2024-11,"Wheat, US HRW",$/mt,253.8
+2024-11,"Sugar, world",$/kg,0.45
+2024-11,"Cotton, A Index",$/kg,1.8
+2024-11,DAP,$/mt,574.5
+2024-11,Urea,$/mt,352.3
+2024-11,Aluminum,$/mt,2582
+2024-11,"Iron ore, cfr spot",$/dmtu,100.5
+2024-11,Copper,$/mt,9076
+2024-12,"Crude oil, Brent",$/bbl,73.8
+2024-12,"Coal, Australian",$/mt,129.8
+2024-12,"Coal, South African",$/mt,105.5
+2024-12,"Liquefied natural gas, Japan",$/mmbtu,12.64
+2024-12,Palm oil,$/mt,1190
+2024-12,Soybean oil,$/mt,1064
+2024-12,"Wheat, US HRW",$/mt,252.2
+2024-12,"Sugar, world",$/kg,0.44
+2024-12,"Cotton, A Index",$/kg,1.76
+2024-12,DAP,$/mt,568.3
+2024-12,Urea,$/mt,352
+2024-12,Aluminum,$/mt,2541
+2024-12,"Iron ore, cfr spot",$/dmtu,102.2
+2024-12,Copper,$/mt,8916
+2025-01,"Crude oil, Brent",$/bbl,79.2
+2025-01,"Coal, Australian",$/mt,118.6
+2025-01,"Coal, South African",$/mt,103.3
+2025-01,"Liquefied natural gas, Japan",$/mmbtu,13.19
+2025-01,Palm oil,$/mt,1070
+2025-01,Soybean oil,$/mt,1048
+2025-01,"Wheat, US HRW",$/mt,254.1
+2025-01,"Sugar, world",$/kg,0.4
+2025-01,"Cotton, A Index",$/kg,1.72
+2025-01,DAP,$/mt,582.7
+2025-01,Urea,$/mt,380.5
+2025-01,Aluminum,$/mt,2573
+2025-01,"Iron ore, cfr spot",$/dmtu,99.6
+2025-01,Copper,$/mt,8991
+2025-02,"Crude oil, Brent",$/bbl,75.2
+2025-02,"Coal, Australian",$/mt,106.9
+2025-02,"Coal, South African",$/mt,100.4
+2025-02,"Liquefied natural gas, Japan",$/mmbtu,12.78
+2025-02,Palm oil,$/mt,1067
+2025-02,Soybean oil,$/mt,1069
+2025-02,"Wheat, US HRW",$/mt,264.6
+2025-02,"Sugar, world",$/kg,0.42
+2025-02,"Cotton, A Index",$/kg,1.72
+2025-02,DAP,$/mt,603.8
+2025-02,Urea,$/mt,436.5
+2025-02,Aluminum,$/mt,2658
+2025-02,"Iron ore, cfr spot",$/dmtu,105.1
+2025-02,Copper,$/mt,9331
+2025-03,"Crude oil, Brent",$/bbl,72.6
+2025-03,"Coal, Australian",$/mt,104
+2025-03,"Coal, South African",$/mt,98
+2025-03,"Liquefied natural gas, Japan",$/mmbtu,12.55
+2025-03,Palm oil,$/mt,1068
+2025-03,Soybean oil,$/mt,1011
+2025-03,"Wheat, US HRW",$/mt,255.4
+2025-03,"Sugar, world",$/kg,0.42
+2025-03,"Cotton, A Index",$/kg,1.71
+2025-03,DAP,$/mt,615.1
+2025-03,Urea,$/mt,394.5
+2025-03,Aluminum,$/mt,2658
+2025-03,"Iron ore, cfr spot",$/dmtu,100.1
+2025-03,Copper,$/mt,9740
+2025-04,"Crude oil, Brent",$/bbl,67.7
+2025-04,"Coal, Australian",$/mt,98.6
+2025-04,"Coal, South African",$/mt,95.6
+2025-04,"Liquefied natural gas, Japan",$/mmbtu,12.68
+2025-04,Palm oil,$/mt,994
+2025-04,Soybean oil,$/mt,1120
+2025-04,"Wheat, US HRW",$/mt,249.6
+2025-04,"Sugar, world",$/kg,0.4
+2025-04,"Cotton, A Index",$/kg,1.73
+2025-04,DAP,$/mt,635
+2025-04,Urea,$/mt,386.9
+2025-04,Aluminum,$/mt,2372
+2025-04,"Iron ore, cfr spot",$/dmtu,97.2
+2025-04,Copper,$/mt,9177
+2025-05,"Crude oil, Brent",$/bbl,64.2
+2025-05,"Coal, Australian",$/mt,104.4
+2025-05,"Coal, South African",$/mt,94.3
+2025-05,"Liquefied natural gas, Japan",$/mmbtu,12.32
+2025-05,Palm oil,$/mt,908
+2025-05,Soybean oil,$/mt,1163
+2025-05,"Wheat, US HRW",$/mt,237
+2025-05,"Sugar, world",$/kg,0.39
+2025-05,"Cotton, A Index",$/kg,1.72
+2025-05,DAP,$/mt,669.2
+2025-05,Urea,$/mt,392
+2025-05,Aluminum,$/mt,2449
+2025-05,"Iron ore, cfr spot",$/dmtu,97
+2025-05,Copper,$/mt,9533
+2025-06,"Crude oil, Brent",$/bbl,71.5
+2025-06,"Coal, Australian",$/mt,109
+2025-06,"Coal, South African",$/mt,93.8
+2025-06,"Liquefied natural gas, Japan",$/mmbtu,12.17
+2025-06,Palm oil,$/mt,935
+2025-06,Soybean oil,$/mt,1178
+2025-06,"Wheat, US HRW",$/mt,240.1
+2025-06,"Sugar, world",$/kg,0.37
+2025-06,"Cotton, A Index",$/kg,1.73
+2025-06,DAP,$/mt,715.4
+2025-06,Urea,$/mt,420.5
+2025-06,Aluminum,$/mt,2526
+2025-06,"Iron ore, cfr spot",$/dmtu,92.3
+2025-06,Copper,$/mt,9835
+2025-07,"Crude oil, Brent",$/bbl,71
+2025-07,"Coal, Australian",$/mt,112.9
+2025-07,"Coal, South African",$/mt,93.6
+2025-07,"Liquefied natural gas, Japan",$/mmbtu,11.91
+2025-07,Palm oil,$/mt,976
+2025-07,Soybean oil,$/mt,1307
+2025-07,"Wheat, US HRW",$/mt,235
+2025-07,"Sugar, world",$/kg,0.37
+2025-07,"Cotton, A Index",$/kg,1.74
+2025-07,DAP,$/mt,736
+2025-07,Urea,$/mt,496
+2025-07,Aluminum,$/mt,2606
+2025-07,"Iron ore, cfr spot",$/dmtu,97.3
+2025-07,Copper,$/mt,9771
+2025-08,"Crude oil, Brent",$/bbl,68.2
+2025-08,"Coal, Australian",$/mt,112.2
+2025-08,"Coal, South African",$/mt,93.3
+2025-08,"Liquefied natural gas, Japan",$/mmbtu,11.79
+2025-08,Palm oil,$/mt,1026
+2025-08,Soybean oil,$/mt,1245
+2025-08,"Wheat, US HRW",$/mt,231.1
+2025-08,"Sugar, world",$/kg,0.37
+2025-08,"Cotton, A Index",$/kg,1.73
+2025-08,DAP,$/mt,795.1
+2025-08,Urea,$/mt,507.7
+2025-08,Aluminum,$/mt,2597
+2025-08,"Iron ore, cfr spot",$/dmtu,99.7
+2025-08,Copper,$/mt,9670
+2025-09,"Crude oil, Brent",$/bbl,68
+2025-09,"Coal, Australian",$/mt,106.3
+2025-09,"Coal, South African",$/mt,92.3
+2025-09,"Liquefied natural gas, Japan",$/mmbtu,11.47
+2025-09,Palm oil,$/mt,1037
+2025-09,Soybean oil,$/mt,1159
+2025-09,"Wheat, US HRW",$/mt,233.8
+2025-09,"Sugar, world",$/kg,0.35
+2025-09,"Cotton, A Index",$/kg,1.72
+2025-09,DAP,$/mt,780.6
+2025-09,Urea,$/mt,461.1
+2025-09,Aluminum,$/mt,2653
+2025-09,"Iron ore, cfr spot",$/dmtu,103.3
+2025-09,Copper,$/mt,9984
+2025-10,"Crude oil, Brent",$/bbl,64.7
+2025-10,"Coal, Australian",$/mt,107.5
+2025-10,"Coal, South African",$/mt,91.6
+2025-10,"Liquefied natural gas, Japan",$/mmbtu,11.1
+2025-10,Palm oil,$/mt,1038
+2025-10,Soybean oil,$/mt,1132
+2025-10,"Wheat, US HRW",$/mt,230.8
+2025-10,"Sugar, world",$/kg,0.34
+2025-10,"Cotton, A Index",$/kg,1.68
+2025-10,DAP,$/mt,754
+2025-10,Urea,$/mt,394.4
+2025-10,Aluminum,$/mt,2793
+2025-10,"Iron ore, cfr spot",$/dmtu,103.5
+2025-10,Copper,$/mt,10740
+2025-11,"Crude oil, Brent",$/bbl,63.6
+2025-11,"Coal, Australian",$/mt,112.6
+2025-11,"Coal, South African",$/mt,91.6
+2025-11,"Liquefied natural gas, Japan",$/mmbtu,11.15
+2025-11,Palm oil,$/mt,983
+2025-11,Soybean oil,$/mt,1128
+2025-11,"Wheat, US HRW",$/mt,245.9
+2025-11,"Sugar, world",$/kg,0.32
+2025-11,"Cotton, A Index",$/kg,1.66
+2025-11,DAP,$/mt,708.3
+2025-11,Urea,$/mt,409.3
+2025-11,Aluminum,$/mt,2819
+2025-11,"Iron ore, cfr spot",$/dmtu,102.5
+2025-11,Copper,$/mt,10812
+2025-12,"Crude oil, Brent",$/bbl,62.7
+2025-12,"Coal, Australian",$/mt,107.7
+2025-12,"Coal, South African",$/mt,90.9
+2025-12,"Liquefied natural gas, Japan",$/mmbtu,11.32
+2025-12,Palm oil,$/mt,980
+2025-12,Soybean oil,$/mt,1116
+2025-12,"Wheat, US HRW",$/mt,242.8
+2025-12,"Sugar, world",$/kg,0.32
+2025-12,"Cotton, A Index",$/kg,1.63
+2025-12,DAP,$/mt,627.5
+2025-12,Urea,$/mt,392.5
+2025-12,Aluminum,$/mt,2876
+2025-12,"Iron ore, cfr spot",$/dmtu,104.6
+2025-12,Copper,$/mt,11785
+2026-01,"Crude oil, Brent",$/bbl,66.8
+2026-01,"Coal, Australian",$/mt,109.8
+2026-01,"Coal, South African",$/mt,90.6
+2026-01,"Liquefied natural gas, Japan",$/mmbtu,11.49
+2026-01,Palm oil,$/mt,1013
+2026-01,Soybean oil,$/mt,1154
+2026-01,"Wheat, US HRW",$/mt,249.9
+2026-01,"Sugar, world",$/kg,0.32
+2026-01,"Cotton, A Index",$/kg,1.64
+2026-01,DAP,$/mt,619.2
+2026-01,Urea,$/mt,415.4
+2026-01,Aluminum,$/mt,3142
+2026-01,"Iron ore, cfr spot",$/dmtu,105.5
+2026-01,Copper,$/mt,13012
+2026-02,"Crude oil, Brent",$/bbl,71.1
+2026-02,"Coal, Australian",$/mt,118.4
+2026-02,"Coal, South African",$/mt,91.2
+2026-02,"Liquefied natural gas, Japan",$/mmbtu,11.32
+2026-02,Palm oil,$/mt,1064
+2026-02,Soybean oil,$/mt,1282
+2026-02,"Wheat, US HRW",$/mt,257.6
+2026-02,"Sugar, world",$/kg,0.31
+2026-02,"Cotton, A Index",$/kg,1.63
+2026-02,DAP,$/mt,626.5
+2026-02,Urea,$/mt,472
+2026-02,Aluminum,$/mt,3065
+2026-02,"Iron ore, cfr spot",$/dmtu,98.8
+2026-02,Copper,$/mt,12951
+2026-03,"Crude oil, Brent",$/bbl,103.7
+2026-03,"Coal, Australian",$/mt,138.6
+2026-03,"Coal, South African",$/mt,93.8
+2026-03,"Liquefied natural gas, Japan",$/mmbtu,11.42
+2026-03,Palm oil,$/mt,1167
+2026-03,Soybean oil,$/mt,1493
+2026-03,"Wheat, US HRW",$/mt,276
+2026-03,"Sugar, world",$/kg,0.33
+2026-03,"Cotton, A Index",$/kg,1.7
+2026-03,DAP,$/mt,658.3
+2026-03,Urea,$/mt,725.6
+2026-03,Aluminum,$/mt,3373
+2026-03,"Iron ore, cfr spot",$/dmtu,104.5
+2026-03,Copper,$/mt,12529
+2026-04,"Crude oil, Brent",$/bbl,120.4
+2026-04,"Coal, Australian",$/mt,130.9
+2026-04,"Coal, South African",$/mt,94.8
+2026-04,"Liquefied natural gas, Japan",$/mmbtu,15.65
+2026-04,Palm oil,$/mt,1181
+2026-04,Soybean oil,$/mt,1643
+2026-04,"Wheat, US HRW",$/mt,282
+2026-04,"Sugar, world",$/kg,0.32
+2026-04,"Cotton, A Index",$/kg,1.9
+2026-04,DAP,$/mt,725.3
+2026-04,Urea,$/mt,856.9
+2026-04,Aluminum,$/mt,3600
+2026-04,"Iron ore, cfr spot",$/dmtu,106.1
+2026-04,Copper,$/mt,12951
+2026-05,"Crude oil, Brent",$/bbl,107.5
+2026-05,"Coal, Australian",$/mt,136.9
+2026-05,"Coal, South African",$/mt,95.6
+2026-05,"Liquefied natural gas, Japan",$/mmbtu,12.88
+2026-05,Palm oil,$/mt,1168
+2026-05,Soybean oil,$/mt,1781
+2026-05,"Wheat, US HRW",$/mt,303
+2026-05,"Sugar, world",$/kg,0.34
+2026-05,"Cotton, A Index",$/kg,2.03
+2026-05,DAP,$/mt,769.5
+2026-05,Urea,$/mt,770.5
+2026-05,Aluminum,$/mt,3666
+2026-05,"Iron ore, cfr spot",$/dmtu,108.6
+2026-05,Copper,$/mt,13543
+2026-06,"Crude oil, Brent",$/bbl,85.4
+2026-06,"Coal, Australian",$/mt,138.5
+2026-06,"Coal, South African",$/mt,96.3
+2026-06,"Liquefied natural gas, Japan",$/mmbtu,11.79
+2026-06,Palm oil,$/mt,1142
+2026-06,Soybean oil,$/mt,1740
+2026-06,"Wheat, US HRW",$/mt,286
+2026-06,"Sugar, world",$/kg,0.32
+2026-06,"Cotton, A Index",$/kg,1.9
+2026-06,DAP,$/mt,783.8
+2026-06,Urea,$/mt,453.1
+2026-06,Aluminum,$/mt,3439
+2026-06,"Iron ore, cfr spot",$/dmtu,100.8
+2026-06,Copper,$/mt,13552
+2026-07,"Crude oil, Brent",$/bbl,83.4
+2026-07,"Coal, Australian",$/mt,131.9
+2026-07,"Coal, South African",$/mt,96.3
+2026-07,"Liquefied natural gas, Japan",$/mmbtu,13.85
+2026-07,Palm oil,$/mt,1133
+2026-07,Soybean oil,$/mt,1658
+2026-07,"Wheat, US HRW",$/mt,310
+2026-07,"Sugar, world",$/kg,0.34
+2026-07,"Cotton, A Index",$/kg,1.96
+2026-07,DAP,$/mt,781.3
+2026-07,Urea,$/mt,400
+2026-07,Aluminum,$/mt,3161
+2026-07,"Iron ore, cfr spot",$/dmtu,98.2
+2026-07,Copper,$/mt,13543
+2026-08,"Crude oil, Brent",$/bbl,90.9
+2026-08,"Coal, Australian",$/mt,135.2
+2026-08,"Coal, South African",$/mt,96.8
+2026-08,"Liquefied natural gas, Japan",$/mmbtu,15.27
+2026-08,Palm oil,$/mt,1132
+2026-08,Soybean oil,$/mt,1639
+2026-08,"Wheat, US HRW",$/mt,330
+2026-08,"Sugar, world",$/kg,0.38
+2026-08,"Cotton, A Index",$/kg,2.11
+2026-08,DAP,$/mt,793.5
+2026-08,Urea,$/mt,390
+2026-08,Aluminum,$/mt,3251
+2026-08,"Iron ore, cfr spot",$/dmtu,96.3
+2026-08,Copper,$/mt,14326
+2026-09,"Crude oil, Brent",$/bbl,116.8
+2026-09,"Coal, Australian",$/mt,147.1
+2026-09,"Coal, South African",$/mt,98.2
+2026-09,"Liquefied natural gas, Japan",$/mmbtu,16.26
+2026-09,Palm oil,$/mt,1180
+2026-09,Soybean oil,$/mt,1615
+2026-09,"Wheat, US HRW",$/mt,347
+2026-09,"Sugar, world",$/kg,0.41
+2026-09,"Cotton, A Index",$/kg,2.1
+2026-09,DAP,$/mt,800.6
+2026-09,Urea,$/mt,407.5
+2026-09,Aluminum,$/mt,3283
+2026-09,"Iron ore, cfr spot",$/dmtu,97.7
+2026-09,Copper,$/mt,14474
+2026-10,"Crude oil, Brent",$/bbl,125
+2026-10,"Coal, Australian",$/mt,152.3
+2026-10,"Coal, South African",$/mt,100
+2026-10,"Liquefied natural gas, Japan",$/mmbtu,16.59
+2026-10,Palm oil,$/mt,1120
+2026-10,Soybean oil,$/mt,1546
+2026-10,"Wheat, US HRW",$/mt,317
+2026-10,"Sugar, world",$/kg,0.43
+2026-10,"Cotton, A Index",$/kg,2
+2026-10,DAP,$/mt,803.1
+2026-10,Urea,$/mt,420
+2026-10,Aluminum,$/mt,3061
+2026-10,"Iron ore, cfr spot",$/dmtu,90.8
+2026-10,Copper,$/mt,14508

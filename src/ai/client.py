@@ -50,6 +50,18 @@ def rate_limit_wait(response: httpx.Response) -> float | None:
     return delay if delay <= 60 else None
 
 
+OVERLOADED = {500, 502, 503, 504}
+SERVER_RETRIES = 2
+
+
+def server_wait() -> float:
+    """Seconds before retrying when the provider is overloaded; brief spikes are common on free tiers."""
+    try:
+        return float(os.getenv("FINSIGHT_SERVER_RETRY_WAIT", "10"))
+    except ValueError:
+        return 10
+
+
 class AIClient:
     def __init__(self) -> None:
         load_dotenv()
@@ -104,6 +116,12 @@ class AIClient:
         try:
             with httpx.Client(timeout=httpx.Timeout(90, connect=15)) as client:
                 response = client.post(self.url, headers={"Authorization": f"Bearer {self.key}"}, json=body)
+                for retry in range(SERVER_RETRIES):
+                    if response.status_code not in OVERLOADED:
+                        break
+                    sleep(server_wait() * (retry + 1))
+                    response = client.post(self.url, headers={"Authorization": f"Bearer {self.key}"}, json=body)
+                    usage["server_retries"] = retry + 1
                 if response.status_code == 429:
                     wait = rate_limit_wait(response)
                     if wait is None:
@@ -119,7 +137,9 @@ class AIClient:
                          403: "API access was denied; check the key's project, API permissions and supported region",
                          429: "Rate limit or free-tier quota reached; check your provider's quota page and wait before retrying",
                          400: "Model rejected the JSON format or request",
-                         404: "Model or compatible endpoint is unavailable"}
+                         404: "Model or compatible endpoint is unavailable",
+                         **{code: f"The AI provider is busy or temporarily unavailable (HTTP {code}) even after "
+                                  f"{SERVER_RETRIES} retries; wait a few minutes" for code in OVERLOADED}}
                 raise AIError(codes.get(response.status_code, f"Provider returned HTTP {response.status_code}") + ". Check .env/model settings and retry, or use the demo.")
             data = response.json()
             reported = data.get("usage") or {}

@@ -5,3 +5,4 @@ import pytest
 def no_rate_limit_wait(monkeypatch):
     # Rate-limit retries wait in real use; tests must stay instant.
     monkeypatch.setenv("FINSIGHT_RATE_LIMIT_WAIT", "0")
+    monkeypatch.setenv("FINSIGHT_SERVER_RETRY_WAIT", "0")

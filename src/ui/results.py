@@ -1,8 +1,11 @@
 """Verified values, reproducible metrics and clearly labeled interpretation."""
+import calendar
 import json
 import sqlite3
 from decimal import Decimal
+from datetime import datetime, timezone
 from time import perf_counter
+import altair as alt
 import pandas as pd
 import streamlit as st
 from reportlab.platypus import LayoutError
@@ -12,13 +15,17 @@ from src.ai.synthesis import run_synthesis
 from src.calculations.ratios import calculate, display_metric, market_metrics
 from src.catalog import LABELS, internal_unit
 from src.models import Claim, Run
-from src.reporting.excel import display_peer, peer_rows, peer_workbook, run_workbook
+from src.market.commodities import (SECTORS, WHY, guess_sector, latest_month, sector_context, source_note, window,
+                                    year_end_month)
+from src.reporting.charts import profit_bridge, year_pairs
+from src.ui.brand import GREEN_500, GREEN_700, RUST, STONE
+from src.reporting.excel import display_peer, peer_columns, peer_rows, peer_workbook, run_workbook
 from src.reporting.export import markdown_report, pdf_report
 from src.ui.layout import STEPS, next_button, page_header
 from src.ui.workflow import attach_pdf, show_source, source_viewer
 from src.database.store import list_runs, load_run
 from src.utils.evaluation import OUTCOMES, aggregate, evaluation, field_outcomes
-from src.validation.accounting import validate_run
+from src.validation.accounting import STATUS_LABEL, by_priority, current_decision, decide, extraction_notes, findings
 from src.validation.review import verified_values
 
 
@@ -75,8 +82,8 @@ def evaluation_screen(run: Run, header: bool = True) -> None:
     with st.expander("All measures"):
         st.dataframe(pd.DataFrame([{"Measure": k, "Value": "N/A" if v is None else str(v)} for k, v in stats.items()]), hide_index=True, width="stretch")
     x, y = st.columns(2)
-    x.download_button("Download evaluation JSON", json.dumps(stats, indent=2), file_name=f"finsight-{run.id}-evaluation.json", mime="application/json")
-    y.download_button("Download per-field CSV", pd.DataFrame(outcomes).to_csv(index=False), file_name=f"finsight-{run.id}-fields.csv", mime="text/csv")
+    x.download_button("Download evaluation JSON", json.dumps(stats, indent=2), file_name=f"brokerlens-{run.id}-evaluation.json", mime="application/json")
+    y.download_button("Download per-field CSV", pd.DataFrame(outcomes).to_csv(index=False), file_name=f"brokerlens-{run.id}-fields.csv", mime="text/csv")
     if run.usage:
         with st.expander("API calls"):
             st.dataframe(pd.DataFrame(run.usage), hide_index=True, width="stretch")
@@ -94,35 +101,187 @@ def evaluation_screen(run: Run, header: bool = True) -> None:
     st.dataframe(pd.DataFrame(summaries), hide_index=True, width="stretch")
     st.dataframe(pd.DataFrame(per_field), hide_index=True, width="stretch")
     x, y = st.columns(2)
-    x.download_button("Download runs CSV", pd.DataFrame(summaries).to_csv(index=False), file_name="finsight-all-runs.csv", mime="text/csv")
-    y.download_button("Download per-field totals CSV", pd.DataFrame(per_field).to_csv(index=False), file_name="finsight-field-totals.csv", mime="text/csv")
+    x.download_button("Download runs CSV", pd.DataFrame(summaries).to_csv(index=False), file_name="brokerlens-all-runs.csv", mime="text/csv")
+    y.download_button("Download per-field totals CSV", pd.DataFrame(per_field).to_csv(index=False), file_name="brokerlens-field-totals.csv", mime="text/csv")
 
 
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
-def flags_panel(run: Run) -> None:
-    """Everything FinSight's checks raised, first thing on the Results screen."""
-    flags = [w for w in validate_run(run) if " extraction: " not in w]
+PRIORITY_ICON = {"high": "🔴", "medium": "🟠", "low": "⚪"}
+DECISIONS = ["confirmed", "investigating", "dismissed"]
+
+
+def findings_panel(run: Run) -> None:
+    """Every check result as a card an analyst can open, trace to the PDF and decide on."""
+    cards = by_priority(findings(run))
     with st.container(border=True):
-        if not flags:
-            st.markdown("**✅ No flags from FinSight's checks**")
+        if not cards:
+            st.markdown("**✅ No findings from BrokerLens's checks**")
             st.caption("The checks are limited reconciliations and teaching heuristics, not an audit.")
             return
-        st.markdown(f"**🚩 {len(flags)} flag{'s' if len(flags) != 1 else ''} to review**")
-        for flag in flags[:4]:
-            st.markdown("- " + flag)
-        if len(flags) > 4:
-            with st.expander(f"{len(flags) - 4} more"):
-                for flag in flags[4:]:
-                    st.markdown("- " + flag)
-        st.caption("Prompts for review, not conclusions.")
+        decided = sum(1 for c in cards if current_decision(run, c)[0])
+        high = sum(1 for c in cards if c.priority == "high")
+        st.markdown(f"**🚩 {len(cards)} finding{'s' if len(cards) != 1 else ''} to review** · {high} high priority · "
+                    f"{decided} of {len(cards)} decided")
+        st.caption("Open a finding for the figures behind it, the arithmetic, why it matters and what to check next. "
+                   "Findings are prompts for review, not conclusions.")
+        for card in cards:
+            finding_card(run, card)
+
+
+def finding_card(run: Run, card) -> None:
+    decision, changed = current_decision(run, card)
+    status = STATUS_LABEL[decision.status if decision else "open"]
+    label = f"{PRIORITY_ICON[card.priority]} **{card.title}** · {card.category} · {status}" + (" · figures changed since" if changed else "")
+    with st.expander(label):
+        st.write(card.detail)
+        if card.calculation:
+            st.code(card.calculation, language=None, wrap_lines=True)
+        if card.why:
+            st.markdown("**Why it matters:** " + card.why)
+        if card.next_steps:
+            st.markdown("**What to check next**\n" + "\n".join("- " + step for step in card.next_steps))
+        if card.fields:
+            figure = st.pills("See a figure on its PDF page", card.fields, format_func=LABELS.get, key=f"fig_{run.id}_{card.key}")
+            if figure:
+                show_source(run, figure, f"finding_source_{run.id}_{card.key}")
+        st.markdown("**Your decision**")
+        history = run.finding_decisions.get(card.key, [])
+        for past in history:
+            st.caption(f"{past.at[:16].replace('T', ' ')} · {STATUS_LABEL[past.status]}" + (f" · {past.comment}" if past.comment else ""))
+        if changed:
+            st.warning("The figures behind this finding changed after your last decision. Review it again.")
+        a, b = st.columns([1, 2])
+        choice = a.radio("Status", DECISIONS, format_func=STATUS_LABEL.get, key=f"status_{run.id}_{card.key}",
+                         index=DECISIONS.index(decision.status) if decision else None)
+        comment = b.text_area("Comment (required to dismiss)", key=f"comment_{run.id}_{card.key}", height=96,
+                              placeholder="e.g. gap is share of associates, printed on page 439")
+        if st.button("Save decision", key=f"decide_{run.id}_{card.key}"):
+            if choice is None:
+                st.error("Choose a status first.")
+                return
+            try:
+                decide(run, card, choice, comment, datetime.now(timezone.utc).isoformat())
+            except ValueError as exc:
+                st.error(str(exc))
+            else:
+                st.toast("Decision recorded. Use Save at the top to keep it.")
+                st.rerun()
+
+
+TEAL = GREEN_700
+BRIDGE_COLOURS = alt.Scale(domain=["subtotal", "increase", "decrease", "calculated"],
+                           range=[GREEN_700, GREEN_500, RUST, STONE])
+
+
+def charts_panel(run: Run) -> None:
+    st.caption("Drawn only from verified values. Hover a bar for the exact amount.")
+    rows, unit = profit_bridge(run)
+    if rows:
+        st.markdown("#### From top line to net profit")
+        frame = pd.DataFrame(rows)
+        order = list(dict.fromkeys(frame["Step"]))
+        frame["Amount"] = frame["End"] - frame["Start"]
+        chart = alt.Chart(frame).mark_bar().encode(
+            y=alt.Y("Step:N", sort=order, title=None, axis=alt.Axis(labelLimit=260)),
+            x=alt.X("Start:Q", title=unit), x2="End:Q",
+            color=alt.Color("Kind:N", scale=BRIDGE_COLOURS, legend=alt.Legend(orient="bottom", title=None)),
+            tooltip=["Step", alt.Tooltip("Amount:Q", format=",.2f", title=unit), alt.Tooltip("End:Q", format=",.2f", title="Running total")])
+        st.altair_chart(chart, width="stretch")
+        if any(r["Kind"] == "calculated" for r in rows):
+            st.caption("Grey steps are calculated by Python as the gap between two printed subtotals (lines not extracted, "
+                       "such as distribution costs, other income or share of associates).")
+    pairs, unit = year_pairs(run)
+    if pairs:
+        st.markdown("#### This year vs last year")
+        frame = pd.DataFrame(pairs)
+        chart = alt.Chart(frame).mark_bar().encode(
+            y=alt.Y("Figure:N", sort=None, title=None, axis=alt.Axis(labelLimit=260)), yOffset="Year:N",
+            x=alt.X("Amount:Q", title=unit),
+            color=alt.Color("Year:N", scale=alt.Scale(range=["#b9cfc3", GREEN_700]), legend=alt.Legend(orient="bottom", title=None)),
+            tooltip=["Figure", "Year", alt.Tooltip("Amount:Q", format=",.2f", title=unit)])
+        st.altair_chart(chart, width="stretch")
+    if not rows and not pairs:
+        st.info("Not enough verified figures for charts. Verify the profit and loss lines and the prior-year figures.")
+
+
+NOT_LINKED = "Not commodity-linked"
+
+
+def commodity_panel(run: Run) -> None:
+    """International prices of the inputs or products that move a sector's margins, over the company's financial year."""
+    st.caption("External context from the World Bank, monthly averages in US dollars. Not verified by BrokerLens, not "
+               "used in the ratios, and never sent to the AI analysts.")
+    if run.company.sector == "bank":
+        st.info("Commodity prices are not a direct driver for banks; interest rates and credit quality matter more.")
+        return
+    guess = guess_sector(run.company.industry)
+    detected = year_end_month(run)
+    a, b = st.columns(2)
+    options = [NOT_LINKED, *SECTORS]
+    sector = a.selectbox("Sector", options, index=options.index(guess) if guess else 0, key="commodity_sector_" + run.id,
+                         help="Guessed from the industry you entered; change it if needed.")
+    month = b.selectbox("Financial year ends in", list(range(1, 13)), format_func=lambda m: calendar.month_name[m],
+                        index=(detected or 6) - 1, key="commodity_month_" + run.id,
+                        help="Read from the statement dates." if detected else "Not found in the statements; choose it.")
+    if sector == NOT_LINKED:
+        st.caption("Choose a sector to see the commodity prices behind its margins (cement, fertiliser, oil, power, "
+                   "textiles, steel, sugar, food, cables).")
+        return
+    year = run.company.financial_year
+    context = sector_context(sector, year, month)
+    st.markdown(f"**{sector}:** {WHY[sector]}")
+    if not context:
+        st.warning(f"The World Bank data runs to {latest_month()}, so the financial year ending "
+                   f"{calendar.month_name[month]} {year} is not fully covered.")
+        return
+    first = window(year, month)[0]
+    st.markdown(f"Average over FY{year} ({calendar.month_abbr[int(first[5:])]} {first[:4]} to {calendar.month_abbr[month]} {year}) "
+                "against the year before:")
+    for col, item in zip(st.columns(len(context)), context):
+        col.metric(f"{item.series} · {item.unit}", f"{item.average:,.2f}",
+                   delta=f"{item.change:+.1%} vs FY{year - 1}" if item.change is not None else None, delta_color="off")
+    values = verified_values(run)
+    if all(k in values for k in ("revenue", "net_profit", "revenue_prior_year", "net_profit_prior_year")) and \
+            values["revenue"] > 0 and values["revenue_prior_year"] > 0:
+        margin, prior = values["net_profit"] / values["revenue"], values["net_profit_prior_year"] / values["revenue_prior_year"]
+        line = f"For comparison, the company's verified net profit margin was {margin:.1%} in FY{year} against {prior:.1%} in FY{year - 1}"
+        if "gross_profit" in values and values["revenue"]:
+            line += f"; gross margin in FY{year} was {values['gross_profit'] / values['revenue']:.1%}"
+        st.markdown(line + ".")
+    start = pd.Timestamp(first + "-01")
+    for item in context:
+        frame = pd.DataFrame([{"Month": pd.Timestamp(m + "-01"), "Price": price} for m, price in item.months])
+        band = alt.Chart(pd.DataFrame([{"start": start, "end": frame["Month"].max()}])).mark_rect(opacity=0.12, color=TEAL).encode(
+            x="start:T", x2="end:T")
+        line = alt.Chart(frame).mark_line(point=True, color=TEAL).encode(
+            x=alt.X("Month:T", title=None), y=alt.Y("Price:Q", title=item.unit, scale=alt.Scale(zero=False)),
+            tooltip=[alt.Tooltip("Month:T", format="%b %Y"), alt.Tooltip("Price:Q", format=",.2f", title=item.unit)])
+        st.altair_chart((band + line).properties(title=item.series, height=220), width="stretch")
+    st.caption(f"Shaded: FY{year}. Source: {source_note()} Prices are in US dollars; the rupee exchange rate, freight and "
+               "local taxes are not included, so local costs moved differently. Context for analysis, not a forecast.")
+
+
+def peer_chart(rows: list[dict], columns: list[str], key: str) -> None:
+    options = [r["Metric"] for r in rows if any(r[c] is not None for c in columns)]
+    if not options:
+        return
+    choice = st.selectbox("Chart a measure", options, key=key)
+    row = next(r for r in rows if r["Metric"] == choice)
+    percent = row["_format"] == "percent"
+    frame = pd.DataFrame([{"Company": c, "Value": float(row[c]) * (100 if percent else 1)} for c in columns if row[c] is not None])
+    title = "%" if percent else ("PKR m" if row["_format"] == "million" else "x")
+    chart = alt.Chart(frame).mark_bar(color=TEAL).encode(
+        y=alt.Y("Company:N", sort="-x", title=None), x=alt.X("Value:Q", title=title),
+        tooltip=["Company", alt.Tooltip("Value:Q", format=",.2f", title=title)])
+    st.altair_chart(chart, width="stretch")
 
 
 def market_panel(run: Run) -> None:
     c = run.company
     with st.expander("💹 Valuation multiples · enter today's share price", expanded=c.share_price is not None):
-        st.caption("Type the price from PSX or your trading terminal; FinSight does not fetch prices (PSX market data "
+        st.caption("Type the price from PSX or your trading terminal; BrokerLens does not fetch prices (PSX market data "
                    "needs a licence). Multiples appear here, in the reports and in Excel. The AI analysis never sees them.")
         a, b, d = st.columns(3)
         price = a.number_input("Share price (PKR)", min_value=0.0, step=0.01, format="%.2f", key="price_" + run.id,
@@ -147,7 +306,7 @@ def peer_panel(run: Run) -> None:
         st.warning("Saved runs are unavailable. Check the database path and file permissions.")
         return
     if not saved:
-        st.info("Save other analyses with 💾 Save run to compare them here.")
+        st.info("Save other analyses (Save, at the top) to compare them here.")
         return
     names = {r[0]: f"{r[1]} · saved {r[2][:10]}" for r in saved}
     chosen = st.multiselect("Compare with", list(names), format_func=names.get, key="peers_" + run.id)
@@ -170,13 +329,15 @@ def peer_panel(run: Run) -> None:
         st.caption("Not compared: " + "; ".join(skipped))
     rows = peer_rows(runs)
     st.dataframe(pd.DataFrame(display_peer(rows)), hide_index=True, width="stretch")
+    if len(runs) > 1:
+        peer_chart(rows, peer_columns(runs), "peer_chart_" + run.id)
     st.caption("Each column uses that company's own verified values and financial year. Years and statement bases may "
                "differ, so compare with care. Not investment advice.")
-    st.download_button("Download comparison (Excel)", peer_workbook(runs), file_name="finsight-peer-comparison.xlsx", mime=XLSX)
+    st.download_button("Download comparison (Excel)", peer_workbook(runs), file_name="brokerlens-peer-comparison.xlsx", mime=XLSX)
 
 
 def results_screen(run: Run) -> None:
-    page_header("Results", [
+    page_header("Research workspace", [
         "Ratios are calculated by Python from your verified values only; the AI never does arithmetic.",
         "Click **Run AI council & synthesis** for four analyst views and a neutral summary. Every claim cites its source.",
         "Download the report at the bottom. It is decision support, not investment advice.",
@@ -207,7 +368,7 @@ def results_screen(run: Run) -> None:
     if growth:
         for col, metric in zip(st.columns(3), growth):
             col.metric(metric.label, display_metric(metric))
-    flags_panel(run)
+    findings_panel(run)
     market_panel(run)
     st.caption("Verified figures and Python-calculated ratios. Everything under the AI button is interpretation.")
     button_label = "Generate demo council & synthesis" if run.is_demo else "Run AI council & synthesis"
@@ -225,10 +386,11 @@ def results_screen(run: Run) -> None:
     if "workflow_start" in st.session_state:
         run.timings["workflow_seconds"] = perf_counter() - st.session_state.workflow_start
     registry = reference_registry(run)
-    tab_names = ["Overview", "Financial Data", "Ratios", "Peer comparison", *ROLES, "Final Synthesis", "Sources / Evidence", "Evaluation"]
+    tab_names = ["Overview", "Charts", "Commodities", "Financial Data", "Ratios", "Peer comparison", *ROLES, "Final Synthesis",
+                 "Sources / Evidence", "Evaluation"]
     tabs = dict(zip(tab_names, st.tabs(tab_names)))
     with tabs["Overview"]:
-        st.markdown("### Research workspace")
+        st.markdown("### Summary")
         st.write(f"{run.company.name} · FY {run.company.financial_year} · {run.company.statement_basis.title()} statements")
         st.success("Human verification saved. All calculations use only the saved verified values.")
         st.write(f"{len(values)} of {len(run.fields)} fields verified · {sum(m.value is not None for m in run.metrics)} of {len(metrics)} ratios available · {len(run.analysts)} of 4 perspectives complete")
@@ -236,16 +398,21 @@ def results_screen(run: Run) -> None:
             st.info("DEMO / SYNTHETIC DATA. Analyst outputs are predefined teaching templates reflecting the saved verified values; no API request is made.")
         else:
             st.info("AI-generated interpretation requires source review. Citations show traceability, not proof that the interpretation is correct.")
-        st.markdown("### Accounting checks")
-        warnings = validate_run(run)
-        for warning in warnings:
-            st.warning(warning)
-        if not warnings:
-            st.caption("No warning from the limited reconciliation checks. This is not an audit.")
-        st.caption("Tolerance: greater of PKR 1 or 1% of the larger absolute side. Liquidity/leverage flags are teaching heuristics.")
+        st.markdown("### Extraction notes")
+        notes = extraction_notes(run)
+        for note in notes:
+            st.warning(note)
+        if not notes:
+            st.caption("No extraction issues remain on the verified fields.")
+        st.caption("Findings from the accounting checks are at the top of this page. Tolerance: greater of PKR 1 or 1% of "
+                   "the larger absolute side. Liquidity, leverage and earnings-quality thresholds are teaching heuristics.")
         if run.company.benchmarks:
             st.markdown("### Supplied benchmark context")
             st.write(run.company.benchmarks)
+    with tabs["Charts"]:
+        charts_panel(run)
+    with tabs["Commodities"]:
+        commodity_panel(run)
     with tabs["Financial Data"]:
         reviews = {r.field_name: r for r in run.reviews}
         rows = []
@@ -317,11 +484,11 @@ def results_screen(run: Run) -> None:
         with b:
             try:
                 content = pdf_report(run)
-                st.download_button("Download PDF", content, file_name=f"finsight-{run.id}.pdf", mime="application/pdf", type="primary", width="stretch")
+                st.download_button("Download PDF", content, file_name=f"brokerlens-{run.id}.pdf", mime="application/pdf", type="primary", width="stretch")
             except (ValueError, OSError, RuntimeError, LayoutError):
                 st.warning("PDF export is unavailable. Use Markdown export for this run.")
-        a.download_button("Download Markdown", report, file_name=f"finsight-{run.id}.md", mime="text/markdown", width="stretch")
-        x.download_button("Download Excel", run_workbook(run), file_name=f"finsight-{run.id}.xlsx", mime=XLSX, width="stretch",
+        a.download_button("Download Markdown", report, file_name=f"brokerlens-{run.id}.md", mime="text/markdown", width="stretch")
+        x.download_button("Download Excel", run_workbook(run), file_name=f"brokerlens-{run.id}.xlsx", mime=XLSX, width="stretch",
                           help="Verified data with evidence, ratios as live Excel formulas, valuation from an editable price cell.")
-        c.download_button("Download full audit JSON", run.model_dump_json(indent=2), file_name=f"finsight-{run.id}-audit.json", mime="application/json", width="stretch")
+        c.download_button("Download full audit JSON", run.model_dump_json(indent=2), file_name=f"brokerlens-{run.id}-audit.json", mime="application/json", width="stretch")
     next_button("Next: measure the AI →", STEPS[4], "next_from_results")

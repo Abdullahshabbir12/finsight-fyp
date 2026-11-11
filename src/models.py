@@ -103,6 +103,27 @@ class Synthesis(Record):
     sections: list[Section]
 
 
+class Finding(Record):
+    """A check result an analyst can act on: what was found, the figures behind it, and what to look at next."""
+    key: str  # stable across recalculation, so an analyst's decision stays attached to it
+    category: str
+    priority: Literal["high", "medium", "low"]
+    title: str
+    detail: str
+    fields: list[str] = Field(default_factory=list)  # verified fields involved; each can be shown on its PDF page
+    calculation: str = ""
+    why: str = ""
+    next_steps: list[str] = Field(default_factory=list)
+
+
+class FindingDecision(Record):
+    """One analyst decision on a finding. The list per finding is its history; the last entry is current."""
+    status: Literal["confirmed", "investigating", "dismissed"]
+    comment: str = Field(default="", max_length=2000)
+    detail: str  # the finding as it read when decided, to show when later figures change it
+    at: str
+
+
 class Run(Record):
     id: str
     company: Company
@@ -124,6 +145,7 @@ class Run(Record):
     analysis_seconds: float = 0
     # Unfinished review decisions ("Save progress"); cleared when verification is finished.
     review_draft: list[dict] = Field(default_factory=list)
+    finding_decisions: dict[str, list[FindingDecision]] = Field(default_factory=dict)
 
 
 def upgrade_run(run: Run) -> Run:
@@ -143,6 +165,6 @@ def upgrade_run(run: Run) -> Run:
             if key not in reviewed:
                 run.reviews.append(Review(field_name=key, decision="unavailable", verified_value=None,
                                           reporting_year=expected_year(key, run.company.financial_year),
-                                          note="Field added to FinSight after this run was verified; not captured."))
+                                          note="Field added to BrokerLens after this run was verified; not captured."))
         run.reviews.sort(key=lambda r: fields.index(r.field_name))
     return run

@@ -9,7 +9,8 @@ EXPECTED = {"gross_profit_margin": "0.35", "operating_margin": "0.18", "net_prof
             "current_ratio": "2", "quick_ratio": "1.4", "debt_to_equity": str(Decimal(400) / Decimal(850)),
             "debt_ratio": str(Decimal(650) / Decimal(1500)), "interest_coverage": "6",
             "operating_cash_flow_margin": "0.13", "operating_cash_flow_to_debt": "0.325",
-            "asset_turnover": str(Decimal(1000) / Decimal(1500)), "receivables_turnover": str(Decimal(1000) / Decimal(150))}
+            "asset_turnover": str(Decimal(1000) / Decimal(1500)), "receivables_turnover": str(Decimal(1000) / Decimal(150)),
+            "cash_conversion": str(Decimal(130) / Decimal(105))}
 
 
 @pytest.fixture
@@ -64,7 +65,7 @@ def test_engine_requires_verified_values():
     for row in rows:
         row["Decision"] = "accept"
     commit_review(run, rows)
-    assert len(calculate(run)) == 20  # 14 single-year + 3 growth + 3 average-balance
+    assert len(calculate(run)) == 22  # 15 single-year + 3 growth + 4 average-balance
 
 
 def test_growth_and_average_balance_ratios(values):
@@ -73,6 +74,7 @@ def test_growth_and_average_balance_ratios(values):
     assert calculate_growth("operating_cash_flow_growth", values).value < 0
     assert calculate_average("return_on_average_assets", values).value == Decimal(105) / ((Decimal(1500) + 1400) / 2)
     assert calculate_average("average_receivables_turnover", values).value == Decimal(1000) / ((Decimal(150) + 140) / 2)
+    assert calculate_average("accruals_ratio", values).value == Decimal(105 - 130) / ((Decimal(1500) + 1400) / 2)
 
 
 @pytest.mark.parametrize("prior", [Decimal(0), Decimal(-5), None])

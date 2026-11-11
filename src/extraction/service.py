@@ -61,20 +61,20 @@ def normalize(raw: str, unit: str, field: str) -> Decimal:
     return parse_number(raw) * UNITS[unit]
 
 
-# Statements print these as deductions or outflows in brackets. FinSight stores them as positive
+# Statements print these as deductions or outflows in brackets. BrokerLens stores them as positive
 # amounts so that Gross Profit = Revenue - Cost of Sales and the ratio formulas read naturally.
 # Bank interest and operating expenses follow the same rule, as does the allowance held against non-performing
 # advances, which the advances note prints as a deduction. The provisions charge is different: a reversal is a
 # genuine negative, so its sign is set from the profit lines either side of it (orient_provisions).
 EXPENSE_FIELDS = {"cost_of_sales", "finance_cost", "tax_expense", "capital_expenditure", "interest_expensed", "operating_expenses",
                   "npl_provisions"}
-EXPENSE_NOTE = "Printed as a deduction/outflow; stored as a positive amount (FinSight expense convention). The raw value is unchanged."
+EXPENSE_NOTE = "Printed as a deduction/outflow; stored as a positive amount (BrokerLens expense convention). The raw value is unchanged."
 PROVISION_NOTE = ("Sign set from Profit before provisions less Profit before tax, as printed: a charge is positive and a reversal "
                   "negative. The raw value is unchanged.")
 
 
 def canonical_unit(unit: str, field: str) -> tuple[str, list[str]]:
-    """Map common spellings ("Rupees", "Rs '000", "Rupees in million") to FinSight's units; unknown units are kept and rejected later."""
+    """Map common spellings ("Rupees", "Rs '000", "Rupees in million") to BrokerLens's units; unknown units are kept and rejected later."""
     if unit in allowed_units(field):
         return unit, []
     if field == "capital_adequacy_ratio":
@@ -270,7 +270,62 @@ Include the printed line label in source_text whenever it is on the same line as
 Return {"fields": [...]} using the candidate schema supplied in the request. Confidence is informational only."""
 
 
-def extract_fields(run: Run, selected: list[int], client: AIClient, progress=None) -> None:
+SECOND_LOOK_PAGES = 4  # at most this many extra requests per extraction
+# Never printed as one figure in the ten bank reports tested (the reviewer adds current and savings deposits), so asking
+# again only spends requests.
+SECOND_LOOK_SKIP = {"casa_deposits"}
+
+
+def merge(found: dict[str, FinancialField], field: FinancialField) -> None:
+    """Keep the first usable value per field; two different usable values become a visible conflict."""
+    prior = found.get(field.field_name)
+    if prior and prior.normalized_value is not None and field.normalized_value is not None:
+        if prior.normalized_value != field.normalized_value:
+            prior.normalized_value = None
+            prior.status = "needs_review"
+            prior.issues.append(f"Conflicting values: {prior.raw_value} (PDF page {prior.source_page}: "
+                                f"'{prior.source_text[:80]}') versus {field.raw_value} (PDF page "
+                                f"{field.source_page}: '{field.source_text[:80]}'). Choose the correct one.")
+        return
+    if prior and any("Conflicting" in issue for issue in prior.issues):
+        return
+    if prior is None or (prior.normalized_value is None and field.normalized_value is not None):
+        found[field.field_name] = field
+
+
+def read_chunk(client: AIClient, run: Run, chunk: str, keys: list[str], label: str, errors: list[str]) -> list[FinancialField]:
+    """One request for the given fields on one page. Raises AIError for quota or access failures."""
+    try:
+        response = client.request(ExtractionResponse, SYSTEM,
+            {"company": run.company.profile(), "field_catalogue": keys,
+             "field_guidance": {k: FIELD_GUIDANCE[k] for k in keys if k in FIELD_GUIDANCE},
+             "allowed_units": list(UNITS), "candidate_schema": Candidate.model_json_schema(),
+             "evidence": chunk}, "extraction")
+    except AIOutputRejected as exc:
+        # One unusable answer says nothing about the other pages; keep going.
+        errors.append(f"{label}: {exc}")
+        return []
+    fields = []
+    for raw in response.fields:
+        try:
+            fields.append(checked_candidate(Candidate.model_validate(raw), run, chunk))
+        except (ValueError, ValidationError):
+            errors.append(f"{label}: an invalid field was rejected.")
+    return fields
+
+
+def second_look_pages(found: dict[str, FinancialField], selected: list[int]) -> list[int]:
+    """The pages that already supplied the most values: a missed line is most likely beside the ones that were found."""
+    counts = {}
+    for field in found.values():
+        if field.source_page in selected:
+            counts[field.source_page] = counts.get(field.source_page, 0) + 1
+    return sorted(sorted(counts, key=lambda page: (-counts[page], page))[:SECOND_LOOK_PAGES])
+
+
+def extract_fields(run: Run, selected: list[int], client: AIClient, progress=None, second_look: bool = True) -> None:
+    """Read every selected page for the whole catalogue, then ask again only for missing fields on the pages that gave
+    the most values. Models skip lines unpredictably; a short, focused second request recovers many of them."""
     if run.verified_at:
         raise AIError("Start a new run to re-extract a reviewed document; existing verified values are preserved.")
     chunks = chunk_pages(run.pages, selected)
@@ -282,45 +337,39 @@ def extract_fields(run: Run, selected: list[int], client: AIClient, progress=Non
     found: dict[str, FinancialField] = {}
     errors = []
     successes = 0
+    stopped = False
+    keys = list(catalog(run.company.sector))
     run.extraction_attempts += 1
     try:
         for i, chunk in enumerate(chunks):
             if progress:
                 progress(i + 1, len(chunks))
             try:
-                response = client.request(ExtractionResponse, SYSTEM,
-                    {"company": run.company.profile(), "field_catalogue": catalog(run.company.sector),
-                     "field_guidance": {k: FIELD_GUIDANCE[k] for k in catalog(run.company.sector) if k in FIELD_GUIDANCE},
-                     "allowed_units": list(UNITS), "candidate_schema": Candidate.model_json_schema(),
-                     "evidence": chunk}, "extraction")
-                successes += 1
-                for raw in response.fields:
-                    try:
-                        candidate = Candidate.model_validate(raw)
-                        field = checked_candidate(candidate, run, chunk)
-                    except (ValueError, ValidationError):
-                        errors.append(f"Chunk {i + 1}: an invalid field was rejected.")
-                        continue
-                    prior = found.get(field.field_name)
-                    if prior and prior.normalized_value is not None and field.normalized_value is not None:
-                        if prior.normalized_value != field.normalized_value:
-                            prior.normalized_value = None
-                            prior.status = "needs_review"
-                            prior.issues.append(f"Conflicting values: {prior.raw_value} (PDF page {prior.source_page}: "
-                                                f"'{prior.source_text[:80]}') versus {field.raw_value} (PDF page "
-                                                f"{field.source_page}: '{field.source_text[:80]}'). Choose the correct one.")
-                        continue
-                    if prior and any("Conflicting" in issue for issue in prior.issues):
-                        continue
-                    if prior is None or (prior.normalized_value is None and field.normalized_value is not None):
-                        found[field.field_name] = field
-            except AIOutputRejected as exc:
-                # One unusable answer says nothing about the other pages; keep going.
-                errors.append(f"Chunk {i + 1}: {exc}")
+                fields = read_chunk(client, run, chunk, keys, f"Chunk {i + 1}", errors)
             except AIError as exc:
                 errors.append(f"Chunk {i + 1}: {exc}")
-                # A credentials/quota failure should not trigger another 23 doomed calls.
+                stopped = True  # a credentials/quota failure should not trigger another 23 doomed calls
                 break
+            successes += 1
+            for field in fields:
+                merge(found, field)
+        missing = [k for k in keys if k not in found and k not in SECOND_LOOK_SKIP]
+        pages = second_look_pages(found, selected) if second_look and successes and not stopped and missing else []
+        recovered = []
+        for j, chunk in enumerate(chunk_pages(run.pages, pages)):
+            if progress:
+                progress(len(chunks) + j + 1, len(chunks) + len(pages))
+            try:
+                fields = read_chunk(client, run, chunk, missing, f"Second look {j + 1}", errors)
+            except AIError as exc:
+                errors.append(f"Second look {j + 1}: {exc}")
+                break
+            for field in fields:
+                if field.field_name in missing and field.raw_value is not None:
+                    if field.field_name not in found:
+                        recovered.append(field.field_name)
+                        field.notes.append(f"Found on a second look at PDF page {field.source_page}, asking only for missed fields.")
+                    merge(found, field)
     finally:
         run.timings["extraction_seconds"] = run.timings.get("extraction_seconds", 0) + perf_counter() - start
         run.usage.extend(client.usage)
@@ -328,6 +377,9 @@ def extract_fields(run: Run, selected: list[int], client: AIClient, progress=Non
     if not successes:
         raise AIError(errors[0] if errors else "No extraction completed.")
     orient_provisions(found)
-    run.fields = [found.get(key, FinancialField(field_name=key)) for key in catalog(run.company.sector)]
+    run.fields = [found.get(key, FinancialField(field_name=key)) for key in keys]
     run.warnings.extend(errors)
+    if pages:
+        run.warnings.append(f"Second look: asked again for {len(missing)} missing fields on PDF pages "
+                            f"{', '.join(map(str, pages))}; {len(set(recovered))} found.")
     run.warnings.append(f"Extraction inspected {len(selected)} selected pages, not necessarily the full report. Check omissions, year, units and statement basis manually.")

@@ -82,7 +82,7 @@ def short_value(key: str, value: Decimal) -> str:
         return f"{value:,.0f} shares"
     if unit == "%":
         return f"{value:,.2f}%"
-    if key == "provisions" and value < 0:  # FinSight stores a net reversal as a negative charge
+    if key == "provisions" and value < 0:  # BrokerLens stores a net reversal as a negative charge
         return "a net reversal of " + short_value(key, -value)
     for scale, word in ((Decimal(10) ** 9, "billion"), (Decimal(10) ** 6, "million")):
         if abs(value) >= scale:
@@ -309,7 +309,7 @@ def reject(reason: str, claim: Claim) -> None:
     raise AIOutputRejected(f'{reason}: "{claim.text[:140]}". Output rejected; retry.')
 
 
-# Caveats FinSight itself supplies (payload limitations, bank policy, the industry rule). Written without a citation
+# Caveats BrokerLens itself supplies (payload limitations, bank policy, the industry rule). Written without a citation
 # and labelled FACT, they are still limitations.
 CAVEAT = re.compile(r"insufficient benchmark information|operating cash flow includes deposit|normal for a bank|not an audit|"
                     r"two reporting years|single reporting year|year-end balances", re.I)
@@ -330,7 +330,7 @@ def validate_claim(claim: Claim, registry: dict) -> None:
     claim.references = [repair_prefix(ref, registry) for ref in claim.references]
     inline = TOKEN.findall(claim.text)
     if claim.kind != "LIMITATION" and not claim.references and not inline and CAVEAT.search(claim.text):
-        claim.kind = "LIMITATION"  # one of FinSight's own caveats, mislabelled; relabelling it cannot add an unsupported claim
+        claim.kind = "LIMITATION"  # one of BrokerLens's own caveats, mislabelled; relabelling it cannot add an unsupported claim
     if any(ref not in registry for ref in [*claim.references, *inline]):
         reject("AI cited an unavailable or unknown financial reference", claim)
     if any(f"{a}:{b}" not in registry for a, b in REFERENCE_LIKE.findall(claim.text)):

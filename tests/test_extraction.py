@@ -68,7 +68,7 @@ def test_conflicts_show_both_candidates():
             raw, page, quote = next(replies)
             return ExtractionResponse(fields=[{"field_name": "finance_cost", "reporting_year": 2025, "raw_value": raw,
                 "unit": "PKR thousand", "source_page": page, "source_text": quote, "confidence": .9, "statement_basis": "consolidated"}])
-    extract_fields(run, [1, 2], Fake())
+    extract_fields(run, [1, 2], Fake(), second_look=False)
     field = next(f for f in run.fields if f.field_name == "finance_cost")
     assert field.status == "needs_review" and field.normalized_value is None
     assert "4,128,579" in field.issues[0] and "3,018,963" in field.issues[0] and "page 2" in field.issues[0]
@@ -118,7 +118,7 @@ def test_one_rejected_answer_does_not_stop_other_pages():
             return ExtractionResponse(fields=[{"field_name": "total_assets", "reporting_year": 2025, "raw_value": "1500",
                 "unit": "Rupees in million", "source_page": 2, "source_text": run.fields[8].source_text,
                 "confidence": .9, "statement_basis": "consolidated"}])
-    extract_fields(run, [1, 2], Fake())
+    extract_fields(run, [1, 2], Fake(), second_look=False)
     field = next(f for f in run.fields if f.field_name == "total_assets")
     assert len(calls) == 2 and field.normalized_value == Decimal("1500000000") and field.unit == "PKR million"
 
@@ -147,3 +147,84 @@ def test_rebuilt_quote_is_replaced_by_the_real_printed_line():
     # A label that is not on the page is still rejected.
     invented = checked_candidate(c.model_copy(update={"source_text": "Interest income 813,192,081"}), run, chunk)
     assert invented.status == "needs_review" and invented.normalized_value is None
+
+
+def scripted(run, first: dict, second: dict, fail_on=None):
+    """A fake model: page -> fields on the full first pass; page -> fields when asked only for missed fields."""
+    from src.ai.client import AIError
+    from src.extraction.service import ExtractionResponse
+    demo = {f.field_name: f for f in demo_run().fields}
+    class Fake:
+        usage = []
+        calls = []
+        def request(self, schema, system, payload, stage):
+            page = int(payload["evidence"].split("]")[0].split()[-1])
+            again = len(payload["field_catalogue"]) < 27
+            self.calls.append((page, again, list(payload["field_catalogue"])))
+            if fail_on and len(self.calls) == fail_on:
+                raise AIError("Daily quota reached")
+            keys = (second if again else first).get(page, [])
+            return ExtractionResponse(fields=[{"field_name": k, "reporting_year": demo[k].reporting_year,
+                "raw_value": demo[k].raw_value, "unit": demo[k].unit, "source_page": page, "source_text": demo[k].source_text,
+                "confidence": .9, "statement_basis": "consolidated"} for k in keys])
+    return Fake()
+
+
+def test_second_look_asks_only_for_missed_fields_on_the_best_pages():
+    from src.extraction.service import extract_fields
+    run = demo_run()
+    fake = scripted(run, first={1: ["revenue", "cost_of_sales", "gross_profit"], 2: ["total_assets"]},
+                    second={1: ["net_profit", "revenue"], 2: ["equity"]})
+    extract_fields(run, [1, 2, 3], fake)
+    assert [(page, again) for page, again, _ in fake.calls] == [(1, False), (2, False), (3, False), (1, True), (2, True)]
+    asked = fake.calls[3][2]
+    assert "net_profit" in asked and "revenue" not in asked and len(asked) == 23   # only the 23 missed fields
+    fields = {f.field_name: f for f in run.fields}
+    assert fields["net_profit"].normalized_value == 105000000 and "second look" in fields["net_profit"].notes[-1]
+    assert fields["equity"].status == "extracted" and fields["revenue"].normalized_value == 1000000000
+    assert any("Second look: asked again for 23 missing fields on PDF pages 1, 2; 2 found." == w for w in run.warnings)
+
+
+def test_no_second_look_after_a_quota_failure_or_when_nothing_is_missing():
+    from src.extraction.service import extract_fields
+    run = demo_run()
+    fake = scripted(run, first={1: ["revenue"]}, second={1: ["net_profit"]}, fail_on=2)
+    extract_fields(run, [1, 2, 3], fake)
+    assert len(fake.calls) == 2 and not any("Second look" in w for w in run.warnings)
+    run = demo_run()
+    everything = {p: [f.field_name for f in demo_run().fields if f.source_page == p] for p in (1, 2, 3)}
+    fake = scripted(run, first=everything, second={})
+    extract_fields(run, [1, 2, 3], fake)
+    assert len(fake.calls) == 3 and all(f.status == "extracted" for f in run.fields)
+
+
+def test_second_look_is_capped_at_four_pages():
+    from src.extraction.service import SECOND_LOOK_PAGES, second_look_pages
+    from src.models import FinancialField
+    found = {f"k{i}": FinancialField(field_name="revenue", source_page=page) for i, page in
+             enumerate([5, 5, 5, 6, 6, 7, 8, 9, 9, 9, 9, 40])}
+    assert SECOND_LOOK_PAGES == 4 and second_look_pages(found, [5, 6, 7, 8, 9]) == [5, 6, 7, 9]
+
+
+def test_second_look_is_not_spent_on_fields_never_printed_as_one_figure():
+    from src.extraction.service import ExtractionResponse, extract_fields
+    from tests.test_bank import bank_run
+    run = bank_run()
+    run.verified_at, run.reviews = None, []
+    for page_number in (1, 2):
+        run.pages.append(run.pages[0].model_copy(update={"number": page_number + 1}))
+    calls = []
+    class Fake:
+        usage = []
+        def request(self, schema, system, payload, stage):
+            calls.append(payload["field_catalogue"])
+            page = int(payload["evidence"].split("]")[0].split()[-1])
+            keys = [k for k in payload["field_catalogue"] if k != "casa_deposits"] if page == 1 else []
+            return ExtractionResponse(fields=[{"field_name": k, "reporting_year": 2023 if k.endswith("_prior_year") else 2024,
+                "raw_value": next(f.raw_value for f in bank_run().fields if f.field_name == k), "unit": "PKR",
+                "source_page": 1, "source_text": next(f.source_text for f in bank_run().fields if f.field_name == k),
+                "confidence": .9, "statement_basis": "consolidated"} for k in keys])
+    for page in run.pages:
+        page.text = "\n".join(f.source_text for f in bank_run().fields)
+    extract_fields(run, [1, 2, 3], Fake())
+    assert len(calls) == 3 and not any("Second look" in w for w in run.warnings)   # only CASA missing: no extra requests

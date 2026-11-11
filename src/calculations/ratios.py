@@ -31,6 +31,8 @@ SPECS = {
     "operating_cash_flow_to_debt": RatioSpec("Operating Cash Flow to Debt", ("operating_cash_flow",), "total_debt"),
     "asset_turnover": RatioSpec("Asset Turnover", ("revenue",), "total_assets", allow_negative_numerator=False),
     "receivables_turnover": RatioSpec("Receivables Turnover", ("revenue",), "trade_receivables", allow_negative_numerator=False),
+    # Earnings quality: how much of the profit arrived as operating cash.
+    "cash_conversion": RatioSpec("Cash Conversion", ("operating_cash_flow",), "net_profit"),
 }
 
 
@@ -87,6 +89,9 @@ AVERAGE = {
     "return_on_average_assets": ("Return on Average Assets", "net_profit", "total_assets", True),
     "return_on_average_equity": ("Return on Average Equity", "net_profit", "equity", True),
     "average_receivables_turnover": ("Receivables Turnover (average)", "revenue", "trade_receivables", False),
+    # Accruals ratio (Sloan, 1996): the part of profit not backed by operating cash, scaled by average assets.
+    "accruals_ratio": ("Accruals Ratio",
+                       ("net_profit", "operating_cash_flow"), "total_assets", True),
 }
 
 
@@ -116,24 +121,28 @@ def calculate_growth(name: str, values: Mapping[str, Decimal | None]) -> Metric:
 
 
 def calculate_average(name: str, values: Mapping[str, Decimal | None]) -> Metric:
+    """A flow over the average of opening and closing balances. A tuple numerator is a difference, e.g. profit less cash flow."""
     label, numerator, balance, percent = AVERAGE[name]
+    parts = numerator if isinstance(numerator, tuple) else (numerator,)
     prior = balance + "_prior_year"
+    top = " - ".join(f"[{LABELS[k]}]" for k in parts)
     metric = Metric(name=name, label=label, value=None, format="percent" if percent else "multiple",
-                    inputs=[numerator, balance, prior],
-                    formula=f"[{LABELS[numerator]}] / (([{LABELS[balance]}] + [{LABELS[prior]}]) / 2)")
-    amounts = _amounts(values, [numerator, balance, prior])
+                    inputs=[*parts, balance, prior],
+                    formula=f"{'(' + top + ')' if len(parts) > 1 else top} / (([{LABELS[balance]}] + [{LABELS[prior]}]) / 2)")
+    amounts = _amounts(values, [*parts, balance, prior])
     if isinstance(amounts, str):
         metric.reason = amounts
         return metric
     average = (amounts[balance] + amounts[prior]) / 2
+    top_value = amounts[parts[0]] - sum((amounts[k] for k in parts[1:]), Decimal(0))
     if average <= 0:
         metric.reason = "Average balance is zero or negative; this ratio is not meaningful."
-    elif not percent and amounts[numerator] < 0:
+    elif not percent and top_value < 0:
         metric.reason = "Negative numerator requires review before this ratio is meaningful."
     else:
         with localcontext() as ctx:
             ctx.prec = 28
-            metric.value = amounts[numerator] / average
+            metric.value = top_value / average
     return metric
 
 
@@ -152,6 +161,8 @@ BANK_SPECS = {
     "infection_ratio": RatioSpec("Non-Performing Loan Ratio (infection)", ("non_performing_loans",), "gross_advances", True, False),
     "coverage_ratio": RatioSpec("Provision Coverage", ("npl_provisions",), "non_performing_loans", True, False),
     "equity_to_assets": RatioSpec("Equity to Assets", ("equity",), "total_assets", True),
+    # Year-end gross advances; a net reversal of provisions gives a negative cost of risk.
+    "cost_of_risk": RatioSpec("Cost of Risk", ("provisions",), "gross_advances", True),
 }
 ALL_SPECS = {**SPECS, **BANK_SPECS}
 BANK_GROWTH = {
@@ -165,7 +176,7 @@ ALL_GROWTH = {**GROWTH, **BANK_GROWTH}
 
 
 def reported_capital_adequacy(values: Mapping[str, Decimal | None]) -> Metric:
-    """CAR is calculated by the bank under SBP's Basel III rules; FinSight shows the reported figure."""
+    """CAR is calculated by the bank under SBP's Basel III rules; BrokerLens shows the reported figure."""
     metric = Metric(name="capital_adequacy", label="Capital Adequacy Ratio (reported)", value=None, format="percent",
                     formula="[Capital Adequacy Ratio (reported)], as printed by the bank", inputs=["capital_adequacy_ratio"])
     car = values.get("capital_adequacy_ratio")
@@ -187,7 +198,7 @@ def calculate(run: Run) -> list[Metric]:
             + [calculate_average(name, values) for name in AVERAGE])
 
 
-MARKET_NOTE = "Uses a share price typed by the user, not verified by FinSight."
+MARKET_NOTE = "Uses a share price typed by the user, not verified by BrokerLens."
 
 
 def market_metrics(run: Run) -> list[Metric]:

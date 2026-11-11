@@ -1,23 +1,25 @@
 """Excel workbooks for analysts: verified data with evidence, ratios as live formulas, and peer comparison.
 
-Each ratio is written as an Excel formula over the verified-data cells, beside FinSight's own Python result, so an
+Each ratio is written as an Excel formula over the verified-data cells, beside BrokerLens's own Python result, so an
 analyst can audit the arithmetic or change an input. The price cells start with the user's price (or empty) and can
 be edited in Excel; the valuation multiples then recalculate.
 """
 from decimal import Decimal
 from io import BytesIO
 from openpyxl import Workbook
+from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.worksheet.worksheet import Worksheet
 from src.ai.council import reference_registry, render_text
 from src.calculations.ratios import ALL_GROWTH, ALL_SPECS, AVERAGE, calculate, display_metric, market_metrics
 from src.catalog import LABELS, catalog, internal_unit
 from src.models import Metric, Run
-from src.validation.accounting import validate_run
+from src.reporting.charts import year_pairs
+from src.validation.accounting import STATUS_LABEL, by_priority, current_decision, findings
 from src.validation.review import verified_values
 
 DATA = "Verified data"
-HEADER = PatternFill("solid", fgColor="DDEBF7")
+HEADER = PatternFill("solid", fgColor="E4EFE8")
 INPUT = PatternFill("solid", fgColor="FFF2CC")
 NOTICE = ("Decision-support output for research. Values were verified by the user against the annual report; "
           "this is not an audit and not investment advice. Share price and dividend inputs are user-supplied.")
@@ -34,11 +36,11 @@ def header(sheet: Worksheet, titles: list[str], widths: list[int]) -> None:
     for i, (cell, width) in enumerate(zip(sheet[sheet.max_row], widths), start=1):
         cell.font, cell.fill = Font(bold=True), HEADER
         sheet.column_dimensions[cell.column_letter].width = width
-    sheet.freeze_panes = sheet.cell(row=sheet.max_row + 1, column=1)
+    sheet.freeze_panes = f"A{sheet.max_row + 1}"  # a string, so no empty row is created below the header
 
 
 def ratio_formula(name: str, ref: dict[str, str]) -> str:
-    """The Excel version of a FinSight ratio, built from the same definitions as the Python calculation."""
+    """The Excel version of a BrokerLens ratio, built from the same definitions as the Python calculation."""
     if name in ALL_SPECS:
         spec = ALL_SPECS[name]
         numerator = " - ".join(ref[k] for k in spec.numerator)
@@ -50,7 +52,8 @@ def ratio_formula(name: str, ref: dict[str, str]) -> str:
         return f"=({current} - {prior})/{prior}"
     if name in AVERAGE:
         _, numerator, balance, _ = AVERAGE[name]
-        return f"={ref[numerator]}/(({ref[balance]} + {ref[balance + '_prior_year']})/2)"
+        top = " - ".join(ref[k] for k in (numerator if isinstance(numerator, tuple) else (numerator,)))
+        return f"=({top})/(({ref[balance]} + {ref[balance + '_prior_year']})/2)"
     if name == "capital_adequacy":
         return f"={ref['capital_adequacy_ratio']}/100"
     raise KeyError(name)
@@ -80,7 +83,7 @@ def run_workbook(run: Run) -> bytes:
     summary = book.active
     summary.title = "Summary"
     summary.column_dimensions["A"].width, summary.column_dimensions["B"].width = 34, 70
-    rows = [("FinSight analysis", ""), ("Company", c.name), ("Ticker", c.ticker), ("Financial year", c.financial_year),
+    rows = [("BrokerLens analysis", ""), ("Company", c.name), ("Ticker", c.ticker), ("Financial year", c.financial_year),
             ("Statement basis", c.statement_basis.title()), ("Company type", "Bank" if c.sector == "bank" else "Non-financial"),
             ("Source document", run.filename), ("Verification saved", run.verified_at or ""), ("", ""),
             ("Share price, PKR (user-supplied; edit me)", as_number(c.share_price)),
@@ -93,13 +96,22 @@ def run_workbook(run: Run) -> bytes:
         summary[cell].fill, summary[cell].number_format = INPUT, "#,##0.00"
     summary["B14"].alignment = Alignment(wrap_text=True)
     price, dps = "Summary!$B$10", "Summary!$B$11"
-    flags = [w for w in validate_run(run) if " extraction: " not in w]
+    cards = by_priority(findings(run))
     summary.append([])
-    summary.append(["Flags to review", f"{len(flags)} from FinSight's accounting checks (prompts for review, not findings)"])
+    summary.append(["Findings", f"{len(cards)} from the accounting checks, see the Findings sheet (prompts for review, "
+                    "not conclusions)"])
     summary.cell(row=summary.max_row, column=1).font = Font(bold=True)
-    for flag in flags:
-        summary.append(["", flag])
-        summary.cell(row=summary.max_row, column=2).alignment = Alignment(wrap_text=True)
+    sheet = book.create_sheet("Findings")
+    header(sheet, ["Priority", "Category", "Finding", "Detail", "Calculation", "Figures", "Why it matters", "What to check next",
+                   "Analyst decision", "Comment", "Decided"], [10, 18, 40, 70, 60, 40, 60, 70, 20, 50, 18])
+    for card in cards:
+        decision, changed = current_decision(run, card)
+        sheet.append([card.priority.title(), card.category, card.title, card.detail, card.calculation,
+                      ", ".join(LABELS[k] for k in card.fields), card.why, "\n".join(card.next_steps),
+                      STATUS_LABEL[decision.status if decision else "open"] + (" (figures changed since)" if changed else ""),
+                      decision.comment if decision else "", decision.at[:16].replace("T", " ") if decision else ""])
+        for cell in sheet[sheet.max_row]:
+            cell.alignment = Alignment(wrap_text=True, vertical="top")
 
     data = book.create_sheet(DATA)
     header(data, ["Field", "Value", "Unit", "Year", "Decision", "PDF page", "Evidence (quote)", "Review note", "Key"],
@@ -116,7 +128,7 @@ def run_workbook(run: Run) -> bytes:
             ref[key] = f"'{DATA}'!$B${row}"
 
     sheet = book.create_sheet("Ratios")
-    header(sheet, ["Metric", "Excel formula result", "FinSight (Python) result", "Definition", "Note / N/A reason"],
+    header(sheet, ["Metric", "Excel formula result", "BrokerLens (Python) result", "Definition", "Note / N/A reason"],
            [44, 20, 22, 80, 60])
 
     def add(metric: Metric, formula: str | None) -> None:
@@ -132,6 +144,23 @@ def run_workbook(run: Run) -> bytes:
     sheet.cell(row=sheet.max_row, column=1).font = Font(bold=True)
     for metric in market_metrics(run):
         add(metric, market_formula(metric.name, ref, price, dps))
+
+    pairs, unit = year_pairs(run)
+    if pairs:
+        chart_sheet = book.create_sheet("Charts")
+        year = c.financial_year
+        header(chart_sheet, ["Figure", f"FY{year - 1} ({unit})", f"FY{year} ({unit})"], [44, 18, 18])
+        for i in range(0, len(pairs), 2):
+            chart_sheet.append([pairs[i]["Figure"], pairs[i]["Amount"], pairs[i + 1]["Amount"]])
+            for cell in chart_sheet[chart_sheet.max_row][1:]:
+                cell.number_format = "#,##0.00"
+        chart = BarChart()
+        chart.type, chart.title, chart.y_axis.title = "bar", "This year vs last year", unit
+        rows = chart_sheet.max_row
+        chart.add_data(Reference(chart_sheet, min_col=2, max_col=3, min_row=1, max_row=rows), titles_from_data=True)
+        chart.set_categories(Reference(chart_sheet, min_col=1, min_row=2, max_row=rows))
+        chart.height, chart.width = 9, 18
+        chart_sheet.add_chart(chart, "E2")
 
     if run.analysts or run.synthesis:
         registry = reference_registry(run)

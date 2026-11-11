@@ -1,6 +1,8 @@
-# FinSight
+# BrokerLens
 
-A local Accounting & Finance final-year project prototype. FinSight helps a human analyst review an annual report, verify financial values, calculate ratios, and produce a source-linked research report. It does not make investment decisions or replace professional judgment.
+*Formerly FinSight. The repository, database file and environment variables keep the original `finsight` names so existing deployments and saved runs keep working.*
+
+A local Accounting & Finance final-year project prototype. BrokerLens helps a human analyst review an annual report, verify financial values, calculate ratios, and produce a source-linked research report. It does not make investment decisions or replace professional judgment.
 
 ## Start here (no API key needed)
 
@@ -78,7 +80,9 @@ src/extraction/        Structured AI extraction and unit normalization
 src/validation/        Human review gate and accounting checks
 src/calculations/      Deterministic ratio definitions and functions
 src/ai/                API client, four analyst perspectives, synthesis
-src/reporting/         Markdown, PDF and Excel exports; peer comparison
+src/reporting/         Markdown, PDF and Excel exports; peer comparison; chart data
+src/market/            World Bank commodity price snapshot and sector mapping
+scripts/               Maintenance (refresh the commodity snapshot)
 src/database/          SQLite snapshots
 src/utils/             Evaluation metrics
 src/ui/                Workflow and results screens
@@ -111,6 +115,7 @@ Python 3.12, Streamlit, PyMuPDF, Pydantic, pandas, SQLite, and pytest follow the
   - **Average balances:** return on average assets, return on average equity and average receivables turnover use (opening + closing) ÷ 2.
   - **Profit vs cash-flow divergence:** a warning when net profit growth exceeds operating cash flow growth by more than 25 percentage points (a teaching threshold).
 - **Share count check:** net profit ÷ shares should be roughly the reported EPS. A result below half or above double it (for example rupee share capital or authorised capital read as the share count) gives a warning. The band is wide because non-controlling interest and weighted shares make the two differ legitimately.
+- **Earnings-quality findings:** cash conversion (operating cash flow ÷ net profit); the accruals ratio ((net profit − operating cash flow) ÷ average total assets), flagged above 10% (Sloan, 1996, linked large accruals to less persistent earnings); receivables growing more than 10 percentage points faster than revenue, with days of sales in receivables; and, for banks, profit that includes a net provision reversal. All thresholds are teaching heuristics.
 - Financial-quality flags are indicators requiring further review, never findings of fraud. Two years of data give one growth rate, not a trend.
 
 | Metric | Python calculation |
@@ -129,17 +134,19 @@ Python 3.12, Streamlit, PyMuPDF, Pydantic, pandas, SQLite, and pytest follow the
 | Operating cash flow to debt | Operating cash flow / Total debt |
 | Asset turnover | Revenue / Total assets |
 | Receivables turnover | Revenue / Trade receivables |
+| Cash conversion | Operating cash flow / Net profit |
+| Accruals ratio | (Net profit − Operating cash flow) / Average total assets |
 
 The calculation engine uses Python Decimal arithmetic. Rounding happens for display only. Percentage ratios are stored as fractions and displayed as percentages. The LLM receives these calculated values and is instructed not to calculate ratios. AI prose cannot contain numeric literals; cited quantities are rendered from the verified data and calculated metrics by Python. This reduces unsupported numerical claims but does not guarantee that qualitative interpretation is correct.
 
 ## Banks
 
-Banks report differently: no revenue, cost of sales, current assets or inventory, and deposits are the main liability. When the company type is **Bank** (or **Detect automatically** recognises a bank's report), FinSight uses a separate 33-field catalogue, ratio set and checks. Islamic banks are covered too ("profit" for interest, "Islamic financing" for advances, "due to / from financial institutions" for borrowings and lendings).
+Banks report differently: no revenue, cost of sales, current assets or inventory, and deposits are the main liability. When the company type is **Bank** (or **Detect automatically** recognises a bank's report), BrokerLens uses a separate 33-field catalogue, ratio set and checks. Islamic banks are covered too ("profit" for interest, "Islamic financing" for advances, "due to / from financial institutions" for borrowings and lendings).
 
 - **Fields (27 current year + 6 prior year):** interest earned and expensed, net interest income, non-interest income, total income, total non-mark-up expenses, profit before provisions, provisions (net charge), profit before and after tax, tax, EPS; total assets, cash with treasury banks, lendings, investments, net advances, total liabilities, deposits, borrowings, equity (net assets including non-controlling interest); gross advances, non-performing advances and the allowance against them, current and savings deposits (CASA), reported capital adequacy ratio and share count; prior-year net interest income, profit, assets, advances, deposits and equity.
-- **Pages:** besides the three primary statements and the share-capital note, FinSight finds the advances, deposits and capital adequacy notes by the note numbers printed on the balance sheet (e.g. `Advances 9` → note `9. ADVANCES`). Islamic banking annexures and US-dollar convenience columns are ignored.
+- **Pages:** besides the three primary statements and the share-capital note, BrokerLens finds the advances, deposits and capital adequacy notes by the note numbers printed on the balance sheet (e.g. `Advances 9` → note `9. ADVANCES`). Islamic banking annexures and US-dollar convenience columns are ignored.
 - **Signs:** interest expense, non-mark-up expenses and the non-performing allowance are stored positive. The provisions line is printed with or without brackets for both charges and reversals, so Python sets its sign from the profit lines either side of it (charge positive, reversal negative) when they match exactly, and notes it on the row.
-- **CASA** is rarely printed as one figure. FinSight leaves it for the reviewer, who adds current and savings deposits (customers and financial institutions) from the deposits note and records that evidence; the AI never sums.
+- **CASA** is rarely printed as one figure. BrokerLens leaves it for the reviewer, who adds current and savings deposits (customers and financial institutions) from the deposits note and records that evidence; the AI never sums.
 - **Capital adequacy** is the bank's own reported Basel III ratio (group level for consolidated statements), not recalculated. Use the actual ratio, not the minimum-requirement row printed beside it.
 
 | Metric | Python calculation |
@@ -154,6 +161,7 @@ Banks report differently: no revenue, cost of sales, current assets or inventory
 | Infection ratio | Non-performing advances / Gross advances |
 | Provision coverage | Allowance against non-performing advances / Non-performing advances |
 | Equity to assets | Equity / Total assets |
+| Cost of risk | Provisions (net charge) / Gross advances; negative for a net reversal |
 | Capital adequacy | Reported ratio |
 | Growth | Net interest income, net profit, advances, deposits: (current − prior) / prior |
 
@@ -163,29 +171,31 @@ Tested on 10 Pakistani banks, conventional and Islamic: 310 of 330 values extrac
 
 ## Using the workflow
 
-The step bar at the top (**1 · Upload → 2 · Extract → 3 · Verify → 4 · Results → 5 · Evaluate**) shows where you are, every screen starts with a short **What to do here** box, and a **Next** button appears when a step is done. It works the same on a phone.
+The menu on the left (**Home → Extract → Verify → Research → Evaluate**) shows where you are; on a phone it opens from the top-left corner. Every screen starts with a short **What to do here** box, and a **Next** button appears when a step is done. Home shows totals across your saved analyses (analyses, values verified, findings raised, banks and companies).
 
-1. **Upload:** enter the company name, industry, year, statement basis and company type, upload the PDF and click **Read the report**. Need the report first? **Open PSX financial reports** links to PSX's public financial reports library; download the annual report there in your browser (or from the company's website) and drop it in. FinSight does not download from PSX itself, because PSX's terms of use prohibit automated access to its websites. If you pick a basis the report does not contain, FinSight switches and tells you. **Company type** defaults to **Detect automatically**, which recognises a bank's report and switches to the bank fields; choosing **Non-financial company** for a bank's report shows a warning before any AI call.
-2. **Extract:** FinSight suggests the primary statements for your basis plus the share-capital note (and, for banks, the advances, deposits and capital adequacy notes), skipping analysis, summary and contents pages; two-page spreads are read left page then right page. Compare the suggestion with the report's contents page, then click **Extract financial fields**. A summary shows how many values are 🟢 Ready, 🟠 Check and ⚪ Missing.
+1. **Home:** enter the company name, industry, year, statement basis and company type, upload the PDF and click **Read the report**. Need the report first? **Open PSX financial reports** links to PSX's public financial reports library; download the annual report there in your browser (or from the company's website) and drop it in. BrokerLens does not download from PSX itself, because PSX's terms of use prohibit automated access to its websites. If you pick a basis the report does not contain, BrokerLens switches and tells you. **Company type** defaults to **Detect automatically**, which recognises a bank's report and switches to the bank fields; choosing **Non-financial company** for a bank's report shows a warning before any AI call.
+2. **Extract:** after reading every selected page, BrokerLens asks once more, only for the fields still missing, on the (at most four) pages that supplied the most values: a shorter, focused request recovers lines the model skipped. A busy provider (HTTP 500–504) is retried twice after a short wait. BrokerLens suggests the primary statements for your basis plus the share-capital note (and, for banks, the advances, deposits and capital adequacy notes), skipping analysis, summary and contents pages; two-page spreads are read left page then right page. Compare the suggestion with the report's contents page, then click **Extract financial fields**. A summary shows how many values are 🟢 Ready, 🟠 Check and ⚪ Missing.
 3. **Verify:** each row shows the AI's value, unit and page. Choose **accept**, **edit** or **unavailable**:
    - **✓ Accept all ready** accepts every 🟢 row; **Mark remaining unavailable** gives the rest one reason. Check accepted values against the PDF before finishing.
    - **Edit** needs evidence (a quote or source) and a **Reason** from the list (wrong number, wrong unit, wrong year, sign, missing, flagged). **Unavailable** needs a reason too. Notes are optional unless you pick *Other*.
    - Type values in the unit shown (e.g. `184,390,517` with PKR thousand). Expenses are positive.
    - **Save progress** keeps unfinished work. **Finish verification** lists every remaining problem at once; ratios and AI analysis only use finished verifications.
    - **Check a field against the PDF**, under the table, shows the quote, extraction notes and the original page image.
-4. **Results:** deterministic ratios and growth, then **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure, and rejected AI answers are retried automatically with the reason. Download the **PDF**, **Markdown**, **Excel** or **full audit JSON** report. Also on this screen:
-   - **🚩 Flags to review:** every accounting-check warning, first thing on the page.
-   - **💹 Valuation multiples:** type today's share price (and optionally the dividend per share) to get P/E, P/B, market capitalisation and dividend yield. FinSight does not fetch prices, because PSX market data needs a licence. The price is user-supplied, labelled as such, and never sent to the AI.
-   - **Click a figure to see it on the page:** select a row in **Financial Data** (or a ratio in **Ratios**) and FinSight shows that number boxed in red on its printed line in the original PDF. A reopened saved run asks you to attach the same PDF first, because saved runs keep page text, not the PDF.
+4. **Research:** deterministic ratios and growth, then **Run AI council & synthesis** (or **Generate demo council & synthesis**). Completed perspectives survive an API failure, and rejected AI answers are retried automatically with the reason. Download the **PDF**, **Markdown**, **Excel** or **full audit JSON** report. Also on this screen:
+   - **🚩 Findings:** every check result as a card, first thing on the page: what was found, the figures behind it (each can be shown on its PDF page), the arithmetic, why it matters and what to check next, with a priority. Record a decision on each (confirmed concern, under investigation, or dismissed with a reason); decisions keep their history, appear in the reports and Excel, and are marked when later corrections change the finding.
+   - **Charts:** a bridge from the top line to net profit (calculated gaps between printed subtotals shown in grey), and this year against last year.
+   - **Commodities:** World Bank monthly prices of the inputs or products that move the sector's margins (coal for cement, urea and DAP for fertiliser, Brent for oil, cotton for textiles, and more), averaged over the company's financial year against the year before. The year end is read from the statement dates. External context in US dollars only: not verified, not used in ratios, never sent to the AI.
+   - **💹 Valuation multiples:** type today's share price (and optionally the dividend per share) to get P/E, P/B, market capitalisation and dividend yield. BrokerLens does not fetch prices, because PSX market data needs a licence. The price is user-supplied, labelled as such, and never sent to the AI.
+   - **Click a figure to see it on the page:** select a row in **Financial Data** (or a ratio in **Ratios**) and BrokerLens shows that number boxed in red on its printed line in the original PDF. A reopened saved run asks you to attach the same PDF first, because saved runs keep page text, not the PDF.
    - **Peer comparison:** pick other saved analyses of the same company type to see key figures and every ratio side by side, with an Excel download.
-   - **Excel export:** verified values with page and quote, every ratio as a live Excel formula over those cells next to FinSight's Python result, an editable price cell that recalculates the multiples, and the AI statements.
+   - **Excel export:** verified values with page and quote, every ratio as a live Excel formula over those cells next to BrokerLens's Python result, an editable price cell that recalculates the multiples, and the AI statements.
 5. **Evaluate:** extraction outcomes per field, precision and recall, CSV downloads, and the combined table of all saved live runs.
 
-Click **💾 Save run** (top of the page) to keep a run; reopen it from **Open a saved analysis** on the Upload screen. The SQLite file is `data/finsight.sqlite3` by default and holds extracted page text, proposals, reviews, metrics and analysis, never API keys or the PDF itself.
+Click **Save** (top of the page) to keep a run; reopen it from **Open a saved analysis** on the Home screen. The SQLite file is `data/finsight.sqlite3` by default and holds extracted page text, proposals, reviews, metrics and analysis, never API keys or the PDF itself.
 
 ## A two-minute university demo
 
-1. Click **Load synthetic demo**. FinSight opens **3 · Verify**.
+1. Click **Load synthetic demo**. BrokerLens opens **Verify**.
 2. Click **✓ Accept all ready**, then **Finish verification**, then **Next: results →**.
 3. The unedited example shows revenue of PKR 1,000 million, net profit of PKR 105 million, ROA of 7%, ROE of about 12.35%, current ratio of 2.00x and debt-to-equity of about 0.47x, plus revenue growth of about 11%.
 4. Click **Generate demo council & synthesis**, inspect the tabs and download the report.
@@ -259,4 +269,12 @@ Gemini free-tier eligibility and model prices: [pricing](https://ai.google.dev/g
 
 ## Licence
 
-FinSight is released under the GNU Affero General Public License v3.0 (see `LICENSE`), because it uses PyMuPDF, which is AGPL-licensed. Anyone using a hosted copy can get the source code from the link in the app footer.
+BrokerLens is released under the GNU Affero General Public License v3.0 (see `LICENSE`), because it uses PyMuPDF, which is AGPL-licensed. Anyone using a hosted copy can get the source code from the link in the app footer.
+
+## Data credits
+
+Commodity prices: World Bank, *Commodity Price Data (The Pink Sheet)*, monthly prices in nominal US dollars, licensed under [CC BY 4.0](https://datacatalog.worldbank.org/public-licenses#cc-by). BrokerLens keeps 14 series from January 2010 in `src/market/commodity_prices.csv` and averages them over financial years; the update date is in `src/market/commodity_prices.txt`. To refresh, download the monthly workbook from the World Bank's [commodity markets page](https://www.worldbank.org/en/research/commodity-markets) and run:
+
+```bash
+.venv/bin/python scripts/update_commodities.py CMO-Historical-Data-Monthly.xlsx
+```

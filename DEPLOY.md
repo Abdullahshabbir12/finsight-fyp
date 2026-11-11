@@ -1,6 +1,6 @@
-# Sharing FinSight with testers (Streamlit Community Cloud)
+# Sharing BrokerLens with testers (Streamlit Community Cloud)
 
-This puts FinSight on a free web address so friends can test it in their browser. Nothing changes when you run it on your own computer.
+This puts BrokerLens on a free web address so friends can test it in their browser. Nothing changes when you run it on your own computer.
 
 ## What testers get, and the trade-offs
 
@@ -12,7 +12,7 @@ This puts FinSight on a free web address so friends can test it in their browser
 
 ## Step 1: put the code on GitHub (public)
 
-Your code must be in a GitHub repository. It is **public**, because FinSight's PDF library (PyMuPDF) is AGPL-licensed and users of a hosted copy must be able to get the source; the app footer links to it.
+Your code must be in a GitHub repository. It is **public**, because BrokerLens's PDF library (PyMuPDF) is AGPL-licensed and users of a hosted copy must be able to get the source; the app footer links to it.
 
 If Claude has not already done this for you, run these in the project folder (replace the name if you like):
 
@@ -63,6 +63,6 @@ Testers can produce the evidence the FYP still needs: the conventional-analyst b
 
 1. Give each tester one report from the evaluation set (`data/` on your computer) and its expected values (`PROGRESS.md` results or the saved run).
 2. **Manual round:** with a stopwatch running, the tester fills the 27 fields from the PDF into a spreadsheet and calculates current ratio, debt to equity, ROE and revenue growth. Record the time and compare each value with the answer key.
-3. **FinSight round:** on a *different* report, the tester uses FinSight end to end, checking every row in Human verification against the PDF. The Evaluation screen records the times and corrections.
+3. **BrokerLens round:** on a *different* report, the tester uses BrokerLens end to end, checking every row in Human verification against the PDF. The Evaluation screen records the times and corrections.
 4. Swap the order for half of the testers, so learning effects cancel out.
 5. Ask each tester three questions afterwards: how confident they were in the numbers, which step was hardest, and whether the source links helped them check values.

@@ -11,7 +11,7 @@ from src.ai.council import reference_registry, render_text
 from src.calculations.ratios import display_metric, market_metrics
 from src.catalog import LABELS, internal_unit
 from src.models import Claim, Run
-from src.validation.accounting import validate_run
+from src.validation.accounting import STATUS_LABEL, by_priority, current_decision, extraction_notes, findings
 from src.validation.review import verified_values
 
 DISCLAIMER = "Decision-support prototype for academic research. Human verification is not an audit. AI interpretations may be incomplete or incorrect. This report does not provide investment recommendations or replace professional judgment."
@@ -36,7 +36,7 @@ def markdown_report(run: Run) -> str:
         raise ValueError("Calculate verified metrics before exporting.")
     c = run.company
     registry = reference_registry(run)
-    lines = ["# FinSight | Financial Research", "", f"**Company:** {clean(c.name)} ({clean(c.ticker)})",
+    lines = ["# BrokerLens | Financial Research", "", f"**Company:** {clean(c.name)} ({clean(c.ticker)})",
              f"**Financial year:** {c.financial_year} | **Industry:** {clean(c.industry)} | **Basis:** {c.statement_basis}",
              f"**Document:** {clean(run.filename)}" + (f" | **Source:** {clean(run.source)}" if run.source else ""), f"**Run:** {run.id}", f"**Verification saved:** {run.verified_at}", "",
              "**DEMO / SYNTHETIC DATA**" if run.is_demo else "**Human-verified data with AI-generated interpretation**", "",
@@ -60,12 +60,32 @@ def markdown_report(run: Run) -> str:
     if market:
         lines += ["", "### Valuation multiples (user-supplied price)", "",
                   f"Share price PKR {c.share_price:,.2f}" + (f" ({clean(c.price_date)})" if c.price_date else "")
-                  + ", typed by the user and not verified by FinSight. Not used in the AI analysis.", "",
+                  + ", typed by the user and not verified by BrokerLens. Not used in the AI analysis.", "",
                   "| Metric | Result | Formula |", "|---|---|---|"]
         lines += [f"| {m.label} | {display_metric(m)} | {clean(m.formula)} |" for m in market]
-    lines += ["", "## Validation / Reconciliation", ""]
-    warnings = validate_run(run)
-    lines += ["- " + clean(w) for w in warnings] or ["No warnings from the limited accounting checks. This is not an audit."]
+    lines += ["", "## Findings", "", "Prompts for review from the accounting checks, not conclusions or evidence of misconduct. "
+              "Thresholds are teaching heuristics. Tolerance for reconciliations: the greater of PKR 1 and 1% of the larger side."]
+    cards = by_priority(findings(run))
+    if not cards:
+        lines += ["", "No findings from the limited accounting checks. This is not an audit."]
+    for card in cards:
+        decision, changed = current_decision(run, card)
+        figures = ", ".join(f"[{LABELS[k]}](#{anchor('field:' + k)})" if "field:" + k in registry else LABELS[k] for k in card.fields)
+        lines += ["", f"### {card.priority.title()} priority · {clean(card.category)}: {clean(card.title)}", "", clean(card.detail)]
+        if card.calculation:
+            lines.append("- **Calculation:** " + clean(card.calculation))
+        if figures:
+            lines.append("- **Figures:** " + figures)
+        if card.why:
+            lines.append("- **Why it matters:** " + clean(card.why))
+        if card.next_steps:
+            lines.append("- **What to check next:** " + clean(" ".join(card.next_steps)))
+        lines.append("- **Analyst decision:** " + (
+            f"{STATUS_LABEL[decision.status]} ({decision.at[:10]})" + (f": {clean(decision.comment)}" if decision.comment else "")
+            + (" (figures changed since this decision)" if changed else "") if decision else "Not yet reviewed."))
+    notes = extraction_notes(run)
+    if notes:
+        lines += ["", "### Extraction notes", ""] + ["- " + clean(n) for n in notes]
     lines += ["", "## AI Council", "", "Sample template outputs (offline synthetic demo)." if run.is_demo else "AI-generated interpretation; check the cited evidence."]
     for name, result in run.analysts.items():
         lines += ["", "### " + name, "", claim_markdown(result.overall_observation, registry)]
@@ -109,13 +129,13 @@ def pdf_report(run: Run) -> bytes:
     styles.add(ParagraphStyle(name="FinBody", fontName="Helvetica", fontSize=9, leading=12, spaceAfter=6, textColor=colors.HexColor("#172b46")))
     styles.add(ParagraphStyle(name="FinCell", parent=styles["FinBody"], fontSize=7, leading=10, spaceAfter=0, alignment=TA_LEFT))
     for heading in ("Title", "Heading2", "Heading3", "Heading4"):
-        styles[heading].textColor = colors.HexColor("#087f8c")
+        styles[heading].textColor = colors.HexColor("#1d4a3b")
         styles[heading].keepWithNext = True
     body = []
     def paragraph(text, style="FinBody"):
         text = text.replace("—", "-").replace("≈", "~").replace("→", "to")
         safe = escape(text)
-        safe = re.sub(r"\[([^\]]+)\]\(#([a-z0-9_-]+)\)", r'<link href="#\2" color="#087f8c">\1</link>', safe)
+        safe = re.sub(r"\[([^\]]+)\]\(#([a-z0-9_-]+)\)", r'<link href="#\2" color="#1d4a3b">\1</link>', safe)
         safe = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", safe)
         return Paragraph(safe, styles[style])
     lines = markdown.splitlines()
@@ -130,10 +150,10 @@ def pdf_report(run: Run) -> bytes:
                 i += 1
             widths = [115, 115, 110, 60, 52] if len(rows[0]) == 5 else [125, 65, 262]
             table = Table(rows, colWidths=widths, repeatRows=1, hAlign="LEFT")
-            table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e3f1f3")),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f4f7fa")]),
+            table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e4efe8")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#faf8f3")]),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 6), ("LINEBELOW", (0, 0), (-1, 0), .5, colors.HexColor("#087f8c"))]))
+                ("TOPPADDING", (0, 0), (-1, -1), 6), ("LINEBELOW", (0, 0), (-1, 0), .5, colors.HexColor("#1d4a3b"))]))
             body.extend([table, Spacer(1, 12)])
             continue
         match = re.fullmatch(r'<a id="([a-z0-9_-]+)"></a>', line)
@@ -170,10 +190,10 @@ def pdf_report(run: Run) -> bytes:
         canvas.saveState()
         canvas.setFillColor(colors.HexColor("#64748b"))
         canvas.setFont("Helvetica", 8)
-        canvas.drawString(54, 30, "FinSight | " + ("DEMO / SYNTHETIC DATA" if run.is_demo else "Human review required"))
+        canvas.drawString(54, 30, "BrokerLens | " + ("DEMO / SYNTHETIC DATA" if run.is_demo else "Human review required"))
         canvas.drawRightString(558, 30, f"Page {doc.page}")
         canvas.restoreState()
     doc = SimpleDocTemplate(buffer, pagesize=(612, 792), rightMargin=54, leftMargin=54,
-                            topMargin=48, bottomMargin=50, title="FinSight Financial Research", author="FinSight")
+                            topMargin=48, bottomMargin=50, title="BrokerLens Financial Research", author="BrokerLens")
     doc.build(body, onFirstPage=footer, onLaterPages=footer)
     return buffer.getvalue()

@@ -136,14 +136,26 @@ def test_results_screen_with_price_and_comparison(tmp_path, monkeypatch):
     other.id, other.company.name = "peer", "Peer Bank"
     save_run(other)
     app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30)
-    app.session_state["run"] = bank_run()
+    app.session_state["run"] = bank_run(provisions=-50, profit_before_tax=300, tax_expense=180)  # one finding
     app.run()
     app.radio(key="step").set_value("4 · Results").run()
     assert not app.exception
     app.number_input(key="price_bank-test").set_value(150.0).run()
     assert not app.exception
     assert any(m.label == "Price / Earnings (P/E)" and m.value == "25.00x" for m in app.metric)
-    assert any("flag" in md.value for md in app.markdown)
+    assert any("1 finding to review" in md.value for md in app.markdown)
+    assert any("Profit includes a net provision reversal" in e.label for e in app.expander)
+    next(b for b in app.button if b.key == "decide_bank-test_provision_reversal").click().run()
+    assert any("Choose a status first" in e.value for e in app.error)          # nothing is preselected
+    app.radio(key="status_bank-test_provision_reversal").set_value("dismissed").run()
+    next(b for b in app.button if b.key == "decide_bank-test_provision_reversal").click().run()
+    assert any("Explain why" in e.value for e in app.error)                     # dismissing needs a reason
+    app.text_area(key="comment_bank-test_provision_reversal").set_value("One-off recovery, note 33")
+    next(b for b in app.button if b.key == "decide_bank-test_provision_reversal").click().run()
+    assert not app.exception
+    decision = app.session_state.run.finding_decisions["provision_reversal"][-1]
+    assert decision.status == "dismissed" and decision.comment == "One-off recovery, note 33"
+    assert any("Dismissed" in e.label for e in app.expander)
     app.multiselect(key="peers_bank-test").set_value(["peer"]).run()
     assert not app.exception
     labels = {b.label for b in app.get("download_button")}

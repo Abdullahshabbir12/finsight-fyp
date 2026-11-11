@@ -165,3 +165,37 @@ Reports: `output/reports/finsight-bank-*.pdf` and `.md`. Runs saved in the app d
 - **Excel export** with live formulas: on all 16 real saved runs, 360 of 360 Excel formulas reproduce FinSight's Python results.
 
 **245 tests passed.**
+
+## November 11: BrokerLens features for the mid defense
+
+Renamed to **BrokerLens** (screens, reports and file names; internal settings keep `finsight` names so the deployment and saved runs keep working). Built after the AWT Investments meeting and the group's competitive analysis:
+
+| Feature | What it does | Checked |
+|---|---|---|
+| Finding cards | Every check becomes a card: what was found, the figures (each shown on its PDF page), the arithmetic, why it matters, what to check next, a priority | All 16 saved reports; every new finding traced to the printed figures |
+| Earnings quality | Cash conversion, accruals ratio (Sloan, 1996), receivables growing faster than revenue, bank provision reversals; new ratios: cash conversion, accruals ratio, cost of risk | Engro accruals 19.4% (receivables 2.9bn to 8.3bn while sales grew 15%); Allied and UBL profits each include a 10.1% provision reversal; all confirmed against the PDFs |
+| Analyst decisions | Confirmed concern / under investigation / dismissed (reason required), with history, in reports and Excel; flagged when later corrections change the finding | Unit and app tests |
+| Charts | Top line to net profit bridge (calculated gaps in grey), this year vs last year, peer chart, native Excel chart | Bridges reconcile to every printed subtotal on the saved reports |
+| Commodity context | World Bank monthly prices (CC BY 4.0) for 10 sectors, averaged over the company's financial year; year end read from the statements | Averages match the World Bank workbook exactly; year ends correct for all 16 reports (June for Fauji, Attock, Nishat Chunian) |
+| Second look | Asks again only for missing fields on the four most productive pages | See below |
+| Provider overload | HTTP 500-504 retried twice after a short wait | Unit test |
+
+Fixes found while testing: a blank row under every Excel header (formulas were unaffected), the commodity label showing the wrong start year for December year ends, glued titles ("POSITIONAS AT") hiding the year end, the yellow highlight crossing both halves of a two-page spread, and no status being preselected before an analyst decides.
+
+All 382 Excel formulas across the 16 saved reports reproduce the Python results; all 16 PDF and Markdown reports build with the Findings section.
+
+**Second look, on real reports** (Gemini free tier, which returned HTTP 503 "busy" errors through much of the day):
+
+| Report | Correct | Wrong | Missing | Second look |
+|---|---|---|---|---|
+| Systems 2024 | 24 | 0 | 2 | recovered current assets and current liabilities, both correct |
+| Meezan 2025 | 32 | 0 | 1 (CASA) | nothing left to find |
+| HBL 2024 | 32 | 0 | 1 (CASA) | nothing left to find |
+| Bank Alfalah 2022 | 32 | 0 | 1 (CASA) | nothing left to find |
+| Attock Petroleum 2025 | 22 | 0 | 5 | asked for 5, found none (not printed as single lines) |
+
+The second look added no wrong values. Banks never print CASA as one figure, so it is no longer asked for again. Allied Bank could not be completed: the provider stayed unavailable after the retries.
+
+**New look.** Redesigned from the group's mockup: dark green sidebar menu (Home, Extract, Verify, Research, Evaluate), cream background, Libre Caslon headings with Inter text, a sign-in screen with the BrokerLens mark, a Home banner with totals from the saved analyses (analyses, values verified, findings raised, banks and companies), and the same palette in charts, the PDF report and Excel. Mockup elements with no data behind them in BrokerLens (market index chart, portfolio return, health score, watchlist, notifications) were left out rather than filled with invented numbers.
+
+**272 tests passed.**

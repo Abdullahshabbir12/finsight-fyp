@@ -1,1 +1,1 @@
-"""FinSight: verified financial evidence and deterministic analysis."""
+"""BrokerLens: verified financial evidence and deterministic analysis."""

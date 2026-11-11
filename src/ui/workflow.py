@@ -13,9 +13,11 @@ from src.extraction.service import UNITS, extract_fields
 from src.models import Company, FinancialField, Run
 from src.pdf.reader import (BANK_WARNING, candidate_pages, highlight_page, looks_like_bank, page_count, read_pdf,
                             render_page, statement_bases)
+from src.ui.brand import hero, stat_cards
 from src.ui.layout import STEPS, flash, next_button, page_header, request_step, show_flash
 from src.validation.review import (REASONS, UNAVAILABLE_REASONS, ReviewError, accept_ready, commit_review,
-                                   evidence_target, mark_remaining_unavailable, review_rows, save_draft)
+                                   evidence_target, mark_remaining_unavailable, review_rows, save_draft,
+                                   verified_values)
 
 # Only the columns needed to decide; evidence details live in the panel under the table.
 VISIBLE = ["Field", "Status", "AI value", "Decision", "Verified Value", "Entry Unit", "Reason",
@@ -44,13 +46,13 @@ def start_run(content: bytes, filename: str, name: str, ticker: str, industry: s
     elif found and basis not in found:
         # Extracting the wrong basis flags every value as a mismatch; say so and use what the report contains.
         flash("warning", f"You chose {basis}, but this report only contains {', '.join(sorted(found))} statements, "
-                         f"so FinSight switched to **{sorted(found)[0]}**.")
+                         f"so BrokerLens switched to **{sorted(found)[0]}**.")
         basis = sorted(found)[0]
     bank = looks_like_bank(pages, industry)
     if sector == "auto":
         sector = "bank" if bank else "general"
         if bank:
-            flash("info", "🏦 **Bank detected.** FinSight uses its bank fields: interest income, deposits, advances, "
+            flash("info", "🏦 **Bank detected.** BrokerLens uses its bank fields: interest income, deposits, advances, "
                           "non-performing loans and capital adequacy.")
     elif sector == "general" and bank:
         warnings.insert(0, BANK_WARNING)
@@ -68,13 +70,12 @@ PSX_LIBRARY = "https://financials.psx.com.pk/"
 
 
 def find_report_help() -> None:
-    """Where to get a report. PSX's terms forbid automated access, so FinSight links instead of fetching."""
-    with st.container(border=True):
-        st.markdown("**Don't have the PDF yet?**")
-        st.markdown("1. Open PSX's financial reports library, choose the company, then **Annual** for your year.\n"
-                    "2. Save the PDF, then drop it in the box below and fill in the company details.")
+    """Where to get a report. PSX's terms forbid automated access, so BrokerLens links instead of fetching."""
+    with st.container(border=True, height="stretch"):
+        st.markdown("**:material/travel_explore: Don't have the PDF yet?**")
+        st.caption("Open PSX's financial reports library, choose the company, then **Annual** for your year. Save the PDF and "
+                   "drop it in the form below. Companies also publish reports under Investor Relations on their websites.")
         st.link_button("Open PSX financial reports ↗", PSX_LIBRARY, width="stretch")
-        st.caption("Most companies also publish annual reports on their own websites under Investor Relations.")
 
 
 def upload_tab() -> None:
@@ -85,7 +86,7 @@ def upload_tab() -> None:
         industry = a.text_input("Industry", placeholder="e.g. Cement, Textiles")
         year = b.number_input("Financial year", 1900, 2200, 2025, help="The year the reporting period ends in.")
         basis = a.selectbox("Statement basis", ["consolidated", "standalone"],
-                            help="If the report does not contain the basis you choose, FinSight switches and tells you.")
+                            help="If the report does not contain the basis you choose, BrokerLens switches and tells you.")
         sector = b.selectbox("Company type", list(SECTOR_CHOICES),
                              help="Banks get their own fields and ratios. Detection looks for bank-only lines such as deposits.")
         with st.expander("Optional: industry benchmarks"):
@@ -104,40 +105,67 @@ def upload_tab() -> None:
             st.error(str(exc))
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def library_stats(marker: tuple) -> list[tuple[str, str, str]]:
+    """Totals across saved, non-demo analyses for the Home screen. `marker` (the saved-run list) refreshes the cache."""
+    from src.validation.accounting import findings
+    runs = [load_run(row[0]) for row in marker if not row[3]]
+    verified = raised = 0
+    for run in runs:
+        try:
+            verified += len(verified_values(run))
+            raised += len(findings(run))
+        except ValueError:  # verification not finished
+            continue
+    banks = sum(run.company.sector == "bank" for run in runs)
+    return [("folder_open", f"{len(runs)}", "Saved analyses"), ("fact_check", f"{verified:,}", "Values verified"),
+            ("flag", f"{raised}", "Findings raised"), ("account_balance", f"{banks} · {len(runs) - banks}", "Banks · companies")]
+
+
 def setup_screen() -> None:
     show_flash()
-    page_header("Start an analysis", [
-        "New here? Try the **synthetic demo** first: it walks through every step with sample data.",
-        "For a real report, upload its annual report PDF. Don't have it? Use **Open PSX financial reports** to download it first.",
-        "Banks are supported: FinSight detects them and uses bank fields (deposits, advances, capital adequacy).",
-    ])
-    demo, start = st.columns([1, 2], gap="large")
+    st.markdown(hero("Welcome to BrokerLens", "Evidence-led analysis of Pakistani annual reports: every figure traced to its "
+                     "page, every ratio calculated by Python, every finding explained."), unsafe_allow_html=True)
+    try:
+        stats = library_stats(tuple(list_runs()))
+    except (OSError, sqlite3.Error, ValueError):
+        stats = []
+    if stats:
+        st.markdown(stat_cards(stats), unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown("**What to do here**\n"
+                    "- New here? Try the **synthetic demo** first: it walks through every step with sample data.\n"
+                    "- For a real report, upload its annual report PDF. Don't have it? Use **Open PSX financial reports** to download it first.\n"
+                    "- Banks are supported: BrokerLens detects them and uses bank fields (deposits, advances, capital adequacy).")
+    st.subheader("Quick actions", anchor=False)
+    demo, saved, find = st.columns(3)
     with demo:
-        with st.container(border=True):
-            st.markdown("**Just exploring?**")
+        with st.container(border=True, height="stretch"):
+            st.markdown("**:material/science: Just exploring?**")
             st.caption("A fictional company with prepared values. No API key or PDF needed.")
             if st.button("Load synthetic demo", type="primary", width="stretch"):
                 set_run(demo_run())
                 request_step(STEPS[2])
                 st.rerun()
+    with saved:
         saved_runs_card()
-    with start:
+    with find:
         find_report_help()
-        with st.container(border=True):
-            st.markdown("**Analyse an annual report**")
-            upload_tab()
+    with st.container(border=True):
+        st.markdown("**:material/upload_file: Analyse an annual report**")
+        upload_tab()
 
 
 def saved_runs_card() -> None:
-    with st.container(border=True):
-        st.markdown("**Open a saved analysis**")
+    with st.container(border=True, height="stretch"):
+        st.markdown("**:material/folder_open: Open a saved analysis**")
         try:
             saved = list_runs()
         except (OSError, sqlite3.Error, ValueError):
             st.caption("Saved runs are unavailable on this computer.")
             return
         if not saved:
-            st.caption("Nothing saved yet. Use 💾 Save run at the top once you have a run.")
+            st.caption("Nothing saved yet. Use Save at the top once you have a run.")
             return
         names = {r[0]: f"{'DEMO · ' if r[3] else ''}{r[1]} · {r[2][:10]}" for r in saved}
         selected = st.selectbox("Saved analyses", list(names), format_func=names.get, label_visibility="collapsed")
@@ -224,7 +252,7 @@ def extraction_summary(run: Run) -> None:
 def processing_screen(run: Run) -> None:
     show_flash()
     page_header("Find the numbers", [
-        "FinSight suggests the pages holding the financial statements. Compare them with the report's contents page.",
+        "BrokerLens suggests the pages holding the financial statements. Compare them with the report's contents page.",
         "Click **Extract financial fields**. The AI proposes each value with its page and a quote; nothing is final yet.",
         "Then go to **Verify** to check every value.",
     ])

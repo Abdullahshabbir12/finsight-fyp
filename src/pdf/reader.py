@@ -256,7 +256,11 @@ def highlight_page(content: bytes, page_number: int, numbers: list[str], quote: 
         hit = max(hits, key=score)  # max() keeps the first on ties: the statement's current-year column comes first
         value = pymupdf.Rect(hit[:4])
         labels = [pymupdf.Rect(w[:4]) for w in words if same_line(w, hit) and w[4].lower().strip(":,.") in label]
-        band = pymupdf.Rect(page.rect.x0, value.y0 - 3, page.rect.x1, value.y1 + 3)
+        left, right = page.rect.x0, page.rect.x1
+        if page.rect.width > page.rect.height:  # a two-page spread: mark only the half holding the figure
+            middle = (left + right) / 2
+            left, right = (left, middle) if value.x0 < middle else (middle, right)
+        band = pymupdf.Rect(left, value.y0 - 3, right, value.y1 + 3)
         marker = page.add_highlight_annot(band)  # a highlight blends under the text, keeping it crisp
         marker.set_colors(stroke=(1, 0.86, 0.3))
         marker.set_opacity(0.65)

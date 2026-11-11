@@ -96,7 +96,7 @@ def test_cloud_secrets_become_settings_without_overriding(monkeypatch):
     try:
         app.run()
         assert os.environ["GEMINI_MODEL"] == "local-choice"
-        assert any("Shared test version" in i.value for i in app.info)
+        assert any("Shared test version" in m.value for m in app.sidebar.markdown)
     finally:
         os.environ.pop("FINSIGHT_SHARED_DEPLOYMENT", None)
 
@@ -104,7 +104,8 @@ def test_cloud_secrets_become_settings_without_overriding(monkeypatch):
 def test_theme_and_upload_settings_exist():
     import tomllib
     config = tomllib.loads(Path(".streamlit/config.toml").read_text())
-    assert config["theme"]["base"] == "light" and config["theme"]["primaryColor"] == "#087f8c"
+    assert config["theme"]["base"] == "light" and config["theme"]["primaryColor"] == "#1d4a3b"
+    assert config["theme"]["sidebar"]["backgroundColor"] == "#12332a"
     assert config["server"]["maxUploadSize"] == 100
     assert config["browser"]["gatherUsageStats"] is False
 
