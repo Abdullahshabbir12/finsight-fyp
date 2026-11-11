@@ -224,14 +224,34 @@ def change(field: str, values: dict) -> Decimal | None:
     return None if current is None or prior is None else current - prior
 
 
-def mislabelled(text: str) -> str:
-    """'total liabilities of field:total_assets': a cited value placed under another line's name."""
+def metric_names(registry: dict) -> dict[str, set[str]]:
+    """Metric labels as written in prose ("net profit growth"), each mapped to the metric IDs that carry it."""
+    names: dict[str, set[str]] = {}
+    for ref, item in registry.items():
+        if ref.startswith("metric:"):
+            names.setdefault(re.sub(r"\s*\(.*?\)", "", item["label"]).lower().strip(), set()).add(ref)
+    return names
+
+
+def mislabelled(text: str, registry: dict) -> str:
+    """'total liabilities of field:total_assets' or 'cash flow growth of metric:net_profit_growth': a cited value placed
+    under another line's or ratio's name."""
+    phrases = metric_names(registry)
     for clause in CLAUSE.split(text):
         start = 0
         for token in TOKEN.finditer(clause):
             span, start = clause[start:token.start()], token.end()
+            ref = token.group(0)
+            if ref.startswith("metric:") and ref in registry:
+                hits = [(m.end(), len(phrase), phrase) for phrase in phrases for m in re.finditer(r"\b" + re.escape(phrase) + r"\b", span)]
+                if hits:
+                    phrase = max(hits)[2]  # the ratio name closest before the value
+                    own = set(WORD.findall(re.sub(r"\s*\(.*?\)", "", registry[ref]["label"]).lower())) - STOPWORDS - set(WORD.findall(phrase))
+                    if ref not in phrases[phrase] and not own & set(WORD.findall(span)):
+                        return f"places {registry[ref]['label']} after '{phrase}'; cite the metric that matches each name"
+                continue
             names = list(NAME.finditer(span))
-            if not token.group(0).startswith("field:") or not names:
+            if not ref.startswith("field:") or not names:
                 continue
             cited, name = base_field(token.group(0)[6:]), names[-1].group(1)
             if NAME_ALIASES[name] == cited:
@@ -258,7 +278,7 @@ def contradiction(text: str, registry: dict) -> str:
             if key in values and not NEGATION.search(low[max(0, m.start() - 20):m.start()]):
                 if (m.group(sign_group) == "positive") != (values[key] > 0) and values[key] != 0:
                     return f"describes {LABELS[key[6:]]} as {m.group(sign_group)}, which contradicts the verified value"
-    problem = mislabelled(low)
+    problem = mislabelled(low, registry)
     if problem:
         return problem
     claims = [(m.group(1), m.group(3), re.fullmatch(UP, m.group(3)) is not None, m.group(2)) for m in GROWTH_CLAIM.finditer(low)]

@@ -80,3 +80,14 @@ def test_findings_never_change_values():
     before = run.model_dump_json()
     findings(run)
     assert run.model_dump_json() == before
+
+
+def test_divergence_wording_follows_the_direction_of_both_changes():
+    run = reviewed_demo()                                                   # profit 90 -> 105 (+16.7%)
+    set_value(run, "operating_cash_flow", 100000000)                       # cash flow 140 -> 100 (-28.6%)
+    assert by_key(run)["profit_outgrowing_cash_flow"].title == "Profit grew much faster than operating cash flow"
+    set_value(run, "net_profit", 80000000)                                 # profit -11.1%, cash flow -28.6%: no flag yet
+    assert "profit_outgrowing_cash_flow" not in by_key(run)
+    set_value(run, "operating_cash_flow", 40000000)                        # cash flow -71.4%: both fell, cash far more
+    card = by_key(run)["profit_outgrowing_cash_flow"]
+    assert card.title == "Operating cash flow fell much more than profit" and "fell 71.4%" in card.detail and "only 11.1%" in card.detail

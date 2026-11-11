@@ -270,7 +270,7 @@ Include the printed line label in source_text whenever it is on the same line as
 Return {"fields": [...]} using the candidate schema supplied in the request. Confidence is informational only."""
 
 
-SECOND_LOOK_PAGES = 4  # at most this many extra requests per extraction
+SECOND_LOOK_PAGES = 6  # at most this many extra requests per extraction
 # Never printed as one figure in the ten bank reports tested (the reviewer adds current and savings deposits), so asking
 # again only spends requests.
 SECOND_LOOK_SKIP = {"casa_deposits"}
@@ -315,12 +315,14 @@ def read_chunk(client: AIClient, run: Run, chunk: str, keys: list[str], label: s
 
 
 def second_look_pages(found: dict[str, FinancialField], selected: list[int]) -> list[int]:
-    """The pages that already supplied the most values: a missed line is most likely beside the ones that were found."""
-    counts = {}
+    """The pages that supplied the most values, then the selected pages that supplied none (an equity-and-liabilities page
+    whose lines are all unlabelled subtotals can yield nothing on the first pass). At most SECOND_LOOK_PAGES."""
+    counts = {page: 0 for page in selected}
     for field in found.values():
-        if field.source_page in selected:
-            counts[field.source_page] = counts.get(field.source_page, 0) + 1
-    return sorted(sorted(counts, key=lambda page: (-counts[page], page))[:SECOND_LOOK_PAGES])
+        if field.source_page in counts:
+            counts[field.source_page] += 1
+    ranked = sorted(counts, key=lambda page: (counts[page] == 0, -counts[page], page))
+    return sorted(ranked[:SECOND_LOOK_PAGES])
 
 
 def extract_fields(run: Run, selected: list[int], client: AIClient, progress=None, second_look: bool = True) -> None:

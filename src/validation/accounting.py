@@ -306,11 +306,14 @@ def company_findings(values: dict) -> list[Finding]:
                         "Check the revenue recognition and receivables notes for changes in policy or credit terms."]))
     profit_growth, cash_growth = growth(values, "net_profit"), growth(values, "operating_cash_flow")
     if profit_growth is not None and cash_growth is not None and profit_growth - cash_growth > DIVERGENCE_POINTS:
+        fell = profit_growth < 0  # both fell, cash flow by much more
         out.append(Finding(
             key="profit_outgrowing_cash_flow", category="Earnings quality", priority="medium",
-            title="Profit grew much faster than operating cash flow",
-            detail="Net profit grew materially faster than operating cash flow year on year. Divergence between profit growth "
-                   "and cash flow is an indicator requiring further review; it is not evidence of misconduct.",
+            title="Operating cash flow fell much more than profit" if fell else "Profit grew much faster than operating cash flow",
+            detail=(f"Operating cash flow fell {-cash_growth:.1%} while net profit fell only {-profit_growth:.1%} year on year. "
+                    if fell else "Net profit grew materially faster than operating cash flow year on year. ")
+                   + "Divergence between profit growth and cash flow is an indicator requiring further review; it is not "
+                     "evidence of misconduct.",
             fields=["net_profit", "net_profit_prior_year", "operating_cash_flow", "operating_cash_flow_prior_year"],
             calculation=f"Net profit growth {profit_growth:.1%}; operating cash flow growth {cash_growth:.1%}",
             why="If profit rises while cash flow does not, more of the profit sits in receivables, inventory or other accruals.",

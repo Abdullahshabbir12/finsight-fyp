@@ -1,5 +1,6 @@
 """Bounded text extraction; physical PDF page numbers are always one-based."""
 import re
+from collections import Counter
 from time import perf_counter
 import pymupdf
 from src.models import Page
@@ -18,6 +19,9 @@ NOT_STATEMENT_HEAD = ("analysis", "summary", "six year", "ten year", "highlights
 NOT_STATEMENT_TOP = ("annexure", "islamic banking business")
 NOT_STATEMENT_LINE = ("....", "notes to", "auditor", "comprise", "audited", "we have", "annexed")
 TITLE_FOLLOWERS = ("as at", "as on", "for the year", "for the period", "(", "note", "rupees", "amounts", "rs")
+HEADING_WORDS = re.compile(r"\b(?:" + "|".join(re.escape(w) for w in NOT_STATEMENT_HEAD) + r")\b")
+# Typographic ligatures ("Proﬁt") break title matching and the AI's verbatim quotes.
+LIGATURES = str.maketrans({"\ufb00": "ff", "\ufb01": "fi", "\ufb02": "fl", "\ufb03": "ffi", "\ufb04": "ffl", "\ufb05": "st", "\ufb06": "st"})
 SHARE_NOTE = "issued, subscribed and paid"
 AMOUNT = re.compile(r"\(?\d{1,3}(?:,\d{3})+\)?")
 MAX_BYTES = 100 * 1024 * 1024
@@ -35,8 +39,8 @@ def page_text(page: pymupdf.Page) -> str:
         if len(blocks) >= 6 and len(crossing) <= max(2, len(blocks) // 10):
             left = page.get_text(sort=True, clip=pymupdf.Rect(r.x0, r.y0, mid, r.y1))
             right = page.get_text(sort=True, clip=pymupdf.Rect(mid, r.y0, r.x1, r.y1))
-            return left.rstrip() + "\n\n" + right
-    return page.get_text(sort=True)
+            return (left.rstrip() + "\n\n" + right).translate(LIGATURES)
+    return page.get_text(sort=True).translate(LIGATURES)
 
 
 def read_pdf(content: bytes) -> tuple[list[Page], list[str], float]:
@@ -59,13 +63,33 @@ def read_pdf(content: bytes) -> tuple[list[Page], list[str], float]:
     return pages, warnings, perf_counter() - start
 
 
-def statement_title(text: str) -> str:
-    """Return a primary-statement title line, or '' when the page is not a statement page."""
-    if any(word in " ".join(text.split()).lower() for word in NOT_STATEMENT_HEAD):
+def norm_line(line: str) -> str:
+    return " ".join(line.split()).lower()
+
+
+def boilerplate(pages: list[Page]) -> frozenset[str]:
+    """Running headers, footers and navigation strips: lines repeated on at least a fifth of the pages (and five).
+
+    A navigation strip such as "Overview  Strategy  Financial Analysis  Governance" printed on every page would otherwise
+    make every statement look like an analysis page.
+    """
+    counts = Counter()
+    for page in pages:
+        counts.update({norm_line(line) for line in page.text.splitlines() if line.strip()})
+    limit = max(5, len(pages) // 5)
+    return frozenset(line for line, count in counts.items() if count >= limit and not AMOUNT.search(line) and not TITLE.match(line))
+
+
+def statement_title(text: str, repeated: frozenset[str] = frozenset()) -> str:
+    """Return a primary-statement title line, or '' when the page is not a statement page.
+
+    `repeated` holds the report's running header and navigation lines, which are ignored when looking for the
+    headings that mark analysis and summary pages.
+    """
+    lines = [norm_line(line) for line in text.splitlines() if line.strip()]
+    own = [line for line in lines if line not in repeated]
+    if any(word in " ".join(own)[:400] for word in NOT_STATEMENT_TOP):
         return ""
-    if any(word in " ".join(text[:400].split()).lower() for word in NOT_STATEMENT_TOP):
-        return ""
-    lines = [" ".join(line.split()).lower() for line in text.splitlines() if line.strip()]
     for i, line in enumerate(lines):
         # Titles are sometimes broken over two lines ("STATEMENT OF" / "FINANCIAL POSITION").
         pair = line + " " + lines[i + 1] if i + 1 < len(lines) else line
@@ -74,7 +98,9 @@ def statement_title(text: str) -> str:
             # A title is followed by its date or column headings, never by a line item.
             rest = pair[match.end():].strip()
             if not rest or rest.startswith(TITLE_FOLLOWERS):
-                return pair
+                # Analysis and summary pages announce themselves above the title or just below it.
+                heading = " ".join(l for l in lines[:i + 3] if l not in repeated)
+                return "" if HEADING_WORDS.search(heading) else pair
     return ""
 
 
@@ -86,22 +112,24 @@ def title_basis(title: str) -> str:
 
 def statement_bases(pages: list[Page]) -> set[str]:
     """Which statement sets the report contains: {"consolidated"}, {"standalone"} or both."""
-    labels = {title_basis(statement_title(p.text)) for p in pages if len(AMOUNT.findall(p.text)) >= 15 and statement_title(p.text)}
+    repeated = boilerplate(pages)
+    titles = [statement_title(p.text, repeated) for p in pages if len(AMOUNT.findall(p.text)) >= 15]
+    labels = {title_basis(title) for title in titles if title}
     return {"consolidated" if label == "consolidated" else "standalone" for label in labels}
 
 
-def bank_note_pages(pages: list[Page], statements: list[int]) -> list[int]:
+def bank_note_pages(pages: list[Page], statements: list[int], repeated: frozenset[str] = frozenset()) -> list[int]:
     """The advances, deposits and capital adequacy notes that follow the chosen statements.
 
     The statement of financial position prints each line's note number ("Advances 9 ..."), so the note
     heading ("9. ADVANCES") can be found exactly. Notes are searched only up to the next statement set.
     """
-    later = [p.number for p in pages if p.number > max(statements) and statement_title(p.text)
+    later = [p.number for p in pages if p.number > max(statements) and statement_title(p.text, repeated)
              and len(AMOUNT.findall(p.text)) >= 15]
     end = min(later) if later else len(pages) + 1
     section = [p for p in pages if min(statements) < p.number < end]
     lines = lambda page: "\n".join(" ".join(line.split()) for line in page.text.lower().splitlines())
-    balance_sheet = next((lines(p) for p in pages if p.number in statements and "financial position" in statement_title(p.text)), "")
+    balance_sheet = next((lines(p) for p in pages if p.number in statements and "financial position" in statement_title(p.text, repeated)), "")
     picked = []
     for label, heading, extra in [(r"(?:advances|islamic financing[^\n]{0,40}?)(?:\s*[-–]\s*net)?", r"(?:advances|islamic financing)", 3),
                                   (r"deposits and other accounts", r"deposits and other accounts", 1)]:
@@ -124,7 +152,8 @@ def candidate_pages(pages: list[Page], basis: str = "consolidated", limit: int =
     summary pages repeat those titles, so they are excluded by their headings.
     """
     amounts = {p.number: len(AMOUNT.findall(p.text)) for p in pages}
-    titles = {p.number: statement_title(p.text) for p in pages if amounts[p.number] >= 15}
+    repeated = boilerplate(pages)
+    titles = {p.number: statement_title(p.text, repeated) for p in pages if amounts[p.number] >= 15}
     titles = {n: t for n, t in titles.items() if t}
     has_consolidated = any(title_basis(t) == "consolidated" for t in titles.values())
 
@@ -146,7 +175,7 @@ def candidate_pages(pages: list[Page], basis: str = "consolidated", limit: int =
     if not selected:
         return keyword_pages(pages, limit)
     if sector == "bank":
-        selected += bank_note_pages(pages, [n for n in selected if n in titles])
+        selected += bank_note_pages(pages, [n for n in selected if n in titles], repeated)
         limit = max(limit, 18)
     statements = [n for n in selected if n in titles]
     later = [n for n in titles if n > max(statements) and not matches(title_basis(titles[n]))]
@@ -235,7 +264,7 @@ def highlight_page(content: bytes, page_number: int, numbers: list[str], quote: 
     label = {w for w in re.findall(r"[a-z][a-z'-]+", quote.lower()) if len(w) > 2}
     with pymupdf.open(stream=content, filetype="pdf") as doc:
         page = doc[page_number - 1]
-        words = page.get_text("words")
+        words = [(*w[:4], w[4].translate(LIGATURES), *w[5:]) for w in page.get_text("words")]
         hits = []
         for number in numbers:
             target = _token(number)

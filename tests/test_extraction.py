@@ -176,13 +176,13 @@ def test_second_look_asks_only_for_missed_fields_on_the_best_pages():
     fake = scripted(run, first={1: ["revenue", "cost_of_sales", "gross_profit"], 2: ["total_assets"]},
                     second={1: ["net_profit", "revenue"], 2: ["equity"]})
     extract_fields(run, [1, 2, 3], fake)
-    assert [(page, again) for page, again, _ in fake.calls] == [(1, False), (2, False), (3, False), (1, True), (2, True)]
+    assert [(page, again) for page, again, _ in fake.calls] == [(1, False), (2, False), (3, False), (1, True), (2, True), (3, True)]
     asked = fake.calls[3][2]
     assert "net_profit" in asked and "revenue" not in asked and len(asked) == 23   # only the 23 missed fields
     fields = {f.field_name: f for f in run.fields}
     assert fields["net_profit"].normalized_value == 105000000 and "second look" in fields["net_profit"].notes[-1]
     assert fields["equity"].status == "extracted" and fields["revenue"].normalized_value == 1000000000
-    assert any("Second look: asked again for 23 missing fields on PDF pages 1, 2; 2 found." == w for w in run.warnings)
+    assert any("Second look: asked again for 23 missing fields on PDF pages 1, 2, 3; 2 found." == w for w in run.warnings)
 
 
 def test_no_second_look_after_a_quota_failure_or_when_nothing_is_missing():
@@ -198,12 +198,14 @@ def test_no_second_look_after_a_quota_failure_or_when_nothing_is_missing():
     assert len(fake.calls) == 3 and all(f.status == "extracted" for f in run.fields)
 
 
-def test_second_look_is_capped_at_four_pages():
+def test_second_look_prefers_productive_pages_then_empty_ones_up_to_six():
     from src.extraction.service import SECOND_LOOK_PAGES, second_look_pages
     from src.models import FinancialField
     found = {f"k{i}": FinancialField(field_name="revenue", source_page=page) for i, page in
              enumerate([5, 5, 5, 6, 6, 7, 8, 9, 9, 9, 9, 40])}
-    assert SECOND_LOOK_PAGES == 4 and second_look_pages(found, [5, 6, 7, 8, 9]) == [5, 6, 7, 9]
+    assert SECOND_LOOK_PAGES == 6
+    assert second_look_pages(found, [4, 5, 6, 7, 8, 9]) == [4, 5, 6, 7, 8, 9]      # a page that yielded nothing is re-read
+    assert second_look_pages(found, [1, 2, 3, 5, 6, 7, 8, 9]) == [1, 5, 6, 7, 8, 9]  # capped: productive pages first
 
 
 def test_second_look_is_not_spent_on_fields_never_printed_as_one_figure():

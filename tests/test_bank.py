@@ -252,3 +252,21 @@ def test_bank_run_renders_on_every_screen(tmp_path, monkeypatch):
         if step == "4 · Results":
             labels = {m.label for m in app.metric}
             assert {"Total income · PKR m", "Advances to Deposits (ADR)", "Capital Adequacy Ratio (reported)"} <= labels
+
+
+def test_ratio_cited_under_another_ratios_name_is_rejected():
+    from src.ai.client import AIError
+    from src.ai.council import reference_registry, validate_claim
+    from src.calculations.ratios import calculate
+    from src.models import Claim
+    from tests.test_validation import reviewed_demo
+    run = reviewed_demo()
+    run.metrics = calculate(run)
+    registry = reference_registry(run)
+    with pytest.raises(AIError, match="places Net Profit Growth after 'operating cash flow growth'"):
+        validate_claim(Claim(kind="FACT", text="Cash flow fell, with an operating cash flow growth of metric:net_profit_growth.",
+                             references=[]), registry)
+    for ok in ("Net profit rose, with net profit growth of metric:net_profit_growth.",
+               "Receivables turnover (average) was metric:average_receivables_turnover.",
+               "The current ratio was metric:current_ratio and the quick ratio metric:quick_ratio."):
+        validate_claim(Claim(kind="FACT", text=ok, references=[]), registry)

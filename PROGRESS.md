@@ -199,3 +199,29 @@ The second look added no wrong values. Banks never print CASA as one figure, so 
 **New look.** Redesigned from the group's mockup: dark green sidebar menu (Home, Extract, Verify, Research, Evaluate), cream background, Libre Caslon headings with Inter text, a sign-in screen with the BrokerLens mark, a Home banner with totals from the saved analyses (analyses, values verified, findings raised, banks and companies), and the same palette in charts, the PDF report and Excel. Mockup elements with no data behind them in BrokerLens (market index chart, portfolio return, health score, watchlist, notifications) were left out rather than filled with invented numbers.
 
 **272 tests passed.**
+
+## November 12: tested on five new companies
+
+Five annual reports not seen before, from the companies' own websites, one per sector: Cherat Cement FY2026 (the report that showed all values missing for a tester), International Steels FY2025, Pakistan State Oil FY2025, Fatima Fertilizer 2025 and Hub Power FY2025. Each value was read independently from the PDF into an answer key (135 values; accounting identities checked), and each report went through the whole app: extraction, verification, ratios, findings, charts, commodities, the four AI analysts and synthesis, PDF/Markdown/Excel export and every screen.
+
+| Company | Correct | Wrong | Missed | Correctly left empty |
+|---|---|---|---|---|
+| Cherat Cement 2026 | 25 | 0 | 0 | 2 |
+| International Steels 2025 | 26 | 0 | 0 | 1 |
+| Pakistan State Oil 2025 | 25 | 0 | 0 | 2 |
+| Fatima Fertilizer 2025 | 24 | 0 | 0 | 3 |
+| Hub Power 2025 | 25 | 0 | 0 | 2 |
+
+125 of 125 printed values correct, none wrong; the ten empty fields are totals these reports do not print as one line (total liabilities, total debt, operating profit). The second look recovered 15 values in total (unlabelled subtotals such as current assets, current liabilities and equity), none wrong. All 93 ratios matched a separate hand calculation; every verified value was found and boxed on its PDF page; every screen opened without error.
+
+Problems found and fixed:
+
+| # | Problem | Fix |
+|---|---|---|
+| 1 | Cherat Cement: no statements found; analysis pages suggested instead (the tester's "all missing") | A navigation strip printed on every page ("... Financial Analysis ...") made every statement look like an analysis page. Lines repeated across many pages are now ignored, and warning words are looked for as whole words around the title only. The 16 earlier reports pick exactly the same pages as before. |
+| 2 | PSO: "Proﬁt" printed with a typographic ligature, so the title was not recognised | Ligatures are expanded when reading the PDF |
+| 3 | Fatima: equity and current liabilities missed; the second look skipped the page that had yielded nothing | The second look now includes pages that yielded nothing, up to six pages |
+| 4 | "Profit grew much faster than cash flow" shown when both fell | Wording follows the direction of both changes |
+| 5 | AI wrote "operating cash flow growth of" the net profit growth figure (Cherat, and Fauji Cement from October) | New check rejects a ratio cited under another ratio's name; both analyses were regenerated |
+
+After the fixes, all 904 saved AI statements across the 21 reports pass every check. Gemini's free tier returned "busy" (HTTP 503) or dropped connections several times; the retries recovered most, and the affected steps were re-run. **274 tests passed.**
