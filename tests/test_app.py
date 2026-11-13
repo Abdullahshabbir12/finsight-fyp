@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
@@ -66,6 +67,21 @@ def test_complete_demo_workflow_and_export():
     assert {"Download Markdown", "Download PDF", "Download full audit JSON", "Download per-field CSV"} <= labels
     app.radio(key="step").set_value("5 · Evaluate").run()
     assert not app.exception
+
+
+def test_model_tab_forecasts_and_values_once_depreciation_is_typed():
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30).run()
+    click(app, "Load synthetic demo")
+    click(app, "✓ Accept all ready")
+    click(app, "Finish verification")
+    app.radio(key="step").set_value("4 · Results").run()
+    run = app.session_state.run
+    assert not app.exception and run.model_assumptions.gross_margin == Decimal("0.35")
+    assert not any(m.label == "Value range, base case" for m in app.metric)     # depreciation not typed yet
+    app.number_input(key=f"model_{run.id}_depreciation").set_value(50.0).run()   # PKR 50 m = 5% of sales
+    assert not app.exception and app.session_state.run.model_assumptions.depreciation == Decimal("0.05")
+    value = next(m for m in app.metric if m.label == "Value range, base case")
+    assert value.value.startswith("PKR 25") and value.value.endswith("54")
 
 
 def test_password_screen_blocks_until_correct(monkeypatch):

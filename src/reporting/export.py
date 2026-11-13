@@ -1,5 +1,6 @@
 """One report body for Markdown and a paginated PDF with internal evidence links."""
 from html import escape
+from decimal import Decimal
 from io import BytesIO
 import re
 from reportlab.lib import colors
@@ -8,6 +9,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
 from src.ai.council import reference_registry, render_text
+from src.calculations.model import (AMOUNTS as MODEL_AMOUNTS, LABELS as MODEL_LABELS, LIMITATIONS, NOT_ADVICE, build, pc,
+                                    pkr_m, unavailable)
 from src.calculations.ratios import display_metric, market_metrics
 from src.catalog import LABELS, internal_unit
 from src.models import Claim, Run
@@ -28,6 +31,43 @@ def anchor(ref: str) -> str:
 def claim_markdown(claim: Claim, registry: dict) -> str:
     links = ", ".join(f"[{ref}](#{anchor(ref)})" for ref in claim.references)
     return f"- **{claim.kind}**: {clean(render_text(claim.text, registry))}" + (f" Sources: {links}." if links else "")
+
+
+def model_markdown(run: Run) -> list[str]:
+    """The financial model, only when the analyst chose to add it to the report."""
+    a = run.model_assumptions
+    if not a or not a.in_report or unavailable(run):
+        return []
+    model = build(run)
+    lines = ["", "### Financial model (analyst assumptions)", "", NOT_ADVICE, "", "| Assumption | Value |", "|---|---|"]
+    for name, label in MODEL_LABELS.items():
+        value = getattr(a, name)
+        shown = "Not set" if value is None else pkr_m(value) if name in MODEL_AMOUNTS else pc(value)
+        lines.append(f"| {label} | {shown} |")
+    years = model.cases.get("Base")
+    if years:
+        lines += ["", "| Base case | " + " | ".join(f"FY{y.year}" for y in years) + " |", "|---" * (len(years) + 1) + "|"]
+        rows = [("Sales (PKR m)", "revenue"), ("Net profit (PKR m)", "net_profit"), ("EPS (PKR)", "eps"),
+                ("Free cash flow to the firm (PKR m)", "free_cash_flow")]
+        for label, attr in rows:
+            if getattr(years[0], attr) is None:
+                continue
+            cells = [f"{getattr(y, attr):,.2f}" if attr == "eps" else f"{getattr(y, attr) / Decimal(10) ** 6:,.1f}" for y in years]
+            lines.append(f"| {label} | " + " | ".join(cells) + " |")
+    if model.value_range:
+        low, high = model.value_range
+        rates, growths = [r for r, _ in model.grid], [g for g, _ in model.grid[0][1]]
+        lines += ["", f"Value per share range, base case: **PKR {low:,.2f} to {high:,.2f}** (discount rate {pc(min(rates))} "
+                      f"to {pc(max(rates))}, long-term growth {pc(min(growths))} to {pc(max(growths))})."]
+        for name, valuation in model.values.items():
+            lines.append(f"- {name}: " + (f"PKR {valuation.per_share:,.2f} per share" if valuation.per_share is not None
+                                          else clean(valuation.reason)))
+    elif model.missing:
+        lines += ["", "Not valued: " + clean(", ".join(model.missing)) + " not set."]
+    if model.checks:
+        lines += ["", "Assumption checks:"] + ["- " + clean(c) for c in model.checks]
+    lines += ["", "Limits:"] + ["- " + clean(x) for x in LIMITATIONS]
+    return lines
 
 
 def markdown_report(run: Run) -> str:
@@ -63,6 +103,7 @@ def markdown_report(run: Run) -> str:
                   + ", typed by the user and not verified by BrokerLens. Not used in the AI analysis.", "",
                   "| Metric | Result | Formula |", "|---|---|---|"]
         lines += [f"| {m.label} | {display_metric(m)} | {clean(m.formula)} |" for m in market]
+    lines += model_markdown(run)
     lines += ["", "## Findings", "", "Prompts for review from the accounting checks, not conclusions or evidence of misconduct. "
               "Thresholds are teaching heuristics. Tolerance for reconciliations: the greater of PKR 1 and 1% of the larger side."]
     cards = by_priority(findings(run))
@@ -148,7 +189,9 @@ def pdf_report(run: Run) -> bytes:
                 if not lines[i].startswith("|---"):
                     rows.append([paragraph(cell.strip(), "FinCell") for cell in lines[i].strip("|").split("|")])
                 i += 1
-            widths = [115, 115, 110, 60, 52] if len(rows[0]) == 5 else [125, 65, 262]
+            n = len(rows[0])
+            widths = ([115, 115, 110, 60, 52] if n == 5 else [125, 65, 262] if n == 3 else [300, 152] if n == 2
+                      else [452 - 62 * (n - 1)] + [62] * (n - 1))
             table = Table(rows, colWidths=widths, repeatRows=1, hAlign="LEFT")
             table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e4efe8")),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#faf8f3")]),

@@ -225,3 +225,18 @@ Problems found and fixed:
 | 5 | AI wrote "operating cash flow growth of" the net profit growth figure (Cherat, and Fauji Cement from October) | New check rejects a ratio cited under another ratio's name; both analyses were regenerated |
 
 After the fixes, all 904 saved AI statements across the 21 reports pass every check. Gemini's free tier returned "busy" (HTTP 503) or dropped connections several times; the retries recovered most, and the affected steps were re-run. **274 tests passed.**
+
+## November 14: financial model
+
+Added at the supervisor's request: a **Model** tab on the Research screen for non-financial companies.
+
+- **Assumptions** pre-filled from the verified year with the page each came from (sales growth, gross margin, operating costs net of other income, finance cost, tax rate, capital spending, receivables + inventory as a share of sales). Depreciation and net debt are typed by the analyst when not extracted; the discount rate (18%) and long-term growth (5%) start as placeholders and are flagged until changed.
+- **Forecast:** five years of sales, gross profit, EBIT, profit before tax, tax, net profit, EPS and free cash flow to the firm.
+- **Cases:** downside and upside (shifts to growth and margin, editable) and an optional input-cost shock (share of cost of sales exposed to one commodity and its price change), with the World Bank price moves for the sector shown for context.
+- **Value range:** discounted free cash flow with a terminal value, less net debt, per share; a grid over discount rate ±2 points and long-term growth ±1 point gives the range. Shown as a range under the analyst's assumptions with "not a target price and not a recommendation"; never sent to the AI.
+- **Checks:** growth more than 10 points from last year, margin more than 5 points, tax more than 10 points from the effective rate, depreciation above capital spending, placeholders still in use, discount rate not above growth, and more than 75% of value after year 5.
+- **Excel:** a Model sheet with live formulas (yellow assumption cells; starting year linked to the verified data sheet; forecast, value, sensitivity grid) and BrokerLens's own result beside it. LibreOffice recalculation of the sheet matched Python to the cent for the synthetic company and Fatima Fertilizer (PKR 150.31 base case with the analyst inputs used in testing).
+- **Report:** included in the PDF and Markdown only when the analyst ticks "Add this model to the downloaded report".
+
+Fatima Fertilizer FY2025 check: assumptions pre-filled as 7.50% growth (p. 272), 34.19% gross margin, 6.57% operating costs, PKR 7,937.9 m finance cost, 38.46% tax, 3.16% capital spending (p. 275) and 34.94% receivables + inventory (p. 271); with depreciation of PKR 11,992.2 m (cash flow note, p. 325) the model correctly flagged depreciation above capital spending. **287 tests passed** (13 new: hand-calculated forecast, textbook DCF formula, scenario ordering, grid, missing inputs, checks, banks excluded, AI exclusion, saving, Excel formulas evaluated cell by cell, report option, and the app tab).
+

@@ -11,6 +11,8 @@ from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.worksheet.worksheet import Worksheet
 from src.ai.council import reference_registry, render_text
+from src.calculations.model import (AMOUNTS as MODEL_AMOUNTS, GROWTH_STEPS, LABELS as MODEL_LABELS, LIMITATIONS, NOT_ADVICE,
+                                    RATE_STEPS, YEARS, basis, build, cases, unavailable)
 from src.calculations.ratios import ALL_GROWTH, ALL_SPECS, AVERAGE, calculate, display_metric, market_metrics
 from src.catalog import LABELS, catalog, internal_unit
 from src.models import Metric, Run
@@ -145,6 +147,9 @@ def run_workbook(run: Run) -> bytes:
     for metric in market_metrics(run):
         add(metric, market_formula(metric.name, ref, price, dps))
 
+    if not unavailable(run):
+        model_sheet(book, run, ref)
+
     pairs, unit = year_pairs(run)
     if pairs:
         chart_sheet = book.create_sheet("Charts")
@@ -177,6 +182,170 @@ def run_workbook(run: Run) -> bytes:
     output = BytesIO()
     book.save(output)
     return output.getvalue()
+
+
+MODEL_ORDER = ["sales_growth", "gross_margin", "operating_costs", "finance_cost", "tax_rate", "capex", "depreciation",
+               "working_capital", "discount_rate", "terminal_growth", "net_debt"]
+
+
+def model_sheet(book: Workbook, run: Run, ref: dict[str, str]) -> None:
+    """The financial model as live formulas: yellow assumption cells drive the forecast, free cash flow and value.
+
+    Starting-year cells point at the Verified data sheet; Python's own base-case result sits beside the formula result
+    so the two can be compared. Scenario values are BrokerLens results for the offsets set in the app.
+    """
+    model = build(run)
+    a, y0 = model.assumptions, run.company.financial_year
+    sheet = book.create_sheet("Model")
+    sheet.column_dimensions["A"].width = 46
+    for column in "BCDEFG":
+        sheet.column_dimensions[column].width = 16
+    sheet.append(["Financial model: your assumptions, BrokerLens arithmetic"])
+    sheet["A1"].font = Font(bold=True, size=14)
+    sheet.append([NOT_ADVICE + " Edit the yellow cells; starting figures link to the Verified data sheet. Amounts in PKR."])
+    sheet.merge_cells("A2:G2")
+    sheet["A2"].alignment = Alignment(wrap_text=True, vertical="top")
+    sheet.row_dimensions[2].height = 32
+    sheet.append([])
+    sheet.append(["Assumption", "Value", "Where the starting value came from"])
+    for cell in sheet[sheet.max_row][:3]:
+        cell.font, cell.fill = Font(bold=True), HEADER
+    notes, cell = basis(run), {}
+    for name in MODEL_ORDER:
+        sheet.append([MODEL_LABELS[name], as_number(getattr(a, name)), notes[name]])
+        row = sheet.max_row
+        cell[name] = f"$B${row}"
+        sheet.cell(row=row, column=2).fill = INPUT
+        sheet.cell(row=row, column=2).number_format = "#,##0" if name in MODEL_AMOUNTS else "0.00%"
+        sheet.merge_cells(start_row=row, start_column=3, end_row=row, end_column=7)
+        sheet.cell(row=row, column=3).alignment = Alignment(wrap_text=True, vertical="top")
+        sheet.row_dimensions[row].height = 30
+    shares = ref.get("number_of_shares", "")
+    blank = f'COUNTBLANK({cell[MODEL_ORDER[0]]}:{cell[MODEL_ORDER[-1]]})>0'  # value stays empty until every input is set
+    sheet.append(["The value per share stays empty until every yellow cell is filled."])
+
+    sheet.append([])
+    sheet.append(["Forecast, base case (PKR)", f"FY{y0} (verified)", *[f"FY{y0 + t}" for t in range(1, YEARS + 1)]])
+    for c in sheet[sheet.max_row]:
+        c.font, c.fill = Font(bold=True), HEADER
+    cols = "CDEFG"
+    rows: dict[str, int] = {}
+
+    def line(key: str, label: str, base: str | None, formula, fmt: str = "#,##0") -> None:
+        """One forecast line; formula(column, previous column, year number) gives each year's Excel formula."""
+        sheet.append([label])  # write the row first: after a blank row, max_row would point one row too early
+        rows[key] = row = sheet.max_row
+        cells = [base] + [formula(col, chr(ord(col) - 1), t) for t, col in enumerate(cols, start=1)]
+        for column, content in enumerate(cells, start=2):
+            sheet.cell(row=row, column=column, value=content).number_format = fmt
+
+    def r(key: str, col: str) -> str:
+        return f"{col}{rows[key]}"
+
+    gp_base = (f"={ref['gross_profit']}" if "gross_profit" in ref else
+               f"={ref['revenue']} - {ref['cost_of_sales']}" if "cost_of_sales" in ref else None)
+    has_ebit = "profit_before_tax" in ref and "finance_cost" in ref
+    line("sales", "Sales", f"={ref['revenue']}", lambda c, p, t: f"={p}{rows['sales']}*(1 + {cell['sales_growth']})")
+    line("gp", "Gross profit", gp_base, lambda c, p, t: f"={r('sales', c)}*{cell['gross_margin']}")
+    line("costs", "Operating costs, net of other income",
+         f"=B{rows['gp']} - ({ref['profit_before_tax']} + {ref['finance_cost']})" if has_ebit and gp_base else None,
+         lambda c, p, t: f"={r('sales', c)}*{cell['operating_costs']}")
+    line("ebit", "EBIT (profit before tax + finance cost)",
+         f"={ref['profit_before_tax']} + {ref['finance_cost']}" if has_ebit else None,
+         lambda c, p, t: f"={r('gp', c)} - {r('costs', c)}")
+    line("fc", "Finance cost", f"={ref['finance_cost']}" if "finance_cost" in ref else None,
+         lambda c, p, t: f"={cell['finance_cost']}")
+    line("pbt", "Profit before tax", f"={ref['profit_before_tax']}" if "profit_before_tax" in ref else None,
+         lambda c, p, t: f"={r('ebit', c)} - {r('fc', c)}")
+    line("tax", "Tax", f"={ref['tax_expense']}" if "tax_expense" in ref else None,
+         lambda c, p, t: f"=MAX({r('pbt', c)}, 0)*{cell['tax_rate']}")
+    line("np", "Net profit", f"={ref['net_profit']}" if "net_profit" in ref else None,
+         lambda c, p, t: f"={r('pbt', c)} - {r('tax', c)}")
+    line("eps", "EPS (PKR)", f"={ref['eps']}" if "eps" in ref else None,
+         lambda c, p, t: f"={r('np', c)}/{shares}", "#,##0.00")
+    line("nopat", "NOPAT (EBIT less tax on positive EBIT)", None,
+         lambda c, p, t: f"={r('ebit', c)} - MAX({r('ebit', c)}, 0)*{cell['tax_rate']}")
+    line("dep", "Depreciation and amortisation", None, lambda c, p, t: f"={r('sales', c)}*{cell['depreciation']}")
+    line("capex", "Capital spending", f"={ref['capital_expenditure']}" if "capital_expenditure" in ref else None,
+         lambda c, p, t: f"={r('sales', c)}*{cell['capex']}")
+    line("wc", "Increase in working capital", None,
+         lambda c, p, t: f"=({r('sales', c)} - {p}{rows['sales']})*{cell['working_capital']}")
+    line("fcf", "Free cash flow to the firm", None,
+         lambda c, p, t: f"={r('nopat', c)} + {r('dep', c)} - {r('capex', c)} - {r('wc', c)}")
+    line("df", "Discount factor", None, lambda c, p, t: f"=1/(1 + {cell['discount_rate']})^{t}", "0.0000")
+    line("pv", "Present value of free cash flow", None, lambda c, p, t: f"={r('fcf', c)}*{r('df', c)}")
+
+    sheet.append([])
+    rate, growth = cell["discount_rate"], cell["terminal_growth"]
+    value_rows: dict[str, int] = {}
+    steps = [("pv_years", "Present value, years 1-5", f"=SUM(C{rows['pv']}:G{rows['pv']})"),
+             ("terminal", "Terminal value at year 5", f"=G{rows['fcf']}*(1 + {growth})/({rate} - {growth})"),
+             ("pv_terminal", "Present value of the terminal value", f"=B{{terminal}}*G{rows['df']}"),
+             ("ev", "Enterprise value", "=B{pv_years} + B{pv_terminal}"),
+             ("net_debt", "Less net debt", f"={cell['net_debt']}"),
+             ("equity", "Equity value", "=B{ev} - B{net_debt}"),
+             ("shares", "Shares", f"={shares}"),
+             ("per_share", "Value per share (PKR), base case", f'=IF(OR({blank}, {rate}<={growth}, B{{equity}}<=0), "", B{{equity}}/B{{shares}})'),
+             ("terminal_share", "Share of value after year 5", '=IF(B{ev}<=0, "", B{pv_terminal}/B{ev})')]
+    for key_, label, _ in steps:  # rows first, so formulas can refer to rows below them
+        sheet.append([label])
+        value_rows[key_] = sheet.max_row
+    for key_, _, formula in steps:
+        row = value_rows[key_]
+        sheet.cell(row=row, column=2).value = formula.format(**value_rows)
+        sheet.cell(row=row, column=2).number_format = ("#,##0.00" if key_ in ("per_share",) else "0%"
+                                                       if key_ == "terminal_share" else "#,##0")
+    sheet.cell(row=value_rows["per_share"], column=1).font = Font(bold=True)
+    base = model.values.get("Base")
+    sheet.append(["BrokerLens (Python) value per share, for checking", as_number(base.per_share) if base else None])
+    sheet.cell(row=sheet.max_row, column=2).number_format = "#,##0.00"
+
+    sheet.append([])
+    sheet.append(["Value per share (PKR): discount rate down, long-term growth across",
+                  *[f"={growth} + {float(s)}" for s in GROWTH_STEPS]])
+    head = sheet.max_row
+    for c in sheet[head]:
+        c.font, c.fill = Font(bold=True), HEADER
+    for c in sheet[head][1:]:
+        c.number_format = "0.00%"
+    fcf = [f"{col}{rows['fcf']}" for col in cols]
+    for step in RATE_STEPS:
+        row = sheet.max_row + 1
+        k, cells = f"$A{row}", [f"={rate} + {float(step)}"]
+        for col in "BCD":
+            g = f"{col}${head}"
+            ev = " + ".join(f"{f}/(1 + {k})^{t}" for t, f in enumerate(fcf, start=1))
+            ev += f" + {fcf[-1]}*(1 + {g})/({k} - {g})/(1 + {k})^{YEARS}"
+            equity = f"({ev} - {cell['net_debt']})"
+            cells.append(f'=IF(OR({blank}, {k}<={g}, {equity}<=0), "", {equity}/{shares})')
+        sheet.append(cells)
+        sheet.cell(row=row, column=1).number_format = "0.00%"
+        for c in sheet[row][1:]:
+            c.number_format = "#,##0.00"
+
+    sheet.append([])
+    sheet.append(["Cases (BrokerLens results for the offsets set in the app)", "Sales growth", "Gross margin",
+                  f"EPS FY{y0 + 1}", f"EPS FY{y0 + YEARS}", "Value per share"])
+    for c in sheet[sheet.max_row]:
+        c.font, c.fill = Font(bold=True), HEADER
+    for name, (growth_shift, margin_shift, shock) in cases(a).items():
+        years = model.cases.get(name)
+        if not years or a.sales_growth is None:
+            continue
+        margin = a.gross_margin + margin_shift
+        if shock:
+            margin -= (1 - margin) * a.shock_share * a.shock_change
+        valuation = model.values.get(name)
+        sheet.append([name, as_number(a.sales_growth + growth_shift), as_number(margin), as_number(years[0].eps),
+                      as_number(years[-1].eps), as_number(valuation.per_share) if valuation else None])
+        for c, fmt in zip(sheet[sheet.max_row][1:], ("0.00%", "0.00%", "#,##0.00", "#,##0.00", "#,##0.00")):
+            c.number_format = fmt
+    sheet.append([])
+    for note in ["Checks:", *model.checks, "Limits:", *LIMITATIONS]:
+        sheet.append([note])
+        sheet.merge_cells(start_row=sheet.max_row, start_column=1, end_row=sheet.max_row, end_column=7)
+        sheet.cell(row=sheet.max_row, column=1).alignment = Alignment(wrap_text=True, vertical="top")
+        sheet.row_dimensions[sheet.max_row].height = 30 if len(note) > 90 else 16
 
 
 def peer_columns(runs: list[Run]) -> list[str]:

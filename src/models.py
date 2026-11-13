@@ -124,6 +124,33 @@ class FindingDecision(Record):
     at: str
 
 
+class ModelAssumptions(Record):
+    """The analyst's assumptions for the financial model. Rates are fractions (0.075 = 7.5%); amounts are PKR.
+
+    BrokerLens pre-fills them from verified figures, but they belong to the analyst; None means not set yet.
+    """
+    sales_growth: Decimal | None = Field(default=None, gt=-1, lt=5)
+    gross_margin: Decimal | None = Field(default=None, gt=-1, lt=1)
+    operating_costs: Decimal | None = Field(default=None, gt=-1, lt=5)  # share of sales, net of other income
+    finance_cost: Decimal | None = Field(default=None, ge=0)            # PKR a year
+    tax_rate: Decimal | None = Field(default=None, ge=0, lt=1)
+    capex: Decimal | None = Field(default=None, ge=0, lt=5)             # share of sales
+    depreciation: Decimal | None = Field(default=None, ge=0, lt=5)      # share of sales; typed by the analyst
+    working_capital: Decimal | None = Field(default=None, ge=0, lt=5)   # receivables + inventory, share of sales
+    discount_rate: Decimal | None = Field(default=None, gt=0, lt=1)
+    terminal_growth: Decimal | None = Field(default=None, gt=-1, lt=1)
+    net_debt: Decimal | None = None                                     # PKR; negative means net cash
+    # Scenarios: shifts applied to the base case, in fractions (-0.03 = three percentage points lower).
+    downside_growth: Decimal = Field(default=Decimal("-0.03"), gt=-1, lt=1)
+    downside_margin: Decimal = Field(default=Decimal("-0.02"), gt=-1, lt=1)
+    upside_growth: Decimal = Field(default=Decimal("0.03"), gt=-1, lt=1)
+    upside_margin: Decimal = Field(default=Decimal("0.02"), gt=-1, lt=1)
+    # Input-cost shock: the share of cost of sales exposed to one commodity, and that commodity's price change.
+    shock_share: Decimal = Field(default=Decimal(0), ge=0, le=1)
+    shock_change: Decimal = Field(default=Decimal(0), ge=-1, le=5)
+    in_report: bool = False  # the analyst chose to put this model in the downloaded report
+
+
 class Run(Record):
     id: str
     company: Company
@@ -146,6 +173,8 @@ class Run(Record):
     # Unfinished review decisions ("Save progress"); cleared when verification is finished.
     review_draft: list[dict] = Field(default_factory=list)
     finding_decisions: dict[str, list[FindingDecision]] = Field(default_factory=dict)
+    # Financial model assumptions. Like the share price, never sent to the AI analysts.
+    model_assumptions: ModelAssumptions | None = None
 
 
 def upgrade_run(run: Run) -> Run:

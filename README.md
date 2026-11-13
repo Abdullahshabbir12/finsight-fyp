@@ -78,7 +78,7 @@ src/demo.py            Synthetic teaching dataset
 src/pdf/               Page extraction and candidate selection
 src/extraction/        Structured AI extraction and unit normalization
 src/validation/        Human review gate and accounting checks
-src/calculations/      Deterministic ratio definitions and functions
+src/calculations/      Deterministic ratio definitions and functions; the financial model (forecast, DCF value range)
 src/ai/                API client, four analyst perspectives, synthesis
 src/reporting/         Markdown, PDF and Excel exports; peer comparison; chart data
 src/market/            World Bank commodity price snapshot and sector mapping
@@ -187,8 +187,9 @@ The menu on the left (**Home → Extract → Verify → Research → Evaluate**)
    - **Commodities:** World Bank monthly prices of the inputs or products that move the sector's margins (coal for cement, urea and DAP for fertiliser, Brent for oil, cotton for textiles, and more), averaged over the company's financial year against the year before. The year end is read from the statement dates. External context in US dollars only: not verified, not used in ratios, never sent to the AI.
    - **💹 Valuation multiples:** type today's share price (and optionally the dividend per share) to get P/E, P/B, market capitalisation and dividend yield. BrokerLens does not fetch prices, because PSX market data needs a licence. The price is user-supplied, labelled as such, and never sent to the AI.
    - **Click a figure to see it on the page:** select a row in **Financial Data** (or a ratio in **Ratios**) and BrokerLens shows that number boxed in red on its printed line in the original PDF. A reopened saved run asks you to attach the same PDF first, because saved runs keep page text, not the PDF.
+   - **Model:** a five-year forecast from your own assumptions (sales growth, gross margin, costs, finance cost, tax, capital spending, depreciation, working capital, discount rate, long-term growth, net debt). Each assumption is pre-filled from the verified year, with the page it came from; the discount rate and long-term growth start as marked placeholders, and depreciation and net debt are typed by you when the report does not give them as extracted fields. You get profit, EPS and free cash flow for five years, downside and upside cases, an optional input-cost shock (e.g. coal for cement), and a **value per share range** from a discounted-cash-flow sensitivity grid (discount rate ±2 points, long-term growth ±1 point). Checks flag assumptions far from the report (growth, margin, tax), depreciation above capital spending, placeholders still in use and a terminal value that dominates. Shown as a range under your assumptions, never as a target price or recommendation; the AI never sees the model. Non-financial companies only: banks need a different model. Tick **Add this model to the downloaded report** to include it in the PDF and Markdown.
    - **Peer comparison:** pick other saved analyses of the same company type to see key figures and every ratio side by side, with an Excel download.
-   - **Excel export:** verified values with page and quote, every ratio as a live Excel formula over those cells next to BrokerLens's Python result, an editable price cell that recalculates the multiples, and the AI statements.
+   - **Excel export:** verified values with page and quote, every ratio as a live Excel formula over those cells next to BrokerLens's Python result, an editable price cell that recalculates the multiples, the financial model as live formulas (yellow assumption cells drive the forecast, free cash flow, value per share and sensitivity grid, with BrokerLens's own result beside it for checking), and the AI statements.
 5. **Evaluate:** extraction outcomes per field, precision and recall, CSV downloads, and the combined table of all saved live runs.
 
 Click **Save** (top of the page) to keep a run; reopen it from **Open a saved analysis** on the Home screen. The SQLite file is `data/finsight.sqlite3` by default and holds extracted page text, proposals, reviews, metrics and analysis, never API keys or the PDF itself.
@@ -240,6 +241,7 @@ Tests cover every ratio's ordinary, missing-input, zero-denominator, negative-de
 - Prompts and output checks reduce unsupported claims and investment-advice language but cannot prove qualitative correctness or eliminate every possible model error. Human review remains essential.
 - Local SQLite snapshots keep the original extraction and latest saved review, not a multi-user revision ledger. Save runs and export audit JSON for experiments. No auto-save or cross-device synchronization.
 - PDF export uses a simple Latin-font report layout. Non-Latin scripts in company names or long source quotations are better preserved in Markdown/JSON.
+- The financial model is deliberately simple: one growth rate and one margin for five years, working capital from receivables and inventory only (payables are not extracted), EBIT taken as profit before tax plus finance cost, and no balance sheet projection. It shows a range of values under the analyst's assumptions, not a forecast BrokerLens stands behind. No bank model.
 - No live news, broad PSX coverage, portfolio management, price prediction, trading, automatic ratings, price targets, authentication, payments, enterprise deployment, vector database or microservices.
 
 ## Troubleshooting

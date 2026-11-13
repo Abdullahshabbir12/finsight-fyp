@@ -22,6 +22,7 @@ from src.ui.brand import GREEN_500, GREEN_700, RUST, STONE
 from src.reporting.excel import display_peer, peer_columns, peer_rows, peer_workbook, run_workbook
 from src.reporting.export import markdown_report, pdf_report
 from src.ui.layout import STEPS, next_button, page_header
+from src.ui.model import model_panel
 from src.ui.workflow import attach_pdf, show_source, source_viewer
 from src.database.store import list_runs, load_run
 from src.utils.evaluation import OUTCOMES, aggregate, evaluation, field_outcomes
@@ -386,8 +387,8 @@ def results_screen(run: Run) -> None:
     if "workflow_start" in st.session_state:
         run.timings["workflow_seconds"] = perf_counter() - st.session_state.workflow_start
     registry = reference_registry(run)
-    tab_names = ["Overview", "Charts", "Commodities", "Financial Data", "Ratios", "Peer comparison", *ROLES, "Final Synthesis",
-                 "Sources / Evidence", "Evaluation"]
+    tab_names = ["Overview", "Charts", "Commodities", "Financial Data", "Ratios", "Model", "Peer comparison", *ROLES,
+                 "Final Synthesis", "Sources / Evidence", "Evaluation"]
     tabs = dict(zip(tab_names, st.tabs(tab_names)))
     with tabs["Overview"]:
         st.markdown("### Summary")
@@ -448,6 +449,8 @@ def results_screen(run: Run) -> None:
                 st.write(item["display"] if item else f"{LABELS[key]}: unavailable")
                 if item:
                     show_source(run, key, f"ratio_source_{run.id}_{m.name}")
+    with tabs["Model"]:
+        model_panel(run)
     with tabs["Peer comparison"]:
         peer_panel(run)
     for role in ROLES:
@@ -489,6 +492,7 @@ def results_screen(run: Run) -> None:
                 st.warning("PDF export is unavailable. Use Markdown export for this run.")
         a.download_button("Download Markdown", report, file_name=f"brokerlens-{run.id}.md", mime="text/markdown", width="stretch")
         x.download_button("Download Excel", run_workbook(run), file_name=f"brokerlens-{run.id}.xlsx", mime=XLSX, width="stretch",
-                          help="Verified data with evidence, ratios as live Excel formulas, valuation from an editable price cell.")
+                          help="Verified data with evidence, ratios as live Excel formulas, valuation from an editable "
+                               "price cell, and the financial model with editable assumptions.")
         c.download_button("Download full audit JSON", run.model_dump_json(indent=2), file_name=f"brokerlens-{run.id}-audit.json", mime="application/json", width="stretch")
     next_button("Next: measure the AI →", STEPS[4], "next_from_results")
